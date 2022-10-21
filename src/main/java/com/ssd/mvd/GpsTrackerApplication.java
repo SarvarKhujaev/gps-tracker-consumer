@@ -1,6 +1,5 @@
 package com.ssd.mvd;
 
-import com.ssd.mvd.database.CassandraDataControl;
 import com.ssd.mvd.kafka.KafkaDataControl;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
@@ -12,11 +11,5 @@ public class GpsTrackerApplication {
 
     public static void main( String[] args ) {
         context = SpringApplication.run( GpsTrackerApplication.class, args );
-        CassandraDataControl
-                .getInstance()
-                .getTrackerId()
-                .subscribe( s -> CassandraDataControl
-                        .getInstance()
-                        .transfer( s ) );
-    }
+        KafkaDataControl.getInstance().start(); }
 }

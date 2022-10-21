@@ -2,12 +2,11 @@ version: '3.9'
 
 services:
     app:
-        image: ${CI_REGISTRY}/${CI_PROJECT_PATH}:latest
+        image: $CI_REGISTRY/$CI_PROJECT_PATH:${CI_COMMIT_SHORT_SHA}-${CI_COMMIT_REF_NAME}
         networks:
             - proxy_network
         ports:
             - ${RSOCKET_PORT}:${RSOCKET_PORT}
-            - ${TRACKER_PORT}:${TRACKER_PORT}
 
         environment:
             SERVER_PORT: ${SERVER_PORT}
@@ -36,14 +35,10 @@ services:
             CASSANDRA_CORE_CONN_LOCAL: ${CASSANDRA_CORE_CONN_LOCAL}
             CASSANDRA_CORE_CONN_REMOTE: ${CASSANDRA_CORE_CONN_REMOTE}
 
-            REDIS_HOST: ${REDIS_HOST}
-            REDIS_PORT: ${REDIS_PORT}
-            REDIS_PASSWORD: ${REDIS_PASSWORD}
-            REDIS_CLIENT_NAME: ${REDIS_CLIENT_NAME}
-
             NEW_CAR_TOPIC: ${NEW_CAR_TOPIC}
-            NEW_TUPLE_OF_CAR_TOPIC: ${NEW_TUPLE_OF_CAR_TOPIC}
-            TUPLE_OF_CAR_LOCATION_TOPIC: ${TUPLE_OF_CAR_LOCATION_TOPIC}
+            NEW_TUPLE_OF_CAR_TOPIC : ${NEW_TUPLE_OF_CAR_TOPIC}
+            RAW_GPS_LOCATION_TOPIC : ${RAW_GPS_LOCATION_TOPIC}
+            TUPLE_OF_CAR_LOCATION_TOPIC : ${TUPLE_OF_CAR_LOCATION_TOPIC}
             WEBSOCKET_SERVICE_TOPIC_FOR_ONLINE: ${WEBSOCKET_SERVICE_TOPIC_FOR_ONLINE}
 
         deploy:
