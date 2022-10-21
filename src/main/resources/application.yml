@@ -1,0 +1,63 @@
+server:
+    port: ${SERVER_PORT}
+    address: ${SERVER_ADDR}
+
+spring:
+    data:
+        cassandra:
+            port: ${CASSANDRA_PORT}
+            keyspace-name: ${KEYSPACE_NAME}
+            contact-points: ${CASSANDRA_HOST}
+            local-datacenter: ${CASSANDRA_DC}
+            schema-action: CREATE_IF_NOT_EXISTS
+
+            request:
+                timeout: ${REQUEST_TIMEOUT_FOR_CASSANDRA}
+                consistency: quorum
+
+            connection:
+                connect-timeout: ${CONNECTION_TIMEOUT_FOR_CASSANDRA}
+                init-query-timeout: ${INIT_QUERY_TIMEOUT_FOR_CASSANDRA}
+
+        kafka:
+            bootstrap-servers: ${KAFKA_BROKER}
+
+            producer:
+                key-serializer: org.apache.kafka.common.serialization.StringSerializer
+                value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+            consumer:
+                group-id: ${GROUP_ID_FOR_KAFKA}
+                auto-offset-reset: earliest
+                key-deserializer: org.apache.kafka.common.serialization.StringSerializer
+                value-deserializer: org.apache.kafka.common.serialization.StringSerializer
+
+            admin:
+                client-id: ${GROUP_ID_FOR_KAFKA}
+
+    rsocket:
+        server:
+            port: ${RSOCKET_PORT}
+            address: ${SERVER_ADDR}
+
+variables:
+    TRACKER_PORT : ${TRACKER_PORT}
+
+    KAFKA_BROKER: ${KAFKA_BROKER}
+    GROUP_ID_FOR_KAFKA: ${GROUP_ID_FOR_KAFKA}
+
+    CASSANDRA_PORT: ${CASSANDRA_PORT}
+    CASSANDRA_HOST: ${CASSANDRA_HOST}
+
+    CASSANDRA_MAX_REQ: ${CASSANDRA_MAX_REQ}
+
+    CASSANDRA_MAX_CONN_LOCAL: ${CASSANDRA_MAX_CONN_LOCAL}
+    CASSANDRA_MAX_CONN_REMOTE: ${CASSANDRA_MAX_CONN_REMOTE}
+
+    CASSANDRA_CORE_CONN_LOCAL: ${CASSANDRA_CORE_CONN_LOCAL}
+    CASSANDRA_CORE_CONN_REMOTE: ${CASSANDRA_CORE_CONN_REMOTE}
+
+    NEW_CAR_TOPIC: ${NEW_CAR_TOPIC}
+    NEW_TUPLE_OF_CAR_TOPIC : ${NEW_TUPLE_OF_CAR_TOPIC}
+    TUPLE_OF_CAR_LOCATION_TOPIC : ${TUPLE_OF_CAR_LOCATION_TOPIC}
+    WEBSOCKET_SERVICE_TOPIC_FOR_ONLINE: ${WEBSOCKET_SERVICE_TOPIC_FOR_ONLINE}
