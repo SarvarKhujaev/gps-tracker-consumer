@@ -19,33 +19,16 @@ spring:
                 connect-timeout: ${CONNECTION_TIMEOUT_FOR_CASSANDRA}
                 init-query-timeout: ${INIT_QUERY_TIMEOUT_FOR_CASSANDRA}
 
-        kafka:
-            bootstrap-servers: ${KAFKA_BROKER}
-
-            producer:
-                key-serializer: org.apache.kafka.common.serialization.StringSerializer
-                value-serializer: org.apache.kafka.common.serialization.StringSerializer
-
-            consumer:
-                group-id: ${GROUP_ID_FOR_KAFKA}
-                auto-offset-reset: earliest
-                key-deserializer: org.apache.kafka.common.serialization.StringSerializer
-                value-deserializer: org.apache.kafka.common.serialization.StringSerializer
-
-            admin:
-                client-id: ${GROUP_ID_FOR_KAFKA}
-
     rsocket:
         server:
             port: ${RSOCKET_PORT}
             address: ${SERVER_ADDR}
 
 variables:
-    TRACKER_PORT : ${TRACKER_PORT}
-
     KAFKA_BROKER: ${KAFKA_BROKER}
     GROUP_ID_FOR_KAFKA: ${GROUP_ID_FOR_KAFKA}
 
+    KEYSPACE_NAME : ${KEYSPACE_NAME}
     CASSANDRA_PORT: ${CASSANDRA_PORT}
     CASSANDRA_HOST: ${CASSANDRA_HOST}
 
@@ -59,5 +42,6 @@ variables:
 
     NEW_CAR_TOPIC: ${NEW_CAR_TOPIC}
     NEW_TUPLE_OF_CAR_TOPIC : ${NEW_TUPLE_OF_CAR_TOPIC}
+    RAW_GPS_LOCATION_TOPIC : ${RAW_GPS_LOCATION_TOPIC}
     TUPLE_OF_CAR_LOCATION_TOPIC : ${TUPLE_OF_CAR_LOCATION_TOPIC}
     WEBSOCKET_SERVICE_TOPIC_FOR_ONLINE: ${WEBSOCKET_SERVICE_TOPIC_FOR_ONLINE}

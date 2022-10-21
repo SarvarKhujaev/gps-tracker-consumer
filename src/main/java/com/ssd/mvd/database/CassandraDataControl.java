@@ -41,7 +41,10 @@ public class CassandraDataControl {
         options.setTcpNoDelay( true );
         options.setKeepAlive( true );
         ( this.session = ( this.cluster = Cluster.builder()
-                .withClusterName( "GpsTracker" )
+                .withClusterName( GpsTrackerApplication
+                        .context
+                        .getEnvironment()
+                        .getProperty( "variables.KEYSPACE_NAME" ) )
                 .addContactPoints( "10.254.5.1, 10.254.5.2, 10.254.5.3".split( ", " ) )
                 .withPort( Integer.parseInt( GpsTrackerApplication
                         .context

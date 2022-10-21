@@ -79,7 +79,7 @@ public class KafkaDataControl {
     private final String RAW_GPS_LOCATION_TOPIC = GpsTrackerApplication
             .context
             .getEnvironment()
-            .getProperty( "variables.RAW_GPS_LOCATION_TOPIC_PROD" );
+            .getProperty( "variables.RAW_GPS_LOCATION_TOPIC" );
 
     private KafkaStreams kafkaStreams;
     private final StreamsBuilder builder = new StreamsBuilder();
@@ -130,10 +130,14 @@ public class KafkaDataControl {
     public void start () {
         KStream< String, String > kStream = this.getBuilder().stream( this.getRAW_GPS_LOCATION_TOPIC(),
                 Consumed.with( Serdes.String(), Serdes.String() ) );
-        kStream.mapValues( values -> CassandraDataControl
-                .getInstance()
-                .getAddPosition()
-                .apply( SerDes.getSerDes().deserialize( values ) ) );
+        kStream.mapValues( values -> {
+            Position position = SerDes.getSerDes().deserialize( values );
+            logger.info( "Divice: " + position.getDeviceTime() );
+            logger.info( "Time: " + position.getDeviceId() );
+            return CassandraDataControl
+                    .getInstance()
+                    .getAddPosition()
+                    .apply( position ); } );
 
         this.setKafkaStreams( new KafkaStreams( this.getBuilder().build(), this.getSetStreamProperties().get() ) );
         this.getKafkaStreams().start(); }
