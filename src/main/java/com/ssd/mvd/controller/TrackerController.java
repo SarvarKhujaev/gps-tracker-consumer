@@ -45,4 +45,11 @@ public class TrackerController {
 
     @MessageMapping ( value = "ping" )
     public Mono< Boolean > ping () { return Mono.just( true ); }
+
+    @MessageMapping ( value = "calculate_average_fuel_consumption" )
+    public Mono< PatrulFuelStatistics > calculate_average_fuel_consumption ( Request request ) {
+        return CassandraDataControl
+            .getInstance()
+            .getCalculate_average_fuel_consumption()
+            .apply( request ); }
 }

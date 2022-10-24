@@ -1,6 +1,8 @@
 package com.ssd.mvd.database;
 
 import lombok.Data;
+
+import java.util.Calendar;
 import java.util.Map;
 import java.util.Date;
 import java.util.logging.Logger;
@@ -118,7 +120,8 @@ public class CassandraDataControl {
 
     private final Consumer< ReqCar > addReqCar = reqCar -> this.getSession()
             .executeAsync( "INSERT INTO "
-            + CassandraTables.TABLETS + "." + CassandraTables.CARS +
+                    + CassandraTables.TABLETS + "."
+                    + CassandraTables.CARS +
             CassandraConverter
                     .getInstance()
                     .getALlNames( ReqCar.class ) +
@@ -265,7 +268,8 @@ public class CassandraDataControl {
         Row row = this.getSession().execute( "SELECT * FROM " +
                 CassandraTables.TABLETS.name() + "." +
                 CassandraTables.CARS.name() +
-                ( map.containsKey( "trackerId" ) ? " WHERE trackerId = '" + map.get( "trackerId" )
+                ( map.containsKey( "trackerId" )
+                        ? " WHERE trackerId = '" + map.get( "trackerId" )
                         : " WHERE gosnumber = '" + map.get( "gosnumber" ) ) + "';" ).one();
         return Mono.justOrEmpty( row != null ? new ReqCar( row ) : null ); };
 
@@ -310,35 +314,57 @@ public class CassandraDataControl {
                             .apply( Map.of( "passportNumber", reqCar.getPatrulPassportSeries() ) )
                             .flatMap( patrul -> Mono.just( new TrackerInfo( patrul, reqCar, row ) ) ) ) );
 
-    public void transfer ( String trackersId ) {
-        Flux.fromStream ( this.session.execute ( "SELECT * FROM "
-                                + CassandraTables.TRACKERS.name()
-                                + ".tracker" + trackersId + ";" )
-                        .all().stream() )
-                .filter( row -> row.getDouble( "speed" ) > 0
-                        && row.getDouble( "altitude" ) > 0
-                        && row.getDouble( "longitude" ) > 0
-                        && row.getTimestamp( "date" )
-                        .after( new Date( 1605006666774L ) ) )
-                .map( row -> {
-                    System.out.println( row.getTimestamp( "date" ) + " : " + trackersId );
-                    this.session.execute( "INSERT INTO "
-                            + CassandraTables.TRACKERS.name() + "."
-                            + CassandraTables.TRACKERS_LOCATION_TABLE.name()
-                            + "( imei, date, speed, latitude, longitude ) "
-                            +  "VALUES ('" + row.getString( "imei" )
-                            + "', '" + row.getTimestamp( "date" ).toInstant()
-                            + "', " + row.getDouble( "speed" )
-                            + ", " + row.getDouble( "longitude" )
-                            + ", " + row.getDouble( "altitude" ) + ");" );
-                    return row; } )
-                .subscribe(); }
+    private static Double i;
+    private Calendar end;
+    private Calendar start;
 
-    public Flux< String > getTrackerId () { return Flux.fromStream(
-            this.getSession().execute(
-                    "SELECT trackersid from trackers.trackersId;" )
-                    .all().stream() )
-            .map( row -> row.getString( "trackersid" ) ); }
+    private final Function< Request, Mono< PatrulFuelStatistics > > calculate_average_fuel_consumption = request -> {
+        i = 0.0;
+        PatrulFuelStatistics patrulFuelStatistics = new PatrulFuelStatistics();
+        return this.getPatrul
+                .apply( Map.of( "uuid", request.getTrackerId() ) )
+                .flatMap( patrul -> !patrul.getCarNumber().equals( "null" )
+                        ? this.getCarByNumber
+                        .apply( Map.of( "gosnumber", patrul.getCarNumber() ) )
+                        .map( reqCar -> {
+                            start = Calendar.getInstance();
+                            start.setTime( this.getSession().execute( "SELECT min(date) as min_date FROM "
+                                            + CassandraTables.TRACKERS.name() + "."
+                                            + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()
+                                            + " WHERE imei = '" + reqCar.getTrackerId() + "'"
+                                            + ( request.getStartTime() == null
+                                            && request.getEndTime() == null ? ""
+                                            : " and date >= '" + request.getStartTime().toInstant()
+                                            + "' and date <= '" + request.getEndTime().toInstant() + "'" ) + ";" )
+                                    .one().getTimestamp( "min_date" ) );
+
+                            end = Calendar.getInstance();
+                            end.setTime( this.getSession().execute( "SELECT max(date) as max_date FROM "
+                                            + CassandraTables.TRACKERS.name() + "."
+                                            + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()
+                                            + " WHERE imei = '" + reqCar.getTrackerId() + "'"
+                                            + ( request.getStartTime() == null
+                                            && request.getEndTime() == null ? ""
+                                            : " and date >= '" + request.getStartTime().toInstant()
+                                            + "' and date <= '" + request.getEndTime().toInstant() + "'" ) + ";" )
+                                    .one().getTimestamp( "max_date" ) );
+
+                            Date date;
+                            while ( start.before( end ) ) {
+                                    date = start.getTime();
+                                    start.add( Calendar.DATE, 1 );
+                                    patrulFuelStatistics.getMap().put( date, ( this.getSession()
+                                            .execute( "SELECT sum(distance) as distance_summary FROM "
+                                                    + CassandraTables.TRACKERS.name() + "."
+                                                    + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()
+                                                    + " where imei = '" + reqCar.getTrackerId() + "'"
+                                                    + " and date >= '" + date.toInstant()
+                                                    + "' and date <= '" + start.toInstant() + "';" )
+                                            .one().getDouble( "distance_summary" ) /
+                                            ( reqCar.getAverageFuelSize() > 0 ? reqCar.getAverageFuelSize() : 10 ) ) / 1000 ); }
+                            patrulFuelStatistics.setUuid( patrul.getUuid() );
+                            return patrulFuelStatistics; } )
+                        : Mono.just( patrulFuelStatistics ) ); };
 
     public void clear () {
         instance = null;
