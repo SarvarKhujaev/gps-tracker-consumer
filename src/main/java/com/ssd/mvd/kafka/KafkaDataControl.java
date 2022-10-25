@@ -149,9 +149,10 @@ public class KafkaDataControl {
 
                 @Override
                 public void onSuccess( SendResult< String, String > result ) {
-                    logger.info( "Kafka got Escort car location: " + position.getDeviceId() +
-                            " at: " + position.getDeviceTime() +
-                            " with offset: " + result.getRecordMetadata().offset() ); } } );
+//                    logger.info( "Kafka got Escort car location: " + position.getDeviceId() +
+//                            " at: " + position.getDeviceTime() +
+//                            " with offset: " + result.getRecordMetadata().offset() );
+                } } );
 
     private final Consumer< Position > writeToKafkaPosition = position -> this.getKafkaTemplate().send(
             this.getWEBSOCKET_SERVICE_TOPIC_FOR_ONLINE(), SerDes.getSerDes().serialize( position ) )
@@ -163,9 +164,10 @@ public class KafkaDataControl {
 
                 @Override
                 public void onSuccess( SendResult< String, String > result ) {
-                    logger.info( "Kafka got: " + position.getDeviceId() +
-                            " at: " + position.getDeviceTime() +
-                            " with offset: " + result.getRecordMetadata().offset() ); } } );
+//                    logger.info( "Kafka got: " + position.getDeviceId() +
+//                            " at: " + position.getDeviceTime() +
+//                            " with offset: " + result.getRecordMetadata().offset() );
+                } } );
 
     private final Function< ReqCar, ReqCar > writeToKafka = reqCar -> {
         this.getKafkaTemplate().send( this.getNEW_CAR_TOPIC(), SerDes.getSerDes().serialize( reqCar ) )
