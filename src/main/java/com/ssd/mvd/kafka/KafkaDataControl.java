@@ -130,14 +130,10 @@ public class KafkaDataControl {
     public void start () {
         KStream< String, String > kStream = this.getBuilder().stream( this.getRAW_GPS_LOCATION_TOPIC(),
                 Consumed.with( Serdes.String(), Serdes.String() ) );
-        kStream.mapValues( values -> {
-            Position position = SerDes.getSerDes().deserialize( values );
-            logger.info( "Divice: " + position.getDeviceTime() );
-            logger.info( "Time: " + position.getDeviceId() );
-            return CassandraDataControl
-                    .getInstance()
-                    .getAddPosition()
-                    .apply( position ); } );
+        kStream.mapValues( values -> CassandraDataControl
+                .getInstance()
+                .getAddPosition()
+                .apply( SerDes.getSerDes().deserialize( values ) ) );
 
         this.setKafkaStreams( new KafkaStreams( this.getBuilder().build(), this.getSetStreamProperties().get() ) );
         this.getKafkaStreams().start(); }
