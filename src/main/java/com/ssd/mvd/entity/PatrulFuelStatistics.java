@@ -1,11 +1,10 @@
 package com.ssd.mvd.entity;
 
-import java.util.*;
-
 import lombok.Data;
+import java.util.*;
 
 @Data
 public class PatrulFuelStatistics {
     private UUID uuid; // patrul id
-    private SortedMap< Date, Double > map = new TreeMap<>();
+    private SortedMap< Date, ConsumptionData > map = new TreeMap<>();
 }

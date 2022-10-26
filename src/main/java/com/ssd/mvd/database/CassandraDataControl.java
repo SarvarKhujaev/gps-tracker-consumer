@@ -353,15 +353,18 @@ public class CassandraDataControl {
                             while ( getStart().before( this.getEnd() ) ) {
                                     date = this.getStart().getTime();
                                     this.getStart().add( Calendar.DATE, 1 );
-                                    patrulFuelStatistics.getMap().put( date, ( this.getSession()
+                                    ConsumptionData consumptionData = new ConsumptionData();
+                                    consumptionData.setDistance( this.getSession()
                                             .execute( "SELECT sum(distance) as distance_summary FROM "
                                                     + CassandraTables.TRACKERS.name() + "."
                                                     + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()
                                                     + " where imei = '" + reqCar.getTrackerId() + "'"
                                                     + " and date >= '" + date.toInstant()
                                                     + "' and date <= '" + this.getStart().toInstant() + "';" )
-                                            .one().getDouble( "distance_summary" ) /
-                                            ( reqCar.getAverageFuelSize() > 0 ? reqCar.getAverageFuelSize() : 10 ) ) / 1000 ); }
+                                            .one().getDouble( "distance_summary" ) / 1000 );
+                                    consumptionData.setFuelLevel( consumptionData.getDistance() /
+                                            ( reqCar.getAverageFuelSize() > 0 ? reqCar.getAverageFuelSize() : 10 ) );
+                                    patrulFuelStatistics.getMap().put( date, consumptionData ); }
                             patrulFuelStatistics.setUuid( patrul.getUuid() );
                             return patrulFuelStatistics; } )
                         : Mono.just( patrulFuelStatistics ) ); };
