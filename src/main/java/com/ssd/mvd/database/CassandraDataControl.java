@@ -1,8 +1,6 @@
 package com.ssd.mvd.database;
 
 import lombok.Data;
-import java.time.Duration;
-
 import java.util.Map;
 import java.util.Date;
 import java.util.Calendar;
@@ -318,10 +316,6 @@ public class CassandraDataControl {
 
     private Calendar end;
     private Calendar start;
-    private Long timeDifferenceInDays;
-    private final Function< Request, Long > getTimeDifferenceInSeconds = request ->
-            Math.abs( Duration.between( request.getEndTime().toInstant(),
-                            request.getStartTime().toInstant() ).toDays() );
 
     private final Predicate< Request > checkRequest = request ->
             request.getStartTime() == null
@@ -335,70 +329,59 @@ public class CassandraDataControl {
                         ? this.getCarByNumber
                         .apply( Map.of( "gosnumber", patrul.getCarNumber() ) )
                         .map( reqCar -> {
-                            if ( !this.checkRequest.test( request )
-                                    && ( this.timeDifferenceInDays = this.getTimeDifferenceInSeconds.apply( request ) ) >= 30 ) {
-                                Date date;
-                                this.setEnd( Calendar.getInstance() );
-                                this.getEnd().setTime( request.getEndTime() );
-                                this.setStart( Calendar.getInstance() );
-                                this.getStart().setTime( request.getStartTime() );
-                                patrulFuelStatistics.setAverageFuelConsumption( this.getSession()
-                                        .execute( "SELECT sum(distance) as distance_summary FROM "
-                                                + CassandraTables.TRACKERS.name() + "."
-                                                + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()
-                                                + " where imei = '" + reqCar.getTrackerId() + "'"
-                                                + " and date >= '" + request.getStartTime().toInstant()
-                                                + "' and date <= '" + request.getEndTime().toInstant() + "';" )
-                                        .one().getDouble( "distance_summary" ) / 1000 /
-                                        ( reqCar.getAverageFuelSize() > 0 ? reqCar.getAverageFuelSize() : 10 ) /
-                                        ( this.getTimeDifferenceInDays() > 0
-                                                ? this.getTimeDifferenceInDays() : 1 ) );
-                                while ( getStart().before( this.getEnd() ) ) {
-                                    date = this.getStart().getTime();
-                                    this.getStart().add( Calendar.DATE, 1 );
-                                    patrulFuelStatistics
-                                            .getMap()
-                                            .put( date, new ConsumptionData( 0.0, 0.0 ) ); } }
-                            else { this.setStart( Calendar.getInstance() );
-                                this.getStart().setTime( this.getSession()
-                                        .execute( "SELECT min(date) as min_date FROM "
-                                                + CassandraTables.TRACKERS.name() + "."
-                                                + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()
-                                                + " WHERE imei = '" + reqCar.getTrackerId() + "'"
-                                                + ( this.checkRequest.test( request ) ? ""
-                                                : " and date >= '" + request.getStartTime().toInstant()
-                                                + "' and date <= '" + request.getEndTime().toInstant() + "'" ) + ";" )
-                                        .one().getTimestamp( "min_date" ) );
+                            this.setStart( Calendar.getInstance() );
+                            this.getStart().setTime( this.getSession()
+                                    .execute( "SELECT min(date) AS min_date FROM "
+                                            + CassandraTables.TRACKERS.name() + "."
+                                            + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()
+                                            + " WHERE imei = '" + reqCar.getTrackerId() + "'"
+                                            + ( this.checkRequest.test( request ) ? ""
+                                            : " AND date >= '" + request.getStartTime().toInstant()
+                                            + "' AND date <= '" + request.getEndTime().toInstant() + "'" ) + ";" )
+                                    .one().getTimestamp( "min_date" ) );
 
-                                this.setEnd( Calendar.getInstance() );
-                                this.getEnd().setTime( this.getSession()
-                                        .execute( "SELECT max(date) as max_date FROM "
-                                                + CassandraTables.TRACKERS.name() + "."
-                                                + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()
-                                                + " WHERE imei = '" + reqCar.getTrackerId() + "'"
-                                                + ( this.checkRequest.test( request ) ? ""
-                                                : " and date >= '" + request.getStartTime().toInstant()
-                                                + "' and date <= '" + request.getEndTime().toInstant() + "'" ) + ";" )
-                                        .one().getTimestamp( "max_date" ) );
+                            this.setEnd( Calendar.getInstance() );
+                            this.getEnd().setTime( this.getSession()
+                                    .execute( "SELECT max(date) AS max_date FROM "
+                                            + CassandraTables.TRACKERS.name() + "."
+                                            + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()
+                                            + " WHERE imei = '" + reqCar.getTrackerId() + "'"
+                                            + ( this.checkRequest.test( request ) ? ""
+                                            : " AND date >= '" + request.getStartTime().toInstant()
+                                            + "' AND date <= '" + request.getEndTime().toInstant() + "'" ) + ";" )
+                                    .one().getTimestamp( "max_date" ) );
 
-                                Date date;
-                                while ( getStart().before( this.getEnd() ) ) {
+                            Date date;
+                            while ( this.getStart().before( this.getEnd() ) ) {
                                     date = this.getStart().getTime();
                                     this.getStart().add( Calendar.DATE, 1 );
                                     ConsumptionData consumptionData = new ConsumptionData();
                                     consumptionData.setDistance( this.getSession()
-                                            .execute( "SELECT sum(distance) as distance_summary FROM "
+                                            .execute( "SELECT sum(distance) AS distance_summary FROM "
                                                     + CassandraTables.TRACKERS.name() + "."
                                                     + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()
-                                                    + " where imei = '" + reqCar.getTrackerId() + "'"
-                                                    + " and date >= '" + date.toInstant()
-                                                    + "' and date <= '" + this.getStart().toInstant() + "';" )
+                                                    + " WHERE imei = '" + reqCar.getTrackerId() + "'"
+                                                    + " AND date >= '" + date.toInstant()
+                                                    + "' AND date <= '" + this.getStart().toInstant() + "';" )
                                             .one().getDouble( "distance_summary" ) / 1000 );
                                     consumptionData.setFuelLevel( consumptionData.getDistance() /
                                             ( reqCar.getAverageFuelSize() > 0 ? reqCar.getAverageFuelSize() : 10 ) );
-                                    patrulFuelStatistics.getMap().put( date, consumptionData ); } }
+                                    patrulFuelStatistics.getMap().put( date, consumptionData );
+                                    patrulFuelStatistics.setAverageFuelConsumption(
+                                            patrulFuelStatistics.getAverageFuelConsumption()
+                                            + consumptionData.getFuelLevel() );
+                                patrulFuelStatistics.setAverageDistance(
+                                        patrulFuelStatistics.getAverageDistance()
+                                                + consumptionData.getDistance() ); }
+                            patrulFuelStatistics.setAverageFuelConsumption(
+                                    patrulFuelStatistics.getAverageFuelConsumption() /
+                                            patrulFuelStatistics.getMap().size() );
+                            patrulFuelStatistics.setAverageDistance(
+                                    patrulFuelStatistics.getAverageDistance() /
+                                            patrulFuelStatistics.getMap().size() );
                             patrulFuelStatistics.setUuid( patrul.getUuid() );
                             return patrulFuelStatistics; } )
+                        .onErrorReturn( new PatrulFuelStatistics() )
                         : Mono.just( patrulFuelStatistics ) ); };
 
     public void clear () {

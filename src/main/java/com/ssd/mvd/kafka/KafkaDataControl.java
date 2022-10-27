@@ -89,6 +89,7 @@ public class KafkaDataControl {
         this.getProperties().put( AdminClientConfig.CLIENT_ID_CONFIG, this.ID );
         this.getProperties().put( AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, this.KAFKA_BROKER);
         return getProperties(); };
+
     private final Supplier< Properties > setStreamProperties = () -> {
         this.getProperties().clear();
         this.getProperties().put( StreamsConfig.APPLICATION_ID_CONFIG, this.getID() );
@@ -122,14 +123,15 @@ public class KafkaDataControl {
         this.logger.info( "KafkaDataControl was created" );
         this.client = KafkaAdminClient.create( this.getSetProperties().get() );
         this.getGetNewTopic().accept( this.getWEBSOCKET_SERVICE_TOPIC_FOR_ONLINE() );
-        this.getGetNewTopic().accept( this.getRAW_GPS_LOCATION_TOPIC() );
         this.getGetNewTopic().accept( this.getTUPLE_OF_CAR_LOCATION_TOPIC() );
+        this.getGetNewTopic().accept( this.getRAW_GPS_LOCATION_TOPIC() );
         this.getGetNewTopic().accept( this.getNEW_TUPLE_OF_CAR_TOPIC() );
         this.getGetNewTopic().accept( this.getNEW_CAR_TOPIC() ); }
 
     public void start () {
         KStream< String, String > kStream = this.getBuilder().stream( this.getRAW_GPS_LOCATION_TOPIC(),
                 Consumed.with( Serdes.String(), Serdes.String() ) );
+
         kStream.mapValues( values -> CassandraDataControl
                 .getInstance()
                 .getAddPosition()
@@ -149,10 +151,9 @@ public class KafkaDataControl {
 
                 @Override
                 public void onSuccess( SendResult< String, String > result ) {
-//                    logger.info( "Kafka got Escort car location: " + position.getDeviceId() +
-//                            " at: " + position.getDeviceTime() +
-//                            " with offset: " + result.getRecordMetadata().offset() );
-                } } );
+                    logger.info( "Kafka got Escort car location: " + position.getDeviceId() +
+                            " at: " + position.getDeviceTime() +
+                            " with offset: " + result.getRecordMetadata().offset() ); } } );
 
     private final Consumer< Position > writeToKafkaPosition = position -> this.getKafkaTemplate().send(
             this.getWEBSOCKET_SERVICE_TOPIC_FOR_ONLINE(), SerDes.getSerDes().serialize( position ) )
@@ -164,10 +165,9 @@ public class KafkaDataControl {
 
                 @Override
                 public void onSuccess( SendResult< String, String > result ) {
-//                    logger.info( "Kafka got: " + position.getDeviceId() +
-//                            " at: " + position.getDeviceTime() +
-//                            " with offset: " + result.getRecordMetadata().offset() );
-                } } );
+                    logger.info( "Kafka got: " + position.getDeviceId() +
+                            " at: " + position.getDeviceTime() +
+                            " with offset: " + result.getRecordMetadata().offset() ); } } );
 
     private final Function< ReqCar, ReqCar > writeToKafka = reqCar -> {
         this.getKafkaTemplate().send( this.getNEW_CAR_TOPIC(), SerDes.getSerDes().serialize( reqCar ) )
@@ -182,6 +182,7 @@ public class KafkaDataControl {
                         logger.info( "Kafka got ReqCar: " + reqCar.getTrackerId() +
                                 " with offset: " + result.getRecordMetadata().offset() ); } } );
         return reqCar; };
+
     private final Function< TupleOfCar, TupleOfCar > writeToKafkaTupleOfCar = tupleOfCar -> {
         this.getKafkaTemplate().send( this.getNEW_TUPLE_OF_CAR_TOPIC(), SerDes.getSerDes().serialize( tupleOfCar ) )
                 .addCallback( new ListenableFutureCallback<>() {
