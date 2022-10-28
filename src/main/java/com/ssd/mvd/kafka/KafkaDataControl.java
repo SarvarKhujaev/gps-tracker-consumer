@@ -151,9 +151,10 @@ public class KafkaDataControl {
 
                 @Override
                 public void onSuccess( SendResult< String, String > result ) {
-                    logger.info( "Kafka got Escort car location: " + position.getDeviceId() +
-                            " at: " + position.getDeviceTime() +
-                            " with offset: " + result.getRecordMetadata().offset() ); } } );
+//                    logger.info( "Kafka got Escort car location: " + position.getDeviceId() +
+//                            " at: " + position.getDeviceTime() +
+//                            " with offset: " + result.getRecordMetadata().offset() );
+                } } );
 
     private final Consumer< Position > writeToKafkaPosition = position -> this.getKafkaTemplate().send(
             this.getWEBSOCKET_SERVICE_TOPIC_FOR_ONLINE(), SerDes.getSerDes().serialize( position ) )

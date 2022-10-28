@@ -75,7 +75,7 @@ public class CassandraDataControlForEscort {
         this.logger.info( "CassandraDataControlForEscort is ready" ); }
 
     public void addValue ( Position position ) {
-        this.getSession().execute( "INSERT INTO "
+        if ( position.getSpeed() > 0 ) this.getSession().execute( "INSERT INTO "
                 + CassandraTables.ESCORT.name() + "."
                 + CassandraTables.ESCORTLOCATION.name()
                 + "(imei, date, speed, altitude, longitude) "
