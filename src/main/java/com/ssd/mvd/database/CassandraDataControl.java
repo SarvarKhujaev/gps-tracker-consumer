@@ -224,7 +224,9 @@ public class CassandraDataControl {
                                                                 .apply( reqCar1 ) ) ) ) ); } ) );
         return "success"; };
 
-    private final Function< TrackerInfo, TrackerInfo > addTackerInfo = trackerInfo -> { this.getSession().execute( (
+    private final Function< TrackerInfo, TrackerInfo > addTackerInfo = trackerInfo -> {
+        logger.info( "Updating tracker: " + trackerInfo.getTrackerId() );
+        this.getSession().execute( (
             "INSERT INTO "
                     + CassandraTables.TRACKERS.name() + "."
                     + CassandraTables.TRACKERSID.name()
