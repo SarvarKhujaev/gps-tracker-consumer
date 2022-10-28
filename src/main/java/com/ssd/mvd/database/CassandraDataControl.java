@@ -184,15 +184,17 @@ public class CassandraDataControl {
                             .getInspector()
                             .getTrackerInfoMap()
                             .containsKey( position.getDeviceId() ) ) {
-                        this.getSession().execute( "INSERT INTO "
-                                + CassandraTables.TRACKERS.name() + "."
-                                + CassandraTables.TRACKERS_LOCATION_TABLE.name()
-                                + "( imei, date, speed, latitude, longitude ) "
-                                +  "VALUES ('" + position.getDeviceId()
-                                + "', '" + position.getDeviceTime().toInstant()
-                                + "', " + position.getSpeed()
-                                + ", " + position.getLongitude()
-                                + ", " + position.getLatitude() + ");" );
+                        // сохраняем в базу только если машина двигается
+                        if ( position.getSpeed() > 0 ) {
+                            this.getSession().execute( "INSERT INTO "
+                                    + CassandraTables.TRACKERS.name() + "."
+                                    + CassandraTables.TRACKERS_LOCATION_TABLE.name()
+                                    + "( imei, date, speed, latitude, longitude ) "
+                                    +  "VALUES ('" + position.getDeviceId()
+                                    + "', '" + position.getDeviceTime().toInstant()
+                                    + "', " + position.getSpeed()
+                                    + ", " + position.getLongitude()
+                                    + ", " + position.getLatitude() + ");" ); }
                         this.getPatrul
                                 .apply( Map.of( "passportNumber", reqCar1.getPatrulPassportSeries() ) )
                                 .subscribe( patrul -> KafkaDataControl
@@ -249,7 +251,7 @@ public class CassandraDataControl {
         return trackerInfo; };
 
     public void addValue ( TrackerInfo trackerInfo, Double speed ) {
-        this.getSession().execute ( "INSERT INTO "
+        if ( speed > 0 ) this.getSession().execute ( "INSERT INTO "
                 + CassandraTables.TRACKERS.name() + "."
                 + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()
                 + " ( imei, date, speed, distance ) VALUES('"
@@ -258,9 +260,9 @@ public class CassandraDataControl {
                 + speed + ", "
                 + ( speed * 10 / 36 ) * 15 + ");" ); }
 
-    private final Predicate< Position > checkPosition = position -> position.getLatitude() > 0
+    private final Predicate< Position > checkPosition = position ->
+            position.getLatitude() > 0
             && position.getLongitude() > 0
-            && position.getSpeed() > 0
             && position.getDeviceTime()
             .after( new Date( 1605006666774L ) );
 
@@ -329,6 +331,7 @@ public class CassandraDataControl {
                         ? this.getCarByNumber
                         .apply( Map.of( "gosnumber", patrul.getCarNumber() ) )
                         .map( reqCar -> {
+                            System.out.println( "Tracker: " + reqCar.getTrackerId() );
                             this.setStart( Calendar.getInstance() );
                             this.getStart().setTime( this.getSession()
                                     .execute( "SELECT min(date) AS min_date FROM "
@@ -353,26 +356,26 @@ public class CassandraDataControl {
 
                             Date date;
                             while ( this.getStart().before( this.getEnd() ) ) {
-                                    date = this.getStart().getTime();
-                                    this.getStart().add( Calendar.DATE, 1 );
-                                    ConsumptionData consumptionData = new ConsumptionData();
-                                    consumptionData.setDistance( this.getSession()
-                                            .execute( "SELECT sum(distance) AS distance_summary FROM "
-                                                    + CassandraTables.TRACKERS.name() + "."
-                                                    + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()
-                                                    + " WHERE imei = '" + reqCar.getTrackerId() + "'"
-                                                    + " AND date >= '" + date.toInstant()
-                                                    + "' AND date <= '" + this.getStart().toInstant() + "';" )
-                                            .one().getDouble( "distance_summary" ) / 1000 );
-                                    consumptionData.setFuelLevel( consumptionData.getDistance() /
-                                            ( reqCar.getAverageFuelSize() > 0 ? reqCar.getAverageFuelSize() : 10 ) );
-                                    patrulFuelStatistics.getMap().put( date, consumptionData );
-                                    patrulFuelStatistics.setAverageFuelConsumption(
-                                            patrulFuelStatistics.getAverageFuelConsumption()
-                                            + consumptionData.getFuelLevel() );
+                                date = this.getStart().getTime();
+                                this.getStart().add( Calendar.DATE, 1 );
+                                ConsumptionData consumptionData = new ConsumptionData();
+                                consumptionData.setDistance( this.getSession()
+                                        .execute( "SELECT sum(distance) AS distance_summary FROM "
+                                                + CassandraTables.TRACKERS.name() + "."
+                                                + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()
+                                                + " WHERE imei = '" + reqCar.getTrackerId() + "'"
+                                                + " AND date >= '" + date.toInstant()
+                                                + "' AND date <= '" + this.getStart().toInstant() + "';" )
+                                        .one().getDouble( "distance_summary" ) / 1000 );
+                                consumptionData.setFuelLevel( consumptionData.getDistance() /
+                                        ( reqCar.getAverageFuelSize() > 0 ? reqCar.getAverageFuelSize() : 10 ) );
+                                patrulFuelStatistics.getMap().put( date, consumptionData );
+                                patrulFuelStatistics.setAverageFuelConsumption(
+                                        patrulFuelStatistics.getAverageFuelConsumption()
+                                        + consumptionData.getFuelLevel() );
                                 patrulFuelStatistics.setAverageDistance(
                                         patrulFuelStatistics.getAverageDistance()
-                                                + consumptionData.getDistance() ); }
+                                        + consumptionData.getDistance() ); }
                             patrulFuelStatistics.setAverageFuelConsumption(
                                     patrulFuelStatistics.getAverageFuelConsumption() /
                                             patrulFuelStatistics.getMap().size() );
