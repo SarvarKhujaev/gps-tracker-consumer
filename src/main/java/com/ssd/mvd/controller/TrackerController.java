@@ -14,33 +14,33 @@ public class TrackerController {
     @MessageMapping ( value = "getAllTrackers" )
     public Flux< TrackerInfo > getAllTrackers () { return CassandraDataControl
             .getInstance()
-            .getAllTrackers
+            .getGetAllTrackers()
             .get(); }
 
     @MessageMapping( value = "online" )
     public Flux< TrackerInfo > online () { return CassandraDataControl.getInstance()
-            .getAllTrackers
+            .getGetAllTrackers()
             .get()
             .filter( TrackerInfo::getStatus ); }
 
     @MessageMapping( value = "offline" )
     public Flux< TrackerInfo > offline () { return CassandraDataControl
             .getInstance()
-            .getAllTrackers
+            .getGetAllTrackers()
             .get()
             .filter( trackerInfo -> !trackerInfo.getStatus() ); }
 
     @MessageMapping ( value = "getAllTrackersId" )
     public Flux< LastPosition > getAllTrackersId () { return CassandraDataControl
             .getInstance()
-            .getAllTrackers
+            .getGetAllTrackers()
             .get()
             .map( LastPosition::new ); }
 
     @MessageMapping ( "getTrackerHistory" )
     public Flux< PositionInfo > getTrackerHistory ( Request request ) { return CassandraDataControl
             .getInstance()
-            .getHistoricalPosition
+            .getGetHistoricalPosition()
             .apply( request ); }
 
     @MessageMapping ( value = "ping" )

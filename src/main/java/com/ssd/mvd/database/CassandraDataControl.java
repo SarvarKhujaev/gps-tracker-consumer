@@ -13,6 +13,7 @@ import java.util.function.Predicate;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import com.ssd.mvd.entity.*;
 import com.ssd.mvd.kafka.Inspector;
@@ -117,30 +118,13 @@ public class CassandraDataControl {
 
         this.logger.info( "Cassandra is ready" ); }
 
-    private final Consumer< ReqCar > addReqCar = reqCar -> this.getSession()
-            .executeAsync( "INSERT INTO "
+    private final Consumer< ReqCar > updateReqCarPosition = reqCar -> this.getSession()
+            .executeAsync( "UPDATE "
                     + CassandraTables.TABLETS + "."
-                    + CassandraTables.CARS +
-            CassandraConverter
-                    .getInstance()
-                    .getALlNames( ReqCar.class ) +
-            " VALUES ("
-            + reqCar.getUuid() + ", "
-            + reqCar.getLustraId() + ", '"
-
-            + reqCar.getGosNumber() + "', '"
-            + reqCar.getTrackerId() + "', '"
-            + reqCar.getVehicleType() + "', '"
-            + reqCar.getCarImageLink() + "', '"
-            + reqCar.getPatrulPassportSeries() + "', "
-
-            + reqCar.getSideNumber() + ", "
-            + reqCar.getSimCardNumber() + ", "
-
-            + reqCar.getLatitude() + ", "
-            + reqCar.getLongitude() + ", "
-            + reqCar.getAverageFuelSize() + ", "
-            + reqCar.getAverageFuelConsumption() + ");" );
+                    + CassandraTables.CARS
+                    + " SET longitude = " + reqCar.getLongitude()
+                    + ", latitude = " + reqCar.getLatitude()
+                    + " WHERE uuid = " + reqCar.getUuid() + ";" );
 
     private final Function< Position, String > addPosition = position -> {
         if ( Inspector
@@ -156,7 +140,8 @@ public class CassandraDataControl {
                         .subscribe( tupleOfCar -> { // in case of car exists and in list
                             CassandraDataControlForEscort
                                     .getInstance()
-                                    .addValue( position );
+                                    .getSavePosition()
+                                    .accept( position );
                             if ( tupleOfCar.getUuidOfPatrul() != null ) this.getPatrul
                                     .apply( Map.of( "uuid", tupleOfCar.getUuidOfPatrul().toString() ) )
                                     .subscribe( patrul -> KafkaDataControl
@@ -185,7 +170,7 @@ public class CassandraDataControl {
                             .getTrackerInfoMap()
                             .containsKey( position.getDeviceId() ) ) {
                         // сохраняем в базу только если машина двигается
-                        if ( position.getSpeed() > 0 ) {
+                        if ( position.getSpeed() > 0 )
                             this.getSession().execute( "INSERT INTO "
                                     + CassandraTables.TRACKERS.name() + "."
                                     + CassandraTables.TRACKERS_LOCATION_TABLE.name()
@@ -194,7 +179,8 @@ public class CassandraDataControl {
                                     + "', '" + position.getDeviceTime().toInstant()
                                     + "', " + position.getSpeed()
                                     + ", " + position.getLongitude()
-                                    + ", " + position.getLatitude() + ");" ); }
+                                    + ", " + position.getLatitude() + ");" );
+
                         this.getPatrul
                                 .apply( Map.of( "passportNumber", reqCar1.getPatrulPassportSeries() ) )
                                 .subscribe( patrul -> KafkaDataControl
@@ -225,7 +211,6 @@ public class CassandraDataControl {
         return "success"; };
 
     private final Function< TrackerInfo, TrackerInfo > addTackerInfo = trackerInfo -> {
-        logger.info( "Updating tracker: " + trackerInfo.getTrackerId() );
         this.getSession().execute( (
             "INSERT INTO "
                     + CassandraTables.TRACKERS.name() + "."
@@ -253,7 +238,7 @@ public class CassandraDataControl {
         return trackerInfo; };
 
     public void addValue ( TrackerInfo trackerInfo, Double speed ) {
-        if ( speed > 0 ) this.getSession().execute ( "INSERT INTO "
+        if ( speed > 0 ) this.getSession().executeAsync( "INSERT INTO "
                 + CassandraTables.TRACKERS.name() + "."
                 + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()
                 + " ( imei, date, speed, distance ) VALUES('"
@@ -268,7 +253,7 @@ public class CassandraDataControl {
             && position.getDeviceTime()
             .after( new Date( 1605006666774L ) );
 
-    public final Function< Map< String, String >, Mono< ReqCar > > getCarByNumber = map -> {
+    private final Function< Map< String, String >, Mono< ReqCar > > getCarByNumber = map -> {
         Row row = this.getSession().execute( "SELECT * FROM " +
                 CassandraTables.TABLETS.name() + "." +
                 CassandraTables.CARS.name() +
@@ -277,17 +262,23 @@ public class CassandraDataControl {
                         : " WHERE gosnumber = '" + map.get( "gosnumber" ) ) + "';" ).one();
         return Mono.justOrEmpty( row != null ? new ReqCar( row ) : null ); };
 
-    public final Function< Request, Flux< PositionInfo > > getHistoricalPosition = request -> Flux.fromStream(
+    private final Function< Request, Flux< PositionInfo > > getHistoricalPosition = request -> Flux.fromStream(
             this.getSession().execute( "SELECT * FROM "
                             + CassandraTables.TRACKERS.name() + "."
                             + CassandraTables.TRACKERS_LOCATION_TABLE.name()
                             + " where imei = '" + request.getTrackerId()
                             + "' and date >= '" + request.getStartTime().toInstant()
                             + "' and date <= '" + request.getEndTime().toInstant() + "';" )
-                    .all().stream() )
-            .map( PositionInfo::new );
+                    .all()
+                    .stream()
+                    .parallel() )
+            .parallel()
+            .runOn( Schedulers.parallel() )
+            .flatMap( row -> Mono.just( new PositionInfo( row ) ) )
+            .sequential()
+            .publishOn( Schedulers.single() );
 
-    public Function< Map< String, String >, Mono< Patrul > > getPatrul = map -> Mono.just(
+    private Function< Map< String, String >, Mono< Patrul > > getPatrul = map -> Mono.just(
             this.getSession().execute( "SELECT * FROM "
                     + CassandraTables.TABLETS.name() + "."
                     + CassandraTables.PATRULS.name()
@@ -306,17 +297,23 @@ public class CassandraDataControl {
 
     private final Predicate< Row > checkTrackerTime = row -> Math.abs( row.getDouble( "totalActivityTime" ) ) > 0;
 
-    public Supplier< Flux< TrackerInfo > > getAllTrackers = () -> Flux.fromStream(
+    private Supplier< Flux< TrackerInfo > > getAllTrackers = () -> Flux.fromStream(
             this.getSession().execute( "SELECT * FROM "
                             + CassandraTables.TRACKERS.name() + "."
                             + CassandraTables.TRACKERSID.name() + ";" )
-                    .all().stream() )
+                    .all()
+                    .stream()
+                    .parallel() )
+            .parallel()
+            .runOn( Schedulers.parallel() )
             .filter( this.getCheckTrackerTime() )
             .flatMap( row -> this.getCarByNumber
                     .apply( Map.of( "gosnumber", row.getString( "gosnumber" ) ) )
                     .flatMap( reqCar -> this.getPatrul
                             .apply( Map.of( "passportNumber", reqCar.getPatrulPassportSeries() ) )
-                            .flatMap( patrul -> Mono.just( new TrackerInfo( patrul, reqCar, row ) ) ) ) );
+                            .flatMap( patrul -> Mono.just( new TrackerInfo( patrul, reqCar, row ) ) ) ) )
+            .sequential()
+            .publishOn( Schedulers.single() );
 
     private Calendar end;
     private Calendar start;
@@ -333,7 +330,6 @@ public class CassandraDataControl {
                         ? this.getCarByNumber
                         .apply( Map.of( "gosnumber", patrul.getCarNumber() ) )
                         .map( reqCar -> {
-                            System.out.println( "Tracker: " + reqCar.getTrackerId() );
                             this.setStart( Calendar.getInstance() );
                             this.getStart().setTime( this.getSession()
                                     .execute( "SELECT min(date) AS min_date FROM "

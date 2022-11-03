@@ -127,7 +127,7 @@ public class TrackerInfo {
         this.setReqCar( reqCar );
         CassandraDataControl
                 .getInstance()
-                .getAddReqCar()
+                .getUpdateReqCarPosition()
                 .accept( this.getReqCar() );
         return position; }
 
@@ -179,7 +179,8 @@ public class TrackerInfo {
                                 .toInstant() ).getSeconds() ) );
         CassandraDataControlForEscort
                 .getInstance()
-                .addValue( this.save( tupleOfCar, position ) );
+                .getSaveTackerInfo()
+                .apply( this.save( tupleOfCar, position ) );
         return position; }
 
     public Position updateTime ( Position position, ReqCar reqCar, Patrul patrul ) {
@@ -209,6 +210,7 @@ public class TrackerInfo {
         this.save( tupleOfCar, position );
         CassandraDataControlForEscort
                 .getInstance()
-                .addValue( this.save( patrul, position ) );
+                .getSaveTackerInfo()
+                .apply( this.save( patrul, position ) );
         return position; }
 }

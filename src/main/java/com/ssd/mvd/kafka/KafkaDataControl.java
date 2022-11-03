@@ -108,8 +108,8 @@ public class KafkaDataControl {
                             .name( imei )
                             .partitions( 5 )
                             .replicas( 3 )
-                            .build() ) );
-        } } catch ( ExecutionException | InterruptedException e ) { throw new RuntimeException(e); } };
+                            .build() ) ); } }
+        catch ( ExecutionException | InterruptedException e ) { throw new RuntimeException(e); } };
 
     private KafkaTemplate< String, String > kafkaTemplate () {
         Map< String, Object > map = new HashMap<>();
@@ -151,10 +151,9 @@ public class KafkaDataControl {
 
                 @Override
                 public void onSuccess( SendResult< String, String > result ) {
-//                    logger.info( "Kafka got Escort car location: " + position.getDeviceId() +
-//                            " at: " + position.getDeviceTime() +
-//                            " with offset: " + result.getRecordMetadata().offset() );
-                } } );
+                    logger.info( "Kafka got Escort car location: " + position.getDeviceId() +
+                            " at: " + position.getDeviceTime() +
+                            " with offset: " + result.getRecordMetadata().offset() ); } } );
 
     private final Consumer< Position > writeToKafkaPosition = position -> this.getKafkaTemplate().send(
             this.getWEBSOCKET_SERVICE_TOPIC_FOR_ONLINE(), SerDes.getSerDes().serialize( position ) )
@@ -198,8 +197,8 @@ public class KafkaDataControl {
         return tupleOfCar; };
 
     public void clear () {
-        this.logger.info( "Kafka was closed" );
         CassandraDataControl.getInstance().clear();
+        this.logger.info( "Kafka was closed" );
         this.getKafkaTemplate().destroy();
         this.getKafkaTemplate().flush();
         Inspector.getInspector().stop();

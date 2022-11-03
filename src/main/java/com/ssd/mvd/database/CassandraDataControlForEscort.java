@@ -9,14 +9,16 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.Row;
 
+import reactor.core.scheduler.Schedulers;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.logging.Logger;
 
+import java.util.logging.Logger;
 import java.util.UUID;
 import java.util.Map;
 import lombok.Data;
@@ -29,7 +31,8 @@ public class CassandraDataControlForEscort {
     private final Logger logger = Logger.getLogger( CassandraDataControl.class.toString() );
     private static CassandraDataControlForEscort cassandraDataControl = new CassandraDataControlForEscort();
 
-    public static CassandraDataControlForEscort getInstance () { return cassandraDataControl != null ? cassandraDataControl
+    public static CassandraDataControlForEscort getInstance () { return cassandraDataControl != null
+            ? cassandraDataControl
             : ( cassandraDataControl = new CassandraDataControlForEscort() ); }
 
     private CassandraDataControlForEscort () {
@@ -74,7 +77,7 @@ public class CassandraDataControlForEscort {
 
         this.logger.info( "CassandraDataControlForEscort is ready" ); }
 
-    public void addValue ( Position position ) {
+    private final Consumer< Position > savePosition = position -> {
         if ( position.getSpeed() > 0 ) this.getSession().execute( "INSERT INTO "
                 + CassandraTables.ESCORT.name() + "."
                 + CassandraTables.ESCORTLOCATION.name()
@@ -83,9 +86,9 @@ public class CassandraDataControlForEscort {
                 + "', '" + position.getDeviceTime().toInstant()
                 + "', " + position.getSpeed()
                 + ", " + position.getLongitude()
-                + ", " + position.getLatitude() + ");" ); }
+                + ", " + position.getLatitude() + ");" ); };
 
-    public TrackerInfo addValue ( TrackerInfo trackerInfo ) {
+    private final Function< TrackerInfo, TrackerInfo > saveTackerInfo = trackerInfo -> {
         this.getSession().execute( ( "INSERT INTO "
                 + CassandraTables.ESCORT.name() + "."
                 + CassandraTables.TRACKERSID.name()
@@ -107,7 +110,7 @@ public class CassandraDataControlForEscort {
                 + trackerInfo.getTotalActivityTime() + ", '"
                 + trackerInfo.getLastActiveDate().toInstant() + "', '"
                 + trackerInfo.getDateOfRegistration().toInstant() + "');" ) );
-        return trackerInfo; }
+        return trackerInfo; };
 
     private final Predicate< String > checkTracker = trackerId -> this.getSession()
             .execute ( "SELECT * FROM "
@@ -123,14 +126,16 @@ public class CassandraDataControlForEscort {
             .execute( "SELECT * FROM "
             + CassandraTables.ESCORT.name() + "."
             + CassandraTables.TUPLE_OF_CAR.name() +
-            " where gosnumber = '" + carNumber + "';" ).one() == null
+            " WHERE gosnumber = '" + carNumber + "';" ).one() == null
             && this.getSession().execute( "SELECT * FROM "
             + CassandraTables.TABLETS.name() + "."
             + CassandraTables.CARS.name() +
-            " where gosnumber = '" + carNumber + "';" ).one() == null;
+            " WHERE gosnumber = '" + carNumber + "';" ).one() == null;
 
-    public Mono< ApiResponseModel > updateEscortCar ( TupleOfCar tupleOfCar ) { return this.getAllTupleOfCar( tupleOfCar.getUuid() )
-            .flatMap( tupleOfCar1 -> {
+    private final Function< TupleOfCar, Mono< ApiResponseModel > > updateEscortCar = tupleOfCar ->
+            this.getGetCurrentTupleofCar()
+                .apply( tupleOfCar.getUuid() )
+                .flatMap( tupleOfCar1 -> {
                     if ( !tupleOfCar1.getTrackerId().equals( tupleOfCar.getTrackerId() )
                             && !this.checkTracker
                             .test( tupleOfCar.getTrackerId() ) ) return Inspector
@@ -156,26 +161,26 @@ public class CassandraDataControlForEscort {
                                 + " where uuid = " + tupleOfCar1.getUuidOfPatrul() + ";" ); }
 
                     return this.getSession().execute(
-                            "INSERT INTO "
-                                    + CassandraTables.ESCORT.name() + "."
-                                    + CassandraTables.TUPLE_OF_CAR.name()
-                                    + CassandraConverter
-                                    .getInstance()
-                                    .getALlNames( TupleOfCar.class )
-                                    + " VALUES("
-                                    + tupleOfCar.getUuid() + ", "
-                                    + tupleOfCar.getUuidOfEscort() + ", "
-                                    + tupleOfCar.getUuidOfPatrul() + ", '"
+                                    "INSERT INTO "
+                                            + CassandraTables.ESCORT.name() + "."
+                                            + CassandraTables.TUPLE_OF_CAR.name()
+                                            + CassandraConverter
+                                            .getInstance()
+                                            .getALlNames( TupleOfCar.class )
+                                            + " VALUES("
+                                            + tupleOfCar.getUuid() + ", "
+                                            + tupleOfCar.getUuidOfEscort() + ", "
+                                            + tupleOfCar.getUuidOfPatrul() + ", '"
 
-                                    + tupleOfCar.getCarModel() + "', '"
-                                    + tupleOfCar.getGosNumber() + "', '"
-                                    + tupleOfCar.getTrackerId() + "', '"
-                                    + tupleOfCar.getNsfOfPatrul() + "', '"
-                                    + tupleOfCar.getSimCardNumber() + "', "
+                                            + tupleOfCar.getCarModel() + "', '"
+                                            + tupleOfCar.getGosNumber() + "', '"
+                                            + tupleOfCar.getTrackerId() + "', '"
+                                            + tupleOfCar.getNsfOfPatrul() + "', '"
+                                            + tupleOfCar.getSimCardNumber() + "', "
 
-                                    + tupleOfCar.getLatitude() + ", "
-                                    + tupleOfCar.getLongitude() + ", " +
-                                    tupleOfCar.getAverageFuelConsumption() + " );" )
+                                            + tupleOfCar.getLatitude() + ", "
+                                            + tupleOfCar.getLongitude() + ", " +
+                                            tupleOfCar.getAverageFuelConsumption() + " );" )
                             .wasApplied()
                             ? Inspector
                             .getInspector()
@@ -189,7 +194,7 @@ public class CassandraDataControlForEscort {
                             .apply( Map.of(
                                     "message", "This car does not exists",
                                     "code", 201,
-                                    "success", false ) ); } ); }
+                                    "success", false ) ); } );
 
     public void updateEscortCar ( Double longitude, Double latitude, TupleOfCar tupleOfCar ) {
         this.getSession().execute ( "UPDATE "
@@ -201,73 +206,73 @@ public class CassandraDataControlForEscort {
                         + " and trackerid = '"
                         + tupleOfCar.getTrackerId() + "';" ); }
 
-    public Mono< TupleOfCar > getAllTupleOfCar ( UUID uuid ) {
-        return Mono.just( this.getSession().execute(
-                "SELECT * FROM "
+    private final Function< UUID, Mono< TupleOfCar > > getCurrentTupleofCar = uuid ->
+            Mono.just( this.getSession()
+                        .execute( "SELECT * FROM "
                         + CassandraTables.ESCORT.name() + "."
                         + CassandraTables.TUPLE_OF_CAR.name()
-                + " WHERE uuid = " + uuid + ";" ).one() )
-                .map( TupleOfCar::new ); }
+                        + " WHERE uuid = " + uuid + ";" ).one() )
+            .map( TupleOfCar::new );
 
-    public Mono< ApiResponseModel > deleteCar ( String gosNumber ) {
-        return this.getAllTupleOfCar( UUID.fromString( gosNumber ) )
-                .flatMap( tupleOfCar1 -> tupleOfCar1.getUuidOfPatrul() == null
-                        && tupleOfCar1.getUuidOfEscort() == null
-                        ? Inspector
-                        .getInspector()
-                        .getFunction()
-                        .apply( Map.of(
-                                "message", gosNumber + " was removed successfully",
-                                "success", this.getSession().execute (
-                                        "BEGIN BATCH " +
-                                                "DELETE FROM "
-                                                + CassandraTables.ESCORT.name() + "."
-                                                + CassandraTables.TUPLE_OF_CAR.name()
-                                                + " where uuid = " + UUID.fromString( gosNumber ) + ";" +
-                                                " DELETE FROM "
-                                                + CassandraTables.ESCORT.name() + "."
-                                                + CassandraTables.TRACKERSID.name()
-                                                + " WHERE trackersId = '" + tupleOfCar1.getTrackerId() + "';"
-                                                + " APPLY BATCH;" )
-                                        .wasApplied() ) )
-                        : Inspector
-                        .getInspector()
-                        .getFunction()
-                        .apply( Map.of(
-                                "message", "You cannot delete this car, it is linked to Patrul or Escort",
-                                "code", 201,
-                                "success", false ) ) ); }
+    private final Function< String, Mono< ApiResponseModel > > deleteTupleOfCar = gosNumber ->
+            this.getGetCurrentTupleofCar()
+            .apply( UUID.fromString( gosNumber ) )
+            .flatMap( tupleOfCar1 -> tupleOfCar1.getUuidOfPatrul() == null
+                    && tupleOfCar1.getUuidOfEscort() == null
+                    ? Inspector
+                    .getInspector()
+                    .getFunction()
+                    .apply( Map.of(
+                            "message", gosNumber + " was removed successfully",
+                            "success", this.getSession().execute (
+                                            "BEGIN BATCH " +
+                                                    "DELETE FROM "
+                                                    + CassandraTables.ESCORT.name() + "."
+                                                    + CassandraTables.TUPLE_OF_CAR.name()
+                                                    + " where uuid = " + UUID.fromString( gosNumber ) + ";" +
+                                                    " DELETE FROM "
+                                                    + CassandraTables.ESCORT.name() + "."
+                                                    + CassandraTables.TRACKERSID.name()
+                                                    + " WHERE trackersId = '" + tupleOfCar1.getTrackerId() + "';"
+                                                    + " APPLY BATCH;" )
+                                    .wasApplied() ) )
+                    : Inspector
+                    .getInspector()
+                    .getFunction()
+                    .apply( Map.of(
+                            "message", "You cannot delete this car, it is linked to Patrul or Escort",
+                            "code", 201,
+                            "success", false ) ) );
 
-    public Mono< ApiResponseModel > addValue ( TupleOfCar tupleOfCar ) {
-        return this.checkTracker.test( tupleOfCar.getTrackerId() )
-                && this.checkCarNumber.test( tupleOfCar.getGosNumber() ) ?
-                this.getSession().execute(
-                "INSERT INTO "
-                        + CassandraTables.ESCORT.name() + "."
-                        + CassandraTables.TUPLE_OF_CAR.name()
-                        + CassandraConverter
+    private final Function< TupleOfCar, Mono< ApiResponseModel > > saveNewTupleOfCar = tupleOfCar ->
+            this.checkTracker.test( tupleOfCar.getTrackerId() )
+            && this.checkCarNumber.test( tupleOfCar.getGosNumber() ) ?
+            this.getSession().execute( "INSERT INTO "
+                            + CassandraTables.ESCORT.name() + "."
+                            + CassandraTables.TUPLE_OF_CAR.name()
+                            + CassandraConverter
                             .getInstance()
                             .getALlNames( TupleOfCar.class )
-                        + " VALUES("
-                        + tupleOfCar.getUuid() + ", "
-                        + tupleOfCar.getUuidOfEscort() + ", "
-                        + tupleOfCar.getUuidOfPatrul() + ", '"
+                            + " VALUES("
+                            + tupleOfCar.getUuid() + ", "
+                            + tupleOfCar.getUuidOfEscort() + ", "
+                            + tupleOfCar.getUuidOfPatrul() + ", '"
 
-                        + tupleOfCar.getCarModel() + "', '"
-                        + tupleOfCar.getGosNumber() + "', '"
-                        + tupleOfCar.getTrackerId() + "', '"
-                        + tupleOfCar.getNsfOfPatrul() + "', '"
-                        + tupleOfCar.getSimCardNumber() + "', "
+                            + tupleOfCar.getCarModel() + "', '"
+                            + tupleOfCar.getGosNumber() + "', '"
+                            + tupleOfCar.getTrackerId() + "', '"
+                            + tupleOfCar.getNsfOfPatrul() + "', '"
+                            + tupleOfCar.getSimCardNumber() + "', "
 
-                        + tupleOfCar.getLatitude() + ", "
-                        + tupleOfCar.getLongitude() + ", " +
-                        tupleOfCar.getAverageFuelConsumption() + ") IF NOT EXISTS;" )
+                            + tupleOfCar.getLatitude() + ", "
+                            + tupleOfCar.getLongitude() + ", " +
+                            tupleOfCar.getAverageFuelConsumption() + ") IF NOT EXISTS;" )
 
-                .wasApplied() ?
+                    .wasApplied() ?
                     tupleOfCar.getUuidOfPatrul() != null
                             ? CassandraDataControl // in case of if this car is linked to patrul
                             .getInstance()
-                            .getPatrul
+                            .getGetPatrul()
                             .apply( Map.of( "uuid", tupleOfCar.getUuidOfPatrul().toString() ) )
                             .flatMap( patrul -> Inspector
                                     .getInspector()
@@ -281,7 +286,8 @@ public class CassandraDataControlForEscort {
                                                                     .getInstance()
                                                                     .getWriteToKafkaTupleOfCar()
                                                                     .apply( tupleOfCar ).getTrackerId(),
-                                                            this.addValue( new TrackerInfo( patrul, tupleOfCar ) ) )
+                                                            this.getSaveTackerInfo()
+                                                                    .apply( new TrackerInfo( patrul, tupleOfCar ) ) )
                                                     != null ) ) ) :
                             Inspector
                                     .getInspector()
@@ -292,19 +298,20 @@ public class CassandraDataControlForEscort {
                                                     .getInspector()
                                                     .getTupleOfCarMap()
                                                     .putIfAbsent( tupleOfCar.getTrackerId(),
-                                                            this.addValue( new TrackerInfo( tupleOfCar ) ) ) != null ) )
-                : Inspector
-                        .getInspector()
-                        .getFunction()
-                        .apply( Map.of(
-                                "message", "This car is already exists",
-                                "code", 201 ) )
-                : Inspector
-                .getInspector()
-                .getFunction()
-                .apply( Map.of(
-                        "message", "This trackers or gosnumber is already registered to another car, so choose another one",
-                        "code", 201 ) ); }
+                                                            this.getSaveTackerInfo()
+                                                                    .apply( new TrackerInfo( tupleOfCar ) ) ) != null ) )
+                    : Inspector
+                    .getInspector()
+                    .getFunction()
+                    .apply( Map.of(
+                            "message", "This car is already exists",
+                            "code", 201 ) )
+            : Inspector
+            .getInspector()
+            .getFunction()
+            .apply( Map.of(
+                    "message", "This trackers or gosnumber is already registered to another car, so choose another one",
+                    "code", 201 ) );
 
     private final Function< String, Mono< TupleOfCar > > getTupleOfCarByTracker = trackersId -> {
         Row row = this.getSession().execute( "SELECT * FROM "
@@ -322,7 +329,7 @@ public class CassandraDataControlForEscort {
                     .flatMap( tupleOfCar -> tupleOfCar.getUuidOfPatrul() != null ?
                             CassandraDataControl
                                     .getInstance()
-                                    .getPatrul
+                                    .getGetPatrul()
                                     .apply( Map.of( "uuid", tupleOfCar.getUuidOfPatrul().toString() ) )
                                     .flatMap( patrul -> Mono.just( new TrackerInfo( patrul, tupleOfCar, row ) ) )
                             : Mono.just( new TrackerInfo( tupleOfCar, row ) ) ) );
@@ -344,26 +351,38 @@ public class CassandraDataControlForEscort {
             this.getSession().execute( "SELECT * FROM "
                             + CassandraTables.ESCORT.name() + "."
                             + CassandraTables.TRACKERSID.name() + ";" )
-                    .all().stream() )
+                    .all()
+                    .stream()
+                    .parallel() )
+            .parallel()
+            .runOn( Schedulers.parallel() )
             .filter( CassandraDataControl
                     .getInstance()
                     .getCheckTrackerTime() )
             .flatMap( row -> this.getAllTupleOfCar( row.getString( "gosnumber" ),
                             row.getString( "trackersid" ) )
-                    .flatMap( tupleOfCar -> tupleOfCar.getUuidOfPatrul() != null ?
-                            CassandraDataControl
+                    .flatMap( tupleOfCar -> tupleOfCar.getUuidOfPatrul() != null
+                            ? CassandraDataControl
                                     .getInstance()
-                                    .getPatrul
+                                    .getGetPatrul()
                                     .apply( Map.of( "uuid", tupleOfCar.getUuidOfPatrul().toString() ) )
                                     .flatMap( patrul -> Mono.just( new TrackerInfo( patrul, tupleOfCar, row ) ) )
-                            : Mono.just( new TrackerInfo( tupleOfCar, row ) ) ) );
+                            : Mono.just( new TrackerInfo( tupleOfCar, row ) ) ) )
+            .sequential()
+            .publishOn( Schedulers.single() );
 
     private Supplier< Flux< TupleOfCar > > getAllTupleOfCar = () -> Flux.fromStream( this.getSession().execute(
             "SELECT * FROM "
                     + CassandraTables.ESCORT.name() + "."
                     + CassandraTables.TUPLE_OF_CAR.name() + ";" )
-                    .all().stream() )
-            .map( TupleOfCar::new );
+                    .all()
+                    .stream()
+                    .parallel() )
+            .parallel()
+            .runOn( Schedulers.parallel() )
+            .flatMap( row -> Mono.just( new TupleOfCar( row ) ) )
+            .sequential()
+            .publishOn( Schedulers.single() );
 
     public void clear () {
         this.getSession().close();

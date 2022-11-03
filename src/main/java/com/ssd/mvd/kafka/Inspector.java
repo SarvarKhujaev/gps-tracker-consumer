@@ -36,7 +36,7 @@ public class Inspector {
     private Inspector () {
         CassandraDataControl
                 .getInstance()
-                .getAllTrackers
+                .getGetAllTrackers()
                 .get()
                 .subscribe( trackerInfo -> this.getTrackerInfoMap()
                         .putIfAbsent( trackerInfo.getTrackerId(), trackerInfo ) );

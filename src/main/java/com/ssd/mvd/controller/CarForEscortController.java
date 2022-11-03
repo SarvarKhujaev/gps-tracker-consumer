@@ -59,29 +59,34 @@ public class CarForEscortController {
             .onErrorContinue( ( throwable, o ) -> this.error.accept( throwable ) ); }
 
     @MessageMapping ( value = "getCurrentForEscort" )
-    public Mono< TupleOfCar > getCurrentForEscort( String gosNumber ) { return CassandraDataControlForEscort
+    public Mono< TupleOfCar > getCurrentForEscort( String gosNumber ) {
+        return CassandraDataControlForEscort
             .getInstance()
-            .getAllTupleOfCar( UUID.fromString( gosNumber ) )
+            .getGetCurrentTupleofCar()
+            .apply( UUID.fromString( gosNumber ) )
             .onErrorContinue( ( throwable, o ) -> this.error.accept( throwable ) ); }
 
     @MessageMapping ( value = "deleteCarForEscort" )
     public Mono< ApiResponseModel > deleteCarForEscort( String gosNumber ) { return CassandraDataControlForEscort
             .getInstance()
-            .deleteCar( gosNumber )
+            .getDeleteTupleOfCar()
+            .apply( gosNumber )
             .onErrorContinue( ( throwable, o ) -> this.error.accept( throwable ) )
             .onErrorReturn( this.errorResponse.get() ); }
 
     @MessageMapping ( value = "updateEscortCar" )
     public Mono< ApiResponseModel > updateEscortCar ( TupleOfCar tupleOfCar ) { return CassandraDataControlForEscort
             .getInstance()
-            .updateEscortCar( tupleOfCar )
+            .getUpdateEscortCar()
+            .apply( tupleOfCar )
             .onErrorContinue( ( throwable, o ) -> this.error.accept( throwable ) )
             .onErrorReturn( this.errorResponse.get() ); }
 
     @MessageMapping( value = "addNewCarForEscort" )
     public Mono< ApiResponseModel > addNewCarForEscort ( TupleOfCar tupleOfCar ) { return CassandraDataControlForEscort
             .getInstance()
-            .addValue( tupleOfCar )
+            .getSaveNewTupleOfCar()
+            .apply( tupleOfCar )
             .onErrorContinue( ( throwable, o ) -> this.error.accept( throwable ) )
             .onErrorReturn( this.errorResponse.get() ); }
 }
