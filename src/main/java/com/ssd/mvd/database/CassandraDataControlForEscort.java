@@ -78,7 +78,10 @@ public class CassandraDataControlForEscort {
         this.logger.info( "CassandraDataControlForEscort is ready" ); }
 
     private final Consumer< Position > savePosition = position -> {
-        if ( position.getSpeed() > 0 ) this.getSession().execute( "INSERT INTO "
+        if ( CassandraDataControl
+                .getInstance()
+                .getCheckPosition()
+                .test( position ) ) this.getSession().execute( "INSERT INTO "
                 + CassandraTables.ESCORT.name() + "."
                 + CassandraTables.ESCORTLOCATION.name()
                 + "(imei, date, speed, altitude, longitude) "
@@ -274,22 +277,34 @@ public class CassandraDataControlForEscort {
                             .getInstance()
                             .getGetPatrul()
                             .apply( Map.of( "uuid", tupleOfCar.getUuidOfPatrul().toString() ) )
-                            .flatMap( patrul -> Inspector
-                                    .getInspector()
-                                    .getFunction()
-                                    .apply( Map.of(
-                                            "message", "Escort was saved successfully",
-                                            "success", Inspector
-                                                    .getInspector()
-                                                    .getTupleOfCarMap()
-                                                    .putIfAbsent( KafkaDataControl
-                                                                    .getInstance()
-                                                                    .getWriteToKafkaTupleOfCar()
-                                                                    .apply( tupleOfCar ).getTrackerId(),
-                                                            this.getSaveTackerInfo()
-                                                                    .apply( new TrackerInfo( patrul, tupleOfCar ) ) )
-                                                    != null ) ) ) :
-                            Inspector
+                            .flatMap( patrul -> {
+                                patrul.setCarType( tupleOfCar.getCarModel() );
+                                patrul.setCarNumber( tupleOfCar.getGosNumber() );
+                                patrul.setUuidForEscortCar( tupleOfCar.getUuid() );
+                                this.getSession().execute(
+                                        "UPDATE " + CassandraTables.TABLETS.name() +
+                                                "." + CassandraTables.PATRULS +
+                                                " SET uuidForEscortCar = " + patrul.getUuidForEscortCar()
+                                                + ", carType = '" + patrul.getCarType() + "'"
+                                                + ", carNumber = '" + patrul.getCarNumber() + "'"
+                                                + " where uuid = " + patrul.getUuid() + ";" );
+                                return Inspector
+                                        .getInspector()
+                                        .getFunction()
+                                        .apply( Map.of(
+                                                "message", "Escort was saved successfully",
+                                                "success", Inspector
+                                                        .getInspector()
+                                                        .getTupleOfCarMap()
+                                                        .putIfAbsent( KafkaDataControl
+                                                                        .getInstance()
+                                                                        .getWriteToKafkaTupleOfCar()
+                                                                        .apply( tupleOfCar )
+                                                                        .getTrackerId(),
+                                                                this.getSaveTackerInfo()
+                                                                        .apply( new TrackerInfo( patrul, tupleOfCar ) ) )
+                                                        != null ) ); } )
+                            : Inspector
                                     .getInspector()
                                     .getFunction()
                                     .apply( Map.of(

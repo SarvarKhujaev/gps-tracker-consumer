@@ -39,6 +39,7 @@ public class TrackerInfo {
         this.setReqCar( null );
         this.setPatrul( null );
         this.setTotalActivityTime( 0L );
+        this.setTupleOfCar( tupleOfCar );
         this.setLastActiveDate( new Date() );
         this.setPatrulPassportSeries( null );
         this.setDateOfRegistration( new Date() );

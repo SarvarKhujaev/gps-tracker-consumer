@@ -131,7 +131,6 @@ public class CassandraDataControl {
                 .getInspector()
                 .getTupleOfCarMap()
                 .containsKey( position.getDeviceId() ) ) Mono.just( position )
-                .filter( this.getCheckPosition() )
                 .map( position1 -> CassandraDataControlForEscort
                         .getInstance()
                         .getGetTupleOfCarByTracker()
@@ -162,7 +161,6 @@ public class CassandraDataControl {
                                             .updateTime( position, tupleOfCar ) ); } ) );
 
         else Mono.just( position )
-                .filter( this.getCheckPosition() )
                 .map( position1 -> this.getCarByNumber.apply( Map.of( "trackerId", position.getDeviceId() ) ) )
                 .subscribe( reqCarMono -> reqCarMono.subscribe( reqCar1 -> {
                     if ( reqCar1 != null && Inspector
@@ -170,7 +168,7 @@ public class CassandraDataControl {
                             .getTrackerInfoMap()
                             .containsKey( position.getDeviceId() ) ) {
                         // сохраняем в базу только если машина двигается
-                        if ( position.getSpeed() > 0 )
+                        if ( this.checkPosition.test( position ) )
                             this.getSession().execute( "INSERT INTO "
                                     + CassandraTables.TRACKERS.name() + "."
                                     + CassandraTables.TRACKERS_LOCATION_TABLE.name()
@@ -192,7 +190,8 @@ public class CassandraDataControl {
                                                 .get( position.getDeviceId() )
                                                 .updateTime( position, reqCar1, patrul ) ) ); }
 
-                    else if ( reqCar1 != null && !Inspector
+                    else if ( reqCar1 != null
+                            && !Inspector
                             .getInspector()
                             .getTrackerInfoMap()
                             .containsKey( position.getDeviceId() ) )
@@ -249,9 +248,9 @@ public class CassandraDataControl {
 
     private final Predicate< Position > checkPosition = position ->
             position.getLatitude() > 0
+            && position.getSpeed() > 0
             && position.getLongitude() > 0
-            && position.getDeviceTime()
-            .after( new Date( 1605006666774L ) );
+            && position.getDeviceTime().after( new Date( 1605006666774L ) );
 
     private final Function< Map< String, String >, Mono< ReqCar > > getCarByNumber = map -> {
         Row row = this.getSession().execute( "SELECT * FROM " +
