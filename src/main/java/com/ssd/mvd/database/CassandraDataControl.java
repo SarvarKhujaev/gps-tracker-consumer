@@ -305,7 +305,7 @@ public class CassandraDataControl {
                     .parallel() )
             .parallel()
             .runOn( Schedulers.parallel() )
-            .filter( this.getCheckTrackerTime() )
+//            .filter( this.getCheckTrackerTime() )
             .flatMap( row -> this.getCarByNumber
                     .apply( Map.of( "gosnumber", row.getString( "gosnumber" ) ) )
                     .flatMap( reqCar -> this.getPatrul

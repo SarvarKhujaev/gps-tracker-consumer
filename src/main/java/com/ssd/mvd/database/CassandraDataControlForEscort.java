@@ -371,9 +371,9 @@ public class CassandraDataControlForEscort {
                     .parallel() )
             .parallel()
             .runOn( Schedulers.parallel() )
-            .filter( CassandraDataControl
-                    .getInstance()
-                    .getCheckTrackerTime() )
+//            .filter( CassandraDataControl
+//                    .getInstance()
+//                    .getCheckTrackerTime() )
             .flatMap( row -> this.getAllTupleOfCar( row.getString( "gosnumber" ),
                             row.getString( "trackersid" ) )
                     .flatMap( tupleOfCar -> tupleOfCar.getUuidOfPatrul() != null
