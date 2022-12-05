@@ -1,5 +1,6 @@
 package com.ssd.mvd.database;
 
+import com.ssd.mvd.controller.UnirestController;
 import com.ssd.mvd.constants.CassandraTables;
 import com.ssd.mvd.kafka.KafkaDataControl;
 import com.ssd.mvd.kafka.Inspector;
@@ -73,6 +74,7 @@ public class CassandraDataControlForEscort {
                 "speed double, " +
                 "altitude double, " +
                 "longitude double, " +
+                "address text, " +
                 "PRIMARY KEY ( (imei), date ) );" );
 
         this.logger.info( "CassandraDataControlForEscort is ready" ); }
@@ -81,15 +83,20 @@ public class CassandraDataControlForEscort {
         if ( CassandraDataControl
                 .getInstance()
                 .getCheckPosition()
-                .test( position ) ) this.getSession().execute( "INSERT INTO "
+                .test( position ) ) this.getSession().executeAsync( "INSERT INTO "
                 + CassandraTables.ESCORT.name() + "."
                 + CassandraTables.ESCORTLOCATION.name()
-                + "(imei, date, speed, altitude, longitude) "
+                + "( imei, date, speed, altitude, longitude, address ) "
                 +  "VALUES ('" + position.getDeviceId()
                 + "', '" + position.getDeviceTime().toInstant()
                 + "', " + position.getSpeed()
                 + ", " + position.getLongitude()
-                + ", " + position.getLatitude() + ");" ); };
+                + ", " + position.getLatitude()
+                + ", '" + UnirestController
+                .getInstance()
+                .getGetAddressByLocation()
+                .apply( position.getLatitude(), position.getLongitude() )
+                + "' );" ); };
 
     private final Function< TrackerInfo, TrackerInfo > saveTackerInfo = trackerInfo -> {
         this.getSession().execute( ( "INSERT INTO "
@@ -207,7 +214,7 @@ public class CassandraDataControlForEscort {
                         ", latitude = " + latitude +
                         " where uuid = " + tupleOfCar.getUuid()
                         + " and trackerid = '"
-                        + tupleOfCar.getTrackerId() + "';" ); }
+                        + tupleOfCar.getTrackerId() + "' IF EXISTS;" ); }
 
     private final Function< UUID, Mono< TupleOfCar > > getCurrentTupleofCar = uuid ->
             Mono.just( this.getSession()

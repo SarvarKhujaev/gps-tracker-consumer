@@ -20,6 +20,7 @@ import com.ssd.mvd.kafka.Inspector;
 import com.ssd.mvd.GpsTrackerApplication;
 import com.ssd.mvd.kafka.KafkaDataControl;
 import com.ssd.mvd.constants.CassandraTables;
+import com.ssd.mvd.controller.UnirestController;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.policies.TokenAwarePolicy;
@@ -105,7 +106,9 @@ public class CassandraDataControl {
                         "date timestamp, " +
                         "speed double, " +
                         "latitude double, " +
-                        "longitude double, PRIMARY KEY ( (imei), date ) );" );
+                        "longitude double, " +
+                        "address text, " +
+                "PRIMARY KEY ( (imei), date ) );" );
 
         this.getSession().execute ( "CREATE TABLE IF NOT EXISTS "
                 + CassandraTables.TRACKERS.name() + "."
@@ -124,7 +127,7 @@ public class CassandraDataControl {
                     + CassandraTables.CARS
                     + " SET longitude = " + reqCar.getLongitude()
                     + ", latitude = " + reqCar.getLatitude()
-                    + " WHERE uuid = " + reqCar.getUuid() + ";" );
+                    + " WHERE uuid = " + reqCar.getUuid() + " IF EXISTS;" );
 
     private final Function< Position, String > addPosition = position -> {
         if ( Inspector
@@ -169,15 +172,20 @@ public class CassandraDataControl {
                             .containsKey( position.getDeviceId() ) ) {
                         // сохраняем в базу только если машина двигается
                         if ( this.checkPosition.test( position ) )
-                            this.getSession().execute( "INSERT INTO "
+                            this.getSession().executeAsync( "INSERT INTO "
                                     + CassandraTables.TRACKERS.name() + "."
                                     + CassandraTables.TRACKERS_LOCATION_TABLE.name()
-                                    + "( imei, date, speed, latitude, longitude ) "
+                                    + "( imei, date, speed, latitude, longitude, address ) "
                                     +  "VALUES ('" + position.getDeviceId()
                                     + "', '" + position.getDeviceTime().toInstant()
                                     + "', " + position.getSpeed()
                                     + ", " + position.getLongitude()
-                                    + ", " + position.getLatitude() + ");" );
+                                    + ", " + position.getLatitude()
+                                    + ", '" + UnirestController
+                                    .getInstance()
+                                    .getGetAddressByLocation()
+                                    .apply( position.getLatitude(), position.getLongitude() )
+                                    + "' );" );
 
                         this.getPatrul
                                 .apply( Map.of( "passportNumber", reqCar1.getPatrulPassportSeries() ) )
@@ -263,11 +271,11 @@ public class CassandraDataControl {
 
     private final Function< Request, Flux< PositionInfo > > getHistoricalPosition = request -> Flux.fromStream(
             this.getSession().execute( "SELECT * FROM "
-                            + CassandraTables.TRACKERS.name() + "."
-                            + CassandraTables.TRACKERS_LOCATION_TABLE.name()
-                            + " where imei = '" + request.getTrackerId()
-                            + "' and date >= '" + request.getStartTime().toInstant()
-                            + "' and date <= '" + request.getEndTime().toInstant() + "';" )
+                    + CassandraTables.TRACKERS.name() + "."
+                    + CassandraTables.TRACKERS_LOCATION_TABLE.name()
+                    + " where imei = '" + request.getTrackerId()
+                    + "' and date >= '" + request.getStartTime().toInstant()
+                    + "' and date <= '" + request.getEndTime().toInstant() + "';" )
                     .all()
                     .stream()
                     .parallel() )
