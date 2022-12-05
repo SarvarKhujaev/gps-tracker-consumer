@@ -1,8 +1,8 @@
 package com.ssd.mvd.address;
 
+import lombok.extern.jackson.Jacksonized;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import lombok.extern.jackson.Jacksonized;
 
 @lombok.Data
 @Jacksonized
