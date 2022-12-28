@@ -8,12 +8,13 @@ import com.ssd.mvd.entity.*;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
 import java.util.UUID;
+
 
 @Slf4j
 @RestController
@@ -89,4 +90,18 @@ public class CarForEscortController {
             .apply( tupleOfCar )
             .onErrorContinue( ( throwable, o ) -> this.error.accept( throwable ) )
             .onErrorReturn( this.errorResponse.get() ); }
+
+    @MessageMapping ( value = "findTheClosestCarsInRadius" )
+    public Flux< TupleOfCar > findTheClosestCarsInRadius ( Point point ) {
+        return CassandraDataControlForEscort
+                .getInstance()
+                .getFindTheClosestCarsInRadius()
+                .apply( point ); }
+
+    @MessageMapping ( value = "findTheClosestCarsinPolygon" )
+    public Flux< TupleOfCar > findTheClosestCarsinPolygon ( List< Point > pointList ) {
+        return CassandraDataControlForEscort
+                .getInstance()
+                .getFindTheClosestCarsinPolygon()
+                .apply( pointList ); }
 }

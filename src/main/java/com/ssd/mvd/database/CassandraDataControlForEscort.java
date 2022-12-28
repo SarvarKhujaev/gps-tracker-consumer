@@ -14,15 +14,15 @@ import reactor.core.scheduler.Schedulers;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.function.Predicate;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
 import java.util.logging.Logger;
+import java.util.function.*;
+import java.util.List;
 import java.util.UUID;
 import java.util.Map;
 import lombok.Data;
+
+import static java.lang.Math.cos;
+import static java.lang.Math.*;
 
 @Data
 public class CassandraDataControlForEscort {
@@ -402,7 +402,57 @@ public class CassandraDataControlForEscort {
                     .parallel() )
             .parallel()
             .runOn( Schedulers.parallel() )
-            .flatMap( row -> Mono.just( new TupleOfCar( row ) ) )
+            .map( TupleOfCar::new )
+            .sequential()
+            .publishOn( Schedulers.single() );
+
+    private static final Double p = PI / 180;
+
+    private final BiFunction< Point, Row, Double > calculate = ( first, second ) ->
+            12742 * asin( sqrt( 0.5 - cos( ( second.getDouble( "latitude" ) - first.getLatitude() ) * p ) / 2
+                    + cos( first.getLatitude() * p ) * cos( second.getDouble( "latitude" ) * p )
+                    * ( 1 - cos( ( second.getDouble( "longitude" ) - first.getLongitude() ) * p ) ) / 2 ) ) * 1000;
+
+    private final BiFunction< List< Point >, Row, Boolean > calculateDistanceInSquare = ( pointList, row ) -> {
+        Boolean result = false;
+        int j = pointList.size() - 1;
+        for ( int i = 0; i < pointList.size(); i++ ) {
+            if ( ( pointList.get( i ).getLatitude() < row.getDouble( "latitude" )
+                    && pointList.get( j ).getLatitude() >= row.getDouble( "latitude" )
+                    || pointList.get( j ).getLatitude() < row.getDouble( "latitude" )
+                    && pointList.get( i ).getLatitude() >= row.getDouble( "latitude" ) )
+                    && ( pointList.get( i ).getLongitude() + ( row.getDouble( "latitude" )
+                    - pointList.get( i ).getLatitude() ) / ( pointList.get( j ).getLatitude() - pointList.get( j ).getLongitude() )
+                    * ( pointList.get( j ).getLatitude() - pointList.get( i ).getLatitude() ) < row.getDouble( "longitude" ) ) )
+                result = !result;
+            j = i; }
+        return result; };
+
+    private final Function< Point, Flux< TupleOfCar > > findTheClosestCarsInRadius = point -> Flux.fromStream(
+            this.getSession().execute( "SELECT * FROM "
+                        + CassandraTables.ESCORT.name() + "."
+                        + CassandraTables.TUPLE_OF_CAR.name() + ";" )
+                    .all()
+                    .stream()
+                    .parallel() )
+            .parallel()
+            .runOn( Schedulers.parallel() )
+            .filter( tupleOfCar -> this.getCalculate().apply( point, tupleOfCar ) <= point.getRadius() )
+            .map( TupleOfCar::new )
+            .sequential()
+            .publishOn( Schedulers.single() );
+
+    private final Function< List< Point >, Flux< TupleOfCar > > findTheClosestCarsinPolygon = point -> Flux.fromStream(
+            this.getSession().execute( "SELECT * FROM "
+                            + CassandraTables.ESCORT.name() + "."
+                            + CassandraTables.TUPLE_OF_CAR.name() + ";" )
+                    .all()
+                    .stream()
+                    .parallel() )
+            .parallel()
+            .runOn( Schedulers.parallel() )
+            .filter( tupleOfCar -> this.getCalculateDistanceInSquare().apply( point, tupleOfCar ) )
+            .map( TupleOfCar::new )
             .sequential()
             .publishOn( Schedulers.single() );
 

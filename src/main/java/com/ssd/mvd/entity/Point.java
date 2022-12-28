@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class Point {
+    private Double radius;
     private Double latitude;
     private Double longitude;
 }
