@@ -235,7 +235,7 @@ public class CassandraDataControl {
                 + trackerInfo.getTrackerId() + "', '"
                 + trackerInfo.getPatrulPassportSeries() + "', '"
                 + trackerInfo.getGosNumber() + "', '"
-                + trackerInfo.getIcon() + "', "
+                + trackerInfo.getIcon() + "', '"
                 + trackerInfo.getIcon2() + "', "
                 + trackerInfo.getStatus() + ", "
                 + trackerInfo.getLatitude() + ", "
