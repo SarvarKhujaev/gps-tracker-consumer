@@ -42,7 +42,7 @@ public class CarForEscortController {
             .getInstance()
             .getGetAllTrackers()
             .get()
-            .map( trackerInfo -> new LastPosition( trackerInfo, true ) )
+            .map( trackerInfo -> new LastPosition( trackerInfo, trackerInfo.getPatrul() ) )
             .onErrorContinue( ( throwable, o ) -> this.error.accept( throwable ) ); }
 
     @MessageMapping ( value = "getAllTrackersForEscortCar" )
@@ -60,7 +60,7 @@ public class CarForEscortController {
             .onErrorContinue( ( throwable, o ) -> this.error.accept( throwable ) ); }
 
     @MessageMapping ( value = "getCurrentForEscort" )
-    public Mono< TupleOfCar > getCurrentForEscort( String gosNumber ) {
+    public Mono< TupleOfCar > getCurrentForEscort ( String gosNumber ) {
         return CassandraDataControlForEscort
             .getInstance()
             .getGetCurrentTupleofCar()
@@ -68,7 +68,7 @@ public class CarForEscortController {
             .onErrorContinue( ( throwable, o ) -> this.error.accept( throwable ) ); }
 
     @MessageMapping ( value = "deleteCarForEscort" )
-    public Mono< ApiResponseModel > deleteCarForEscort( String gosNumber ) { return CassandraDataControlForEscort
+    public Mono< ApiResponseModel > deleteCarForEscort ( String gosNumber ) { return CassandraDataControlForEscort
             .getInstance()
             .getDeleteTupleOfCar()
             .apply( gosNumber )
@@ -96,12 +96,14 @@ public class CarForEscortController {
         return CassandraDataControlForEscort
                 .getInstance()
                 .getFindTheClosestCarsInRadius()
-                .apply( point ); }
+                .apply( point )
+                .onErrorContinue( ( throwable, o ) -> this.error.accept( throwable ) ); }
 
     @MessageMapping ( value = "findTheClosestCarsinPolygon" )
     public Flux< TupleOfCar > findTheClosestCarsinPolygon ( List< Point > pointList ) {
         return CassandraDataControlForEscort
                 .getInstance()
                 .getFindTheClosestCarsinPolygon()
-                .apply( pointList ); }
+                .apply( pointList )
+                .onErrorContinue( ( throwable, o ) -> this.error.accept( throwable ) ); }
 }

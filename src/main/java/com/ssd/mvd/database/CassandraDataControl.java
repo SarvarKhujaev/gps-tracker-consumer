@@ -171,7 +171,7 @@ public class CassandraDataControl {
                             .getTrackerInfoMap()
                             .containsKey( position.getDeviceId() ) ) {
                         // сохраняем в базу только если машина двигается
-                        if ( this.checkPosition.test( position ) )
+                        if ( this.getCheckPosition().test( position ) )
                             this.getSession().executeAsync( "INSERT INTO "
                                     + CassandraTables.TRACKERS.name() + "."
                                     + CassandraTables.TRACKERS_LOCATION_TABLE.name()
@@ -185,9 +185,9 @@ public class CassandraDataControl {
                                     .getInstance()
                                     .getGetAddressByLocation()
                                     .apply( position.getLatitude(), position.getLongitude() )
-                                    + "' );" );
+                                    .replaceAll( "'", "`" ) + "' );" );
 
-                        this.getPatrul
+                        this.getGetPatrul()
                                 .apply( Map.of( "passportNumber", reqCar1.getPatrulPassportSeries() ) )
                                 .subscribe( patrul -> KafkaDataControl
                                         .getInstance()
@@ -316,7 +316,7 @@ public class CassandraDataControl {
 //            .filter( this.getCheckTrackerTime() )
             .flatMap( row -> this.getCarByNumber
                     .apply( Map.of( "gosnumber", row.getString( "gosnumber" ) ) )
-                    .flatMap( reqCar -> this.getPatrul
+                    .flatMap( reqCar -> this.getGetPatrul()
                             .apply( Map.of( "passportNumber", reqCar.getPatrulPassportSeries() ) )
                             .flatMap( patrul -> Mono.just( new TrackerInfo( patrul, reqCar, row ) ) ) ) )
             .sequential()

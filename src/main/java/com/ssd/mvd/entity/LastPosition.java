@@ -1,5 +1,6 @@
 package com.ssd.mvd.entity;
 
+import com.ssd.mvd.database.CassandraDataControl;
 import com.ssd.mvd.constants.Status;
 import java.util.UUID;
 import lombok.Data;
@@ -31,8 +32,12 @@ public class LastPosition {
         this.setCarGosNumber( trackerInfo.getReqCar().getGosNumber() );
         this.setLastLongitude( trackerInfo.getReqCar().getLongitude() );
 
-        this.setIcon( trackerInfo.getIcon() );
-        this.setIcon2( trackerInfo.getIcon2() );
+        Icons icons = CassandraDataControl
+                .getInstance()
+                .getGetPoliceType()
+                .apply( trackerInfo.getPatrul().getPoliceType() );
+        this.setIcon( icons.getIcon1() );
+        this.setIcon2( icons.getIcon2() );
         this.setTaskId( trackerInfo.getPatrul().getTaskId() );
         this.setStatus( trackerInfo.getPatrul().getStatus() );
         this.setPatrulName( trackerInfo.getPatrul().getName() );
@@ -40,17 +45,18 @@ public class LastPosition {
         this.setPoliceType( trackerInfo.getPatrul().getPoliceType() );
         this.setPatrulpassportSeries( trackerInfo.getPatrul().getPassportNumber() ); }
 
-    public LastPosition ( TrackerInfo trackerInfo, Boolean check ) {
+    public LastPosition ( TrackerInfo trackerInfo, Patrul patrul ) {
         this.setCarType( trackerInfo.getTupleOfCar().getCarModel() );
         this.setTrackerId( trackerInfo.getTupleOfCar().getTrackerId() );
         this.setLastLatitude( trackerInfo.getTupleOfCar().getLatitude() );
         this.setCarGosNumber( trackerInfo.getTupleOfCar().getGosNumber() );
         this.setLastLongitude( trackerInfo.getTupleOfCar().getLongitude() );
 
-        this.setTaskId( trackerInfo.getPatrul() != null ? trackerInfo.getPatrul().getTaskId() : null );
-        this.setStatus( trackerInfo.getPatrul() != null ? trackerInfo.getPatrul().getStatus() : null );
-        this.setPatrulUUID( trackerInfo.getPatrul() != null ? trackerInfo.getPatrul().getUuid() : null );
-        this.setPatrulName( trackerInfo.getPatrul() != null ? trackerInfo.getPatrul().getName() : null );
-        this.setPoliceType( trackerInfo.getPatrul() != null ? trackerInfo.getPatrul().getPoliceType() : null );
-        this.setPatrulpassportSeries( trackerInfo.getPatrul() != null ? trackerInfo.getPatrul().getPassportNumber() : null ); }
+        if ( patrul != null ) {
+            this.setTaskId( patrul.getTaskId() );
+            this.setStatus( patrul.getStatus() );
+            this.setPatrulUUID( patrul.getUuid() );
+            this.setPatrulName( patrul.getName() );
+            this.setPoliceType( patrul.getPoliceType() );
+            this.setPatrulpassportSeries( patrul.getPassportNumber() ); } }
 }
