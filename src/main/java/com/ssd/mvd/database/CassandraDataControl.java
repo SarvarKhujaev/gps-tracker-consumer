@@ -218,30 +218,31 @@ public class CassandraDataControl {
         return "success"; };
 
     private final Function< TrackerInfo, TrackerInfo > addTackerInfo = trackerInfo -> {
-        this.getSession().execute( (
-            "INSERT INTO "
-                    + CassandraTables.TRACKERS.name() + "."
-                    + CassandraTables.TRACKERSID.name()
-                    + "(trackersId, " +
-                    "patrulPassportSeries, " +
-                    "gosnumber, " +
-                    "policeType, " +
-                    "status, " +
-                    "latitude, " +
-                    "longitude, " +
-                    "totalActivityTime, " +
-                    "lastActiveDate, " +
-                    "dateOfRegistration ) VALUES('"
-                    + trackerInfo.getTrackerId() + "', '"
-                    + trackerInfo.getPatrulPassportSeries() + "', '"
-                    + trackerInfo.getGosNumber() + "', '"
-                    + trackerInfo.getIcon() + "', "
-                    + trackerInfo.getStatus() + ", "
-                    + trackerInfo.getLatitude() + ", "
-                    + trackerInfo.getLongitude() + ", "
-                    + trackerInfo.getTotalActivityTime() + ", '"
-                    + trackerInfo.getLastActiveDate().toInstant() + "', '"
-                    + trackerInfo.getDateOfRegistration().toInstant() + "');" ) );
+        this.getSession().execute( "INSERT INTO "
+                + CassandraTables.TRACKERS.name() + "."
+                + CassandraTables.TRACKERSID.name()
+                + "(trackersId, " +
+                "patrulPassportSeries, " +
+                "gosnumber, " +
+                "policeType, " +
+                "policeType2, " +
+                "status, " +
+                "latitude, " +
+                "longitude, " +
+                "totalActivityTime, " +
+                "lastActiveDate, " +
+                "dateOfRegistration ) VALUES('"
+                + trackerInfo.getTrackerId() + "', '"
+                + trackerInfo.getPatrulPassportSeries() + "', '"
+                + trackerInfo.getGosNumber() + "', '"
+                + trackerInfo.getIcon() + "', "
+                + trackerInfo.getIcon2() + "', "
+                + trackerInfo.getStatus() + ", "
+                + trackerInfo.getLatitude() + ", "
+                + trackerInfo.getLongitude() + ", "
+                + trackerInfo.getTotalActivityTime() + ", '"
+                + trackerInfo.getLastActiveDate().toInstant() + "', '"
+                + trackerInfo.getDateOfRegistration().toInstant() + "');" );
         return trackerInfo; };
 
     public void addValue ( TrackerInfo trackerInfo, Double speed ) {
@@ -273,9 +274,9 @@ public class CassandraDataControl {
             this.getSession().execute( "SELECT * FROM "
                     + CassandraTables.TRACKERS.name() + "."
                     + CassandraTables.TRACKERS_LOCATION_TABLE.name()
-                    + " where imei = '" + request.getTrackerId()
-                    + "' and date >= '" + request.getStartTime().toInstant()
-                    + "' and date <= '" + request.getEndTime().toInstant() + "';" )
+                    + " WHERE imei = '" + request.getTrackerId()
+                    + "' AND date >= '" + request.getStartTime().toInstant()
+                    + "' AND date <= '" + request.getEndTime().toInstant() + "';" )
                     .all()
                     .stream()
                     .parallel() )
@@ -294,20 +295,19 @@ public class CassandraDataControl {
                     : " WHERE uuid = " + map.get( "uuid" ) ) + ";" ).one() )
             .map( Patrul::new );
 
-    public final Function< String, String > getPoliceType = policeType -> {
-        Row row = this.getSession().execute(
-                "SELECT icon FROM "
-                        + CassandraTables.TABLETS.name() + "."
-                        + CassandraTables.POLICE_TYPE.name()
-                        + " WHERE policeType = '" + policeType + "';" ).one();
-        return row != null ? row.getString( "icon" ) : "not found"; };
+    public final Function< String, Icons > getPoliceType = policeType -> {
+        Row row = this.getSession().execute( "SELECT icon, icon2 FROM "
+                + CassandraTables.TABLETS.name() + "."
+                + CassandraTables.POLICE_TYPE.name()
+                + " WHERE policeType = '" + policeType + "';" ).one();
+        return new Icons( row ); };
 
     private final Predicate< Row > checkTrackerTime = row -> Math.abs( row.getDouble( "totalActivityTime" ) ) > 0;
 
     private Supplier< Flux< TrackerInfo > > getAllTrackers = () -> Flux.fromStream(
             this.getSession().execute( "SELECT * FROM "
-                            + CassandraTables.TRACKERS.name() + "."
-                            + CassandraTables.TRACKERSID.name() + ";" )
+                    + CassandraTables.TRACKERS.name() + "."
+                    + CassandraTables.TRACKERSID.name() + ";" )
                     .all()
                     .stream()
                     .parallel() )

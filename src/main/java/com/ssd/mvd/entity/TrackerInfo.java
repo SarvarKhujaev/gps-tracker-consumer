@@ -20,7 +20,8 @@ public class TrackerInfo {
     private Patrul patrul;
     private TupleOfCar tupleOfCar;
 
-    private String icon; // icon
+    private String icon;
+    private String icon2;
     private String trackerId;
     private String gosNumber;
     private String patrulPassportSeries;
@@ -51,10 +52,12 @@ public class TrackerInfo {
         this.setTupleOfCar( null );
 
         this.setPatrul( patrul );
-        this.setIcon( CassandraDataControl
+        Icons icons = CassandraDataControl
                 .getInstance()
-                .getPoliceType
-                .apply( patrul.getPoliceType() ) );
+                .getGetPoliceType()
+                .apply( patrul.getPoliceType() );
+        this.setIcon2( icons.getIcon2() );
+        this.setIcon( icons.getIcon1() );
         this.setPatrulPassportSeries( patrul.getPassportNumber() );
 
         this.setReqCar( reqCar );
@@ -94,6 +97,8 @@ public class TrackerInfo {
         this.setReqCar( reqCar );
         this.setGosNumber( reqCar.getGosNumber() );
         this.setStatus( row.getBool( "status" ) );
+        this.setIcon( row.getString( "policeType" ) );
+        this.setIcon2( row.getString( "policeType2" ) );
         this.setLatitude( row.getDouble( "latitude" ) );
         this.setLongitude( row.getDouble( "longitude" ) );
         this.setTrackerId( row.getString( "trackersId" ) );
@@ -141,13 +146,16 @@ public class TrackerInfo {
         position.setPatrulName( patrul.getName() );
         position.setStatus( patrul.getStatus() );
         position.setTaskId( patrul.getTaskId() );
-        position.setIcon( CassandraDataControl
+        Icons icons = CassandraDataControl
                 .getInstance()
-                .getPoliceType
-                .apply( patrul.getPoliceType() ) );
+                .getGetPoliceType()
+                .apply( patrul.getPoliceType() );
+        position.setIcon( icons.getIcon1() );
+        position.setIcon2( icons.getIcon2() );
 
         this.setPatrul( patrul );
-        this.setIcon( position.getIcon() );
+        this.setIcon( icons.getIcon1() );
+        this.setIcon2( icons.getIcon2() );
         this.setPatrulPassportSeries( this.getPatrul().getPassportNumber() );
         return this; }
 

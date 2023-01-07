@@ -12,6 +12,7 @@ import java.util.UUID;
 public class Position {
     // only for Car
     private String icon; // иконка патрульного выбирается исходя из типа патрульного
+    private String icon2; // иконка патрульного выбирается исходя из типа патрульного
     private String carType;
     private String carGosNumber;
 

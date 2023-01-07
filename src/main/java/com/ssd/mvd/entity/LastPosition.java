@@ -8,6 +8,7 @@ import lombok.Data;
 public class LastPosition {
     // Car data
     private String icon; // иконка патрульного выбирается исходя из типа патрульного
+    private String icon2; // иконка патрульного выбирается исходя из типа патрульного
     private String carType;
     private String trackerId;
     private String carGosNumber;
@@ -31,6 +32,7 @@ public class LastPosition {
         this.setLastLongitude( trackerInfo.getReqCar().getLongitude() );
 
         this.setIcon( trackerInfo.getIcon() );
+        this.setIcon2( trackerInfo.getIcon2() );
         this.setTaskId( trackerInfo.getPatrul().getTaskId() );
         this.setStatus( trackerInfo.getPatrul().getStatus() );
         this.setPatrulName( trackerInfo.getPatrul().getName() );
