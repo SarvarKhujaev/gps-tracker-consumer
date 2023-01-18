@@ -9,10 +9,6 @@ public class Icons {
     private String icon2;
 
     public Icons ( Row row ) {
-        if ( row != null ) {
-            this.setIcon1( row.getString( "icon" ) );
-            this.setIcon2( row.getString( "icon2" ) ); }
-        else {
-            this.setIcon1( row.getString( "not found" ) );
-            this.setIcon2( row.getString( "not found" ) ); } }
+        this.setIcon1( row != null ? row.getString( "icon" ) : null );
+        this.setIcon1( row != null ? row.getString( "icon2" ) : null ); }
 }

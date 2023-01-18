@@ -144,7 +144,7 @@ public class CassandraDataControl {
                                     .getInstance()
                                     .getSavePosition()
                                     .accept( position );
-                            if ( tupleOfCar.getUuidOfPatrul() != null ) this.getPatrul
+                            if ( tupleOfCar.getUuidOfPatrul() != null ) this.getGetPatrul()
                                     .apply( Map.of( "uuid", tupleOfCar.getUuidOfPatrul().toString() ) )
                                     .subscribe( patrul -> KafkaDataControl
                                             .getInstance()
@@ -203,7 +203,7 @@ public class CassandraDataControl {
                             .getInspector()
                             .getTrackerInfoMap()
                             .containsKey( position.getDeviceId() ) )
-                        this.getPatrul
+                        this.getGetPatrul()
                                 .apply( Map.of( "passportNumber", reqCar1.getPatrulPassportSeries() ) )
                                 .subscribe( patrul -> Inspector
                                         .getInspector()
@@ -295,12 +295,11 @@ public class CassandraDataControl {
                     : " WHERE uuid = " + map.get( "uuid" ) ) + ";" ).one() )
             .map( Patrul::new );
 
-    public final Function< String, Icons > getPoliceType = policeType -> {
-        Row row = this.getSession().execute( "SELECT icon, icon2 FROM "
-                + CassandraTables.TABLETS.name() + "."
-                + CassandraTables.POLICE_TYPE.name()
-                + " WHERE policeType = '" + policeType + "';" ).one();
-        return new Icons( row ); };
+    public final Function< String, Icons > getPoliceType = policeType -> new Icons(
+            this.getSession().execute( "SELECT icon, icon2 FROM "
+                    + CassandraTables.TABLETS.name() + "."
+                    + CassandraTables.POLICE_TYPE.name()
+                    + " WHERE policeType = '" + policeType + "';" ).one() );
 
     private final Predicate< Row > checkTrackerTime = row -> Math.abs( row.getDouble( "totalActivityTime" ) ) > 0;
 
@@ -331,7 +330,7 @@ public class CassandraDataControl {
 
     private final Function< Request, Mono< PatrulFuelStatistics > > calculate_average_fuel_consumption = request -> {
         PatrulFuelStatistics patrulFuelStatistics = new PatrulFuelStatistics();
-        return this.getPatrul
+        return this.getGetPatrul()
                 .apply( Map.of( "uuid", request.getTrackerId() ) )
                 .flatMap( patrul -> !patrul.getCarNumber().equals( "null" )
                         ? this.getCarByNumber

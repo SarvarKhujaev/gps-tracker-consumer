@@ -146,7 +146,7 @@ public class CassandraDataControlForEscort {
                 .apply( tupleOfCar.getUuid() )
                 .flatMap( tupleOfCar1 -> {
                     if ( !tupleOfCar1.getTrackerId().equals( tupleOfCar.getTrackerId() )
-                            && !this.checkTracker
+                            && !this.getCheckTracker()
                             .test( tupleOfCar.getTrackerId() ) ) return Inspector
                             .getInspector()
                             .getFunction()
@@ -206,11 +206,11 @@ public class CassandraDataControlForEscort {
         this.getSession().execute ( "UPDATE "
                 + CassandraTables.ESCORT.name() + "."
                 + CassandraTables.TUPLE_OF_CAR.name()
-                + " SET longitude = " + longitude +
-                        ", latitude = " + latitude +
-                        " where uuid = " + tupleOfCar.getUuid()
-                        + " and trackerid = '"
-                        + tupleOfCar.getTrackerId() + "' IF EXISTS;" ); }
+                + " SET longitude = " + longitude
+                + ", latitude = " + latitude
+                + " where uuid = " + tupleOfCar.getUuid()
+                + " and trackerid = '"
+                + tupleOfCar.getTrackerId() + "' IF EXISTS;" ); }
 
     private final Function< UUID, Mono< TupleOfCar > > getCurrentTupleofCar = uuid ->
             Mono.just( this.getSession().execute( "SELECT * FROM "
@@ -250,9 +250,9 @@ public class CassandraDataControlForEscort {
                             "success", false ) ) );
 
     private final Function< TupleOfCar, Mono< ApiResponseModel > > saveNewTupleOfCar = tupleOfCar ->
-            this.checkTracker.test( tupleOfCar.getTrackerId() )
-            && this.checkCarNumber.test( tupleOfCar.getGosNumber() ) ?
-            this.getSession().execute( "INSERT INTO "
+            this.getCheckTracker().test( tupleOfCar.getTrackerId() )
+            && this.getCheckCarNumber().test( tupleOfCar.getGosNumber() )
+                    ? this.getSession().execute( "INSERT INTO "
                             + CassandraTables.ESCORT.name() + "."
                             + CassandraTables.TUPLE_OF_CAR.name()
                             + CassandraConverter
@@ -270,11 +270,10 @@ public class CassandraDataControlForEscort {
                             + tupleOfCar.getSimCardNumber() + "', "
 
                             + tupleOfCar.getLatitude() + ", "
-                            + tupleOfCar.getLongitude() + ", " +
-                            tupleOfCar.getAverageFuelConsumption() + ") IF NOT EXISTS;" )
-
-                    .wasApplied() ?
-                    tupleOfCar.getUuidOfPatrul() != null
+                            + tupleOfCar.getLongitude() + ", "
+                            + tupleOfCar.getAverageFuelConsumption() + ") IF NOT EXISTS;" )
+                    .wasApplied()
+                    ? tupleOfCar.getUuidOfPatrul() != null
                             ? CassandraDataControl // in case of if this car is linked to patrul
                             .getInstance()
                             .getGetPatrul()
@@ -283,13 +282,13 @@ public class CassandraDataControlForEscort {
                                 patrul.setCarType( tupleOfCar.getCarModel() );
                                 patrul.setCarNumber( tupleOfCar.getGosNumber() );
                                 patrul.setUuidForEscortCar( tupleOfCar.getUuid() );
-                                this.getSession().execute(
-                                        "UPDATE " + CassandraTables.TABLETS.name() +
-                                                "." + CassandraTables.PATRULS +
-                                                " SET uuidForEscortCar = " + patrul.getUuidForEscortCar()
-                                                + ", carType = '" + patrul.getCarType() + "'"
-                                                + ", carNumber = '" + patrul.getCarNumber() + "'"
-                                                + " where uuid = " + patrul.getUuid() + ";" );
+                                this.getSession().execute( "UPDATE "
+                                        + CassandraTables.TABLETS.name() + "."
+                                        + CassandraTables.PATRULS +
+                                        " SET uuidForEscortCar = " + patrul.getUuidForEscortCar()
+                                        + ", carType = '" + patrul.getCarType() + "'"
+                                        + ", carNumber = '" + patrul.getCarNumber() + "'"
+                                        + " where uuid = " + patrul.getUuid() + ";" );
                                 return Inspector
                                         .getInspector()
                                         .getFunction()
@@ -343,8 +342,8 @@ public class CassandraDataControlForEscort {
                     + CassandraTables.TRACKERSID.name()
                     + " where trackersId = '" + trackerId + "';" ).one() )
             .flatMap( row -> this.getAllTupleOfCar( row.getString( "gosnumber" ), row.getString( "trackersId" ) )
-                    .flatMap( tupleOfCar -> tupleOfCar.getUuidOfPatrul() != null ?
-                            CassandraDataControl
+                    .flatMap( tupleOfCar -> tupleOfCar.getUuidOfPatrul() != null
+                            ? CassandraDataControl
                                     .getInstance()
                                     .getGetPatrul()
                                     .apply( Map.of( "uuid", tupleOfCar.getUuidOfPatrul().toString() ) )

@@ -131,7 +131,10 @@ public class TrackerInfo {
         this.setLatitude( position.getLatitude() );
         this.setGosNumber( reqCar.getGosNumber() );
         this.setReqCar( reqCar );
-        CassandraDataControl
+        if ( CassandraDataControl
+                .getInstance()
+                .getCheckPosition()
+                .test( position ) ) CassandraDataControl
                 .getInstance()
                 .getUpdateReqCarPosition()
                 .accept( this.getReqCar() );
