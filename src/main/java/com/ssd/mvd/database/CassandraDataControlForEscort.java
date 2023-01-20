@@ -341,7 +341,8 @@ public class CassandraDataControlForEscort {
                     + CassandraTables.ESCORT.name() + "."
                     + CassandraTables.TRACKERSID.name()
                     + " where trackersId = '" + trackerId + "';" ).one() )
-            .flatMap( row -> this.getAllTupleOfCar( row.getString( "gosnumber" ), row.getString( "trackersId" ) )
+            .flatMap( row -> this.getGetTupleOfCar()
+                    .apply( row.getString( "gosnumber" ), row.getString( "trackersId" ) )
                     .flatMap( tupleOfCar -> tupleOfCar.getUuidOfPatrul() != null
                             ? CassandraDataControl
                                     .getInstance()
@@ -350,18 +351,18 @@ public class CassandraDataControlForEscort {
                                     .flatMap( patrul -> Mono.just( new TrackerInfo( patrul, tupleOfCar, row ) ) )
                             : Mono.just( new TrackerInfo( tupleOfCar, row ) ) ) );
 
-    private Mono< TupleOfCar > getAllTupleOfCar ( String gosNumber, String trackersId ) {
+    private final BiFunction< String, String, Mono< TupleOfCar > > getTupleOfCar = ( gosNumber, trackersId ) -> {
         try { return Mono.just( this.getSession().execute( "SELECT * FROM "
-                + CassandraTables.ESCORT.name() + "."
-                + CassandraTables.TUPLE_OF_CAR.name()
-                + " where gosNumber = '" + gosNumber + "';" ).one() )
+                        + CassandraTables.ESCORT.name() + "."
+                        + CassandraTables.TUPLE_OF_CAR.name()
+                        + " where gosNumber = '" + gosNumber + "';" ).one() )
                 .map( TupleOfCar::new );
         } catch ( Exception e ) {
             this.getSession().execute( "DELETE FROM "
                     + CassandraTables.ESCORT.name() + "."
                     + CassandraTables.TRACKERSID.name()
                     + " WHERE trackersId = '" + trackersId + "';" );
-            return Mono.empty(); } }
+            return Mono.empty(); } };
 
     private final Supplier< Flux< TrackerInfo > > getAllTrackers = () -> Flux.fromStream(
             this.getSession().execute( "SELECT * FROM "
@@ -375,8 +376,8 @@ public class CassandraDataControlForEscort {
 //            .filter( CassandraDataControl
 //                    .getInstance()
 //                    .getCheckTrackerTime() )
-            .flatMap( row -> this.getAllTupleOfCar( row.getString( "gosnumber" ),
-                            row.getString( "trackersid" ) )
+            .flatMap( row -> this.getGetTupleOfCar()
+                    .apply( row.getString( "gosnumber" ), row.getString( "trackersid" ) )
                     .flatMap( tupleOfCar -> tupleOfCar.getUuidOfPatrul() != null
                             ? CassandraDataControl
                                     .getInstance()

@@ -48,5 +48,8 @@ public class Inspector {
                 .subscribe( trackerInfo -> this.getTupleOfCarMap()
                         .putIfAbsent( trackerInfo.getTrackerId(), trackerInfo ) ); }
 
-    public void stop () { inspector = null; } // stopping all consumers
+    public void stop () {
+        inspector = null;
+        this.getTupleOfCarMap().clear();
+        this.getTrackerInfoMap().clear(); } // stopping all consumers
 }

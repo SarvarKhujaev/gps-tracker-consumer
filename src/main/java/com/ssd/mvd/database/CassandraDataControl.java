@@ -164,7 +164,7 @@ public class CassandraDataControl {
                                             .updateTime( position, tupleOfCar ) ); } ) );
 
         else Mono.just( position )
-                .map( position1 -> this.getCarByNumber.apply( Map.of( "trackerId", position.getDeviceId() ) ) )
+                .map( position1 -> this.getGetCarByNumber().apply( Map.of( "trackerId", position.getDeviceId() ) ) )
                 .subscribe( reqCarMono -> reqCarMono.subscribe( reqCar1 -> {
                     if ( reqCar1 != null && Inspector
                             .getInspector()
@@ -282,11 +282,11 @@ public class CassandraDataControl {
                     .parallel() )
             .parallel()
             .runOn( Schedulers.parallel() )
-            .flatMap( row -> Mono.just( new PositionInfo( row ) ) )
+            .map( PositionInfo::new )
             .sequential()
             .publishOn( Schedulers.single() );
 
-    private Function< Map< String, String >, Mono< Patrul > > getPatrul = map -> Mono.just(
+    private final Function< Map< String, String >, Mono< Patrul > > getPatrul = map -> Mono.just(
             this.getSession().execute( "SELECT * FROM "
                     + CassandraTables.TABLETS.name() + "."
                     + CassandraTables.PATRULS.name()
@@ -303,7 +303,7 @@ public class CassandraDataControl {
 
     private final Predicate< Row > checkTrackerTime = row -> Math.abs( row.getDouble( "totalActivityTime" ) ) > 0;
 
-    private Supplier< Flux< TrackerInfo > > getAllTrackers = () -> Flux.fromStream(
+    private final Supplier< Flux< TrackerInfo > > getAllTrackers = () -> Flux.fromStream(
             this.getSession().execute( "SELECT * FROM "
                     + CassandraTables.TRACKERS.name() + "."
                     + CassandraTables.TRACKERSID.name() + ";" )
@@ -313,7 +313,7 @@ public class CassandraDataControl {
             .parallel()
             .runOn( Schedulers.parallel() )
 //            .filter( this.getCheckTrackerTime() )
-            .flatMap( row -> this.getCarByNumber
+            .flatMap( row -> this.getGetCarByNumber()
                     .apply( Map.of( "gosnumber", row.getString( "gosnumber" ) ) )
                     .flatMap( reqCar -> this.getGetPatrul()
                             .apply( Map.of( "passportNumber", reqCar.getPatrulPassportSeries() ) )
@@ -333,7 +333,7 @@ public class CassandraDataControl {
         return this.getGetPatrul()
                 .apply( Map.of( "uuid", request.getTrackerId() ) )
                 .flatMap( patrul -> !patrul.getCarNumber().equals( "null" )
-                        ? this.getCarByNumber
+                        ? this.getGetCarByNumber()
                         .apply( Map.of( "gosnumber", patrul.getCarNumber() ) )
                         .map( reqCar -> {
                             this.setStart( Calendar.getInstance() );
