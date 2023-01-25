@@ -10,5 +10,5 @@ public class Icons {
 
     public Icons ( Row row ) {
         this.setIcon1( row != null ? row.getString( "icon" ) : null );
-        this.setIcon1( row != null ? row.getString( "icon2" ) : null ); }
+        this.setIcon2( row != null ? row.getString( "icon2" ) : null ); }
 }
