@@ -202,7 +202,9 @@ public class CassandraDataControl {
                             && !Inspector
                             .getInspector()
                             .getTrackerInfoMap()
-                            .containsKey( position.getDeviceId() ) )
+                            .containsKey( position.getDeviceId() ) ) {
+                        this.logger.info( "Tracker: " + position.getDeviceId() );
+                        this.logger.info( "ReqCar: " + reqCar1.getPatrulPassportSeries() );
                         this.getGetPatrul()
                                 .apply( Map.of( "passportNumber", reqCar1.getPatrulPassportSeries() ) )
                                 .subscribe( patrul -> Inspector
@@ -212,9 +214,9 @@ public class CassandraDataControl {
                                                 this.getAddTackerInfo()
                                                         .apply( new TrackerInfo( patrul,
                                                                 KafkaDataControl
-                                                                .getInstance()
-                                                                .getWriteToKafka()
-                                                                .apply( reqCar1 ) ) ) ) ); } ) );
+                                                                        .getInstance()
+                                                                        .getWriteToKafka()
+                                                                        .apply( reqCar1 ) ) ) ) ); } } ) );
         return "success"; };
 
     private final Function< TrackerInfo, TrackerInfo > addTackerInfo = trackerInfo -> {
