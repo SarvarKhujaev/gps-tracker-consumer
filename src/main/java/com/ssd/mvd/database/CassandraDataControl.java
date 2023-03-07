@@ -201,6 +201,7 @@ public class CassandraDataControl {
                     else if ( reqCar1 != null
                             && reqCar1.getPatrulPassportSeries() != null
                             && reqCar1.getPatrulPassportSeries().length() > 1
+                            && reqCar1.getPatrulPassportSeries().compareTo( "null" ) != 0
                             && !Inspector
                             .getInspector()
                             .getTrackerInfoMap()
