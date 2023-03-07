@@ -164,8 +164,8 @@ public class CassandraDataControl {
                                             .updateTime( position, tupleOfCar ) ); } ) );
 
         else Mono.just( position )
-                .map( position1 -> this.getGetCarByNumber().apply( Map.of( "trackerId", position.getDeviceId() ) ) )
-                .subscribe( reqCarMono -> reqCarMono.subscribe( reqCar1 -> {
+                .flatMap( position1 -> this.getGetCarByNumber().apply( Map.of( "trackerId", position.getDeviceId() ) ) )
+                .subscribe( reqCar1 -> {
                     if ( reqCar1 != null && Inspector
                             .getInspector()
                             .getTrackerInfoMap()
@@ -199,6 +199,8 @@ public class CassandraDataControl {
                                                 .updateTime( position, reqCar1, patrul ) ) ); }
 
                     else if ( reqCar1 != null
+                            && reqCar1.getPatrulPassportSeries() != null
+                            && reqCar1.getPatrulPassportSeries().length() > 1
                             && !Inspector
                             .getInspector()
                             .getTrackerInfoMap()
@@ -216,7 +218,7 @@ public class CassandraDataControl {
                                                                 KafkaDataControl
                                                                         .getInstance()
                                                                         .getWriteToKafka()
-                                                                        .apply( reqCar1 ) ) ) ) ); } } ) );
+                                                                        .apply( reqCar1 ) ) ) ) ); } } );
         return "success"; };
 
     private final Function< TrackerInfo, TrackerInfo > addTackerInfo = trackerInfo -> {
