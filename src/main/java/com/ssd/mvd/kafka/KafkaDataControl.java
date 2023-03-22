@@ -114,7 +114,7 @@ public class KafkaDataControl {
     private KafkaTemplate< String, String > kafkaTemplate () {
         Map< String, Object > map = new HashMap<>();
         map.put( ProducerConfig.ACKS_CONFIG, "-1" );
-        map.put( ProducerConfig.MAX_BLOCK_MS_CONFIG, 150000 );
+        map.put( ProducerConfig.MAX_BLOCK_MS_CONFIG, 33554432 * 20 );
         map.put( ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, this.KAFKA_BROKER );
         map.put( ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class );
         map.put( ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class );
