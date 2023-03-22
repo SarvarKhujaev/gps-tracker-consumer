@@ -40,7 +40,6 @@ public class CassandraDataControl {
         SocketOptions options = new SocketOptions();
         options.setConnectTimeoutMillis( 30000 );
         options.setReadTimeoutMillis( 300000 );
-//        options.setReuseAddress( true );
         options.setTcpNoDelay( true );
         options.setKeepAlive( true );
         ( this.session = ( this.cluster = Cluster.builder()
@@ -133,13 +132,11 @@ public class CassandraDataControl {
         if ( Inspector
                 .getInspector()
                 .getTupleOfCarMap()
-                .containsKey( position.getDeviceId() ) ) Mono.just( position )
-                .map( position1 -> CassandraDataControlForEscort
-                        .getInstance()
-                        .getGetTupleOfCarByTracker()
-                        .apply( position.getDeviceId() ) )
-                .subscribe( tupleOfCarMono -> tupleOfCarMono
-                        .subscribe( tupleOfCar -> { // in case of car exists and in list
+                .containsKey( position.getDeviceId() ) ) CassandraDataControlForEscort
+                .getInstance()
+                .getGetTupleOfCarByTracker()
+                .apply( position.getDeviceId() )
+                .subscribe( tupleOfCar -> { // in case of car exists and in list
                             CassandraDataControlForEscort
                                     .getInstance()
                                     .getSavePosition()
@@ -161,7 +158,7 @@ public class CassandraDataControl {
                                             .getInspector()
                                             .getTupleOfCarMap()
                                             .get( position.getDeviceId() )
-                                            .updateTime( position, tupleOfCar ) ); } ) );
+                                            .updateTime( position, tupleOfCar ) ); } );
 
         else Mono.just( position )
                 .flatMap( position1 -> this.getGetCarByNumber().apply( Map.of( "trackerId", position.getDeviceId() ) ) )

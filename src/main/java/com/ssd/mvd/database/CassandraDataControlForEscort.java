@@ -83,7 +83,7 @@ public class CassandraDataControlForEscort {
         if ( CassandraDataControl
                 .getInstance()
                 .getCheckPosition()
-                .test( position ) ) this.getSession().executeAsync( "INSERT INTO "
+                .test( position ) ) this.getSession().execute( "INSERT INTO "
                 + CassandraTables.ESCORT.name() + "."
                 + CassandraTables.ESCORTLOCATION.name()
                 + "( imei, date, speed, altitude, longitude, address ) "
@@ -95,7 +95,8 @@ public class CassandraDataControlForEscort {
                 + ", '" + UnirestController
                 .getInstance()
                 .getGetAddressByLocation()
-                .apply( position.getLatitude(), position.getLongitude() ) + "' );" ); };
+                .apply( position.getLatitude(), position.getLongitude() )
+                .replaceAll( "'", "`" ) + "' );" ); };
 
     private final Function< TrackerInfo, TrackerInfo > saveTackerInfo = trackerInfo -> {
         this.getSession().execute( ( "INSERT INTO "

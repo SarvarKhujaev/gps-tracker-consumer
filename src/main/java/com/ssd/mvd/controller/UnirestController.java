@@ -58,7 +58,5 @@ public class UnirestController {
                     Address[].class )
             .get( 0 )
             .getDisplay_name();
-        } catch ( Exception e ) {
-            System.out.println( e.getMessage() );
-            return "address not found"; } };
+        } catch ( Exception e ) { return "address not found"; } };
 }
