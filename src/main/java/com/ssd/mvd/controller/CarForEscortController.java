@@ -2,40 +2,25 @@ package com.ssd.mvd.controller;
 
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.ssd.mvd.database.CassandraDataControlForEscort;
+import com.ssd.mvd.inspectors.LogInspector;
 import com.ssd.mvd.entity.*;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import lombok.extern.slf4j.Slf4j;
 
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.List;
 import java.util.UUID;
 
 
-@Slf4j
 @RestController
-public class CarForEscortController {
-    private final Consumer< Throwable > error = throwable -> log.error( "Error: {}", throwable.getMessage() );
-    private final Supplier< ApiResponseModel > errorResponse = () -> ApiResponseModel
-            .builder()
-            .success( false )
-            .status( Status
-                    .builder()
-                    .message( "Server Error" )
-                    .code( 201 )
-                    .build() )
-            .build();
-
+public class CarForEscortController extends LogInspector {
     @MessageMapping ( value = "getAllCarsForEscort" )
     public Flux< TupleOfCar > getAllCarsForEscort() { return CassandraDataControlForEscort
             .getInstance()
             .getGetAllTupleOfCar()
             .get()
-            .onErrorContinue( ( throwable, o ) -> this.error.accept( throwable ) ); }
+            .onErrorContinue( super::logging ); }
 
     @MessageMapping ( value = "getAllTrackersIdForEscort" )
     public Flux< LastPosition > getAllTrackersId () { return CassandraDataControlForEscort
@@ -43,21 +28,22 @@ public class CarForEscortController {
             .getGetAllTrackers()
             .get()
             .map( trackerInfo -> new LastPosition( trackerInfo, trackerInfo.getPatrul() ) )
-            .onErrorContinue( ( throwable, o ) -> this.error.accept( throwable ) ); }
+            .onErrorContinue( super::logging ); }
 
     @MessageMapping ( value = "getAllTrackersForEscortCar" )
     public Flux< TrackerInfo > getAllTrackersForEscortCar () { return CassandraDataControlForEscort
             .getInstance()
             .getGetAllTrackers()
             .get()
-            .onErrorContinue( ( throwable, o ) -> this.error.accept( throwable ) ); }
+            .onErrorContinue( super::logging ); }
 
     @MessageMapping ( value = "getCurrentTracker" )
-    public Mono< TrackerInfo > getCurrentTracker ( String trackerId ) { return CassandraDataControlForEscort
+    public Mono< TrackerInfo > getCurrentTracker ( String trackerId ) {
+        return CassandraDataControlForEscort
             .getInstance()
             .getGetCurrentTracker()
             .apply( trackerId )
-            .onErrorContinue( ( throwable, o ) -> this.error.accept( throwable ) ); }
+            .onErrorContinue( super::logging ); }
 
     @MessageMapping ( value = "getCurrentForEscort" )
     public Mono< TupleOfCar > getCurrentForEscort ( String gosNumber ) {
@@ -65,31 +51,7 @@ public class CarForEscortController {
             .getInstance()
             .getGetCurrentTupleofCar()
             .apply( UUID.fromString( gosNumber ) )
-            .onErrorContinue( ( throwable, o ) -> this.error.accept( throwable ) ); }
-
-    @MessageMapping ( value = "deleteCarForEscort" )
-    public Mono< ApiResponseModel > deleteCarForEscort ( String gosNumber ) { return CassandraDataControlForEscort
-            .getInstance()
-            .getDeleteTupleOfCar()
-            .apply( gosNumber )
-            .onErrorContinue( ( throwable, o ) -> this.error.accept( throwable ) )
-            .onErrorReturn( this.errorResponse.get() ); }
-
-    @MessageMapping ( value = "updateEscortCar" )
-    public Mono< ApiResponseModel > updateEscortCar ( TupleOfCar tupleOfCar ) { return CassandraDataControlForEscort
-            .getInstance()
-            .getUpdateEscortCar()
-            .apply( tupleOfCar )
-            .onErrorContinue( ( throwable, o ) -> this.error.accept( throwable ) )
-            .onErrorReturn( this.errorResponse.get() ); }
-
-    @MessageMapping( value = "addNewCarForEscort" )
-    public Mono< ApiResponseModel > addNewCarForEscort ( TupleOfCar tupleOfCar ) { return CassandraDataControlForEscort
-            .getInstance()
-            .getSaveNewTupleOfCar()
-            .apply( tupleOfCar )
-            .onErrorContinue( ( throwable, o ) -> this.error.accept( throwable ) )
-            .onErrorReturn( this.errorResponse.get() ); }
+            .onErrorContinue( super::logging ); }
 
     @MessageMapping ( value = "findTheClosestCarsInRadius" )
     public Flux< TupleOfCar > findTheClosestCarsInRadius ( Point point ) {
@@ -97,7 +59,31 @@ public class CarForEscortController {
                 .getInstance()
                 .getFindTheClosestCarsInRadius()
                 .apply( point )
-                .onErrorContinue( ( throwable, o ) -> this.error.accept( throwable ) ); }
+                .onErrorContinue( super::logging ); }
+
+    @MessageMapping ( value = "deleteCarForEscort" )
+    public Mono< ApiResponseModel > deleteCarForEscort ( String gosNumber ) {
+        return CassandraDataControlForEscort
+                .getInstance()
+                .getDeleteTupleOfCar()
+                .apply( gosNumber )
+                .onErrorResume( super::logging ); }
+
+    @MessageMapping ( value = "updateEscortCar" )
+    public Mono< ApiResponseModel > updateEscortCar ( TupleOfCar tupleOfCar ) {
+        return CassandraDataControlForEscort
+                .getInstance()
+                .getUpdateEscortCar()
+                .apply( tupleOfCar )
+                .onErrorResume( super::logging ); }
+
+    @MessageMapping( value = "addNewCarForEscort" )
+    public Mono< ApiResponseModel > addNewCarForEscort ( TupleOfCar tupleOfCar ) {
+        return CassandraDataControlForEscort
+            .getInstance()
+            .getSaveNewTupleOfCar()
+            .apply( tupleOfCar )
+            .onErrorContinue( super::logging ); }
 
     @MessageMapping ( value = "findTheClosestCarsinPolygon" )
     public Flux< TupleOfCar > findTheClosestCarsinPolygon ( List< Point > pointList ) {
@@ -105,5 +91,5 @@ public class CarForEscortController {
                 .getInstance()
                 .getFindTheClosestCarsinPolygon()
                 .apply( pointList )
-                .onErrorContinue( ( throwable, o ) -> this.error.accept( throwable ) ); }
+                .onErrorContinue( super::logging ); }
 }

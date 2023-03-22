@@ -6,13 +6,11 @@ import com.google.gson.Gson;
 import com.ssd.mvd.entity.ReqCar;
 import com.ssd.mvd.entity.Position;
 import com.ssd.mvd.entity.TupleOfCar;
+import com.ssd.mvd.inspectors.LogInspector;
 
 @Data
-public class SerDes {
+public class SerDes extends LogInspector {
     private final Gson gson = new Gson();
-    private static SerDes serDes = new SerDes();
-
-    public static SerDes getSerDes () { return serDes != null ? serDes : ( serDes = new SerDes() ); }
 
     public String serialize ( ReqCar object ) { return this.getGson().toJson( object ); }
 

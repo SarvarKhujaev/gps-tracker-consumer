@@ -1,12 +1,7 @@
 package com.ssd.mvd.kafka;
 
-import lombok.Data;
-import lombok.NonNull;
-
 import java.util.*;
-import java.time.LocalDateTime;
-import java.util.logging.Logger;
-import java.util.concurrent.ExecutionException;
+import lombok.Data;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -24,34 +19,25 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Consumed;
 
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.KafkaAdminClient;
-import org.apache.kafka.clients.admin.AdminClientConfig;
-import org.apache.kafka.clients.producer.ProducerConfig;
+import reactor.core.publisher.Mono;
+import reactor.kafka.sender.KafkaSender;
+import reactor.kafka.sender.SenderOptions;
 
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.common.serialization.StringSerializer;
-
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.SendResult;
-import org.springframework.kafka.config.TopicBuilder;
-import org.springframework.kafka.core.DefaultKafkaProducerFactory;
-import org.springframework.util.concurrent.ListenableFutureCallback;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.ProducerConfig;
 
 @Data
-public class KafkaDataControl {
-    private Properties properties;
-    private final AdminClient client;
-    private final KafkaTemplate< String, String > kafkaTemplate;
+public class KafkaDataControl extends SerDes {
+    private Properties properties = new Properties();
     private static KafkaDataControl instance = new KafkaDataControl();
-    private final Logger logger = Logger.getLogger( KafkaDataControl.class.toString() );
 
     private final String KAFKA_BROKER = GpsTrackerApplication
             .context
             .getEnvironment()
             .getProperty( "variables.KAFKA_BROKER" );
 
-    private final String ID = GpsTrackerApplication
+    private final String GROUP_ID_FOR_KAFKA = GpsTrackerApplication
             .context
             .getEnvironment()
             .getProperty( "variables.GROUP_ID_FOR_KAFKA" );
@@ -84,51 +70,29 @@ public class KafkaDataControl {
     private KafkaStreams kafkaStreams;
     private final StreamsBuilder builder = new StreamsBuilder();
 
-    private final Supplier< Properties > setProperties = () -> {
-        this.setProperties( new Properties() );
-        this.getProperties().put( AdminClientConfig.CLIENT_ID_CONFIG, this.ID );
-        this.getProperties().put( AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, this.KAFKA_BROKER);
-        return getProperties(); };
+    private final Supplier< Map< String, Object > > getKafkaSenderOptions = () -> Map.of(
+            ProducerConfig.ACKS_CONFIG, "-1",
+            ProducerConfig.MAX_BLOCK_MS_CONFIG, 33554432 * 20,
+            ProducerConfig.CLIENT_ID_CONFIG, this.getGROUP_ID_FOR_KAFKA(),
+            ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, this.getKAFKA_BROKER(),
+            ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, org.apache.kafka.common.serialization.StringSerializer.class,
+            ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, org.apache.kafka.common.serialization.StringSerializer.class );
 
-    private final Supplier< Properties > setStreamProperties = () -> {
-        this.getProperties().clear();
-        this.getProperties().put( StreamsConfig.APPLICATION_ID_CONFIG, this.getID() );
-        this.getProperties().put( StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, this.getKAFKA_BROKER() );
-        this.getProperties().put( StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName() );
-        this.getProperties().put( StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName() );
-        return this.getProperties(); };
+    private final KafkaSender< String, String > kafkaSender = KafkaSender.create(
+            SenderOptions.< String, String >create( this.getGetKafkaSenderOptions().get() )
+                    .maxInFlight( 1024 ) );
+
+    private KafkaDataControl () { super.logging( "KafkaDataControl was created" ); }
 
     public static KafkaDataControl getInstance () { return instance != null ? instance : ( instance = new KafkaDataControl() ); }
 
-    private final Consumer< String > getNewTopic = imei -> {
-        try { if ( !this.getClient().listTopics().names().get().contains( imei ) ) {
-            this.logger.info( "Topic: " + imei + " was created" );
-            this.getClient().createTopics( Collections.singleton(
-                    TopicBuilder
-                            .name( imei )
-                            .partitions( 5 )
-                            .replicas( 3 )
-                            .build() ) ); } }
-        catch ( ExecutionException | InterruptedException e ) { throw new RuntimeException(e); } };
-
-    private KafkaTemplate< String, String > kafkaTemplate () {
-        Map< String, Object > map = new HashMap<>();
-        map.put( ProducerConfig.ACKS_CONFIG, "-1" );
-        map.put( ProducerConfig.MAX_BLOCK_MS_CONFIG, 33554432 * 20 );
-        map.put( ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, this.KAFKA_BROKER );
-        map.put( ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class );
-        map.put( ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class );
-        return new KafkaTemplate<>( new DefaultKafkaProducerFactory<>( map ) ); }
-
-    private KafkaDataControl () {
-        this.kafkaTemplate = this.kafkaTemplate();
-        this.logger.info( "KafkaDataControl was created" );
-        this.client = KafkaAdminClient.create( this.getSetProperties().get() );
-        this.getGetNewTopic().accept( this.getWEBSOCKET_SERVICE_TOPIC_FOR_ONLINE() );
-        this.getGetNewTopic().accept( this.getTUPLE_OF_CAR_LOCATION_TOPIC() );
-        this.getGetNewTopic().accept( this.getRAW_GPS_LOCATION_TOPIC() );
-        this.getGetNewTopic().accept( this.getNEW_TUPLE_OF_CAR_TOPIC() );
-        this.getGetNewTopic().accept( this.getNEW_CAR_TOPIC() ); }
+    private final Supplier< Properties > setStreamProperties = () -> {
+        this.getProperties().clear();
+        this.getProperties().put( StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, this.getKAFKA_BROKER() );
+        this.getProperties().put( StreamsConfig.APPLICATION_ID_CONFIG, this.getGROUP_ID_FOR_KAFKA() );
+        this.getProperties().put( StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName() );
+        this.getProperties().put( StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName() );
+        return this.getProperties(); };
 
     public void start () {
         final KStream< String, String > kStream = this.getBuilder().stream( this.getRAW_GPS_LOCATION_TOPIC(),
@@ -137,75 +101,57 @@ public class KafkaDataControl {
         kStream.mapValues( values -> CassandraDataControl
                 .getInstance()
                 .getAddPosition()
-                .apply( SerDes.getSerDes().deserialize( values ) ) );
+                .apply( super.deserialize( values ) ) );
 
         this.setKafkaStreams( new KafkaStreams( this.getBuilder().build(), this.getSetStreamProperties().get() ) );
         this.getKafkaStreams().start(); }
 
-    private final Consumer< Position > writeToKafkaEscort = position -> this.getKafkaTemplate().send(
-            this.getTUPLE_OF_CAR_LOCATION_TOPIC(), SerDes.getSerDes().serialize( position ) )
-            .addCallback( new ListenableFutureCallback<>() {
-                @Override
-                public void onFailure( @NonNull Throwable ex ) {
-                    logger.warning( "Kafka does not work since: receive"
-                            + LocalDateTime.now() );
-                    clear(); }
+    private final Consumer< Position > writeToKafkaEscort = position -> this.getKafkaSender()
+            .createOutbound()
+            .send( Mono.just( new ProducerRecord<>( this.getTUPLE_OF_CAR_LOCATION_TOPIC(), super.serialize( position ) ) ) )
+            .then()
+            .doOnError( super::logging )
+            .doOnSuccess( success -> super.logging(
+                    "Kafka got Escort car location: "
+                            + position.getDeviceId()
+                            + " at: " + position.getDeviceTime() ) )
+            .subscribe();
 
-                @Override
-                public void onSuccess( SendResult< String, String > result ) {
-                    logger.info( "Kafka got Escort car location: " + position.getDeviceId() +
-                            " at: " + position.getDeviceTime() +
-                            " with offset: " + result.getRecordMetadata().offset() ); } } );
-
-    private final Consumer< Position > writeToKafkaPosition = position -> this.getKafkaTemplate().send(
-            this.getWEBSOCKET_SERVICE_TOPIC_FOR_ONLINE(), SerDes.getSerDes().serialize( position ) )
-            .addCallback( new ListenableFutureCallback<>() {
-                @Override
-                public void onFailure( @NonNull Throwable ex ) { logger.warning( "Kafka does not work since: receive"
-                        + LocalDateTime.now() );
-                    clear(); }
-
-                @Override
-                public void onSuccess( SendResult< String, String > result ) {
-                    logger.info( "Kafka got: " + position.getDeviceId() +
-                            " at: " + position.getDeviceTime() +
-                            " with offset: " + result.getRecordMetadata().offset() ); } } );
-
-    private final Function< ReqCar, ReqCar > writeToKafka = reqCar -> {
-        this.getKafkaTemplate().send( this.getNEW_CAR_TOPIC(), SerDes.getSerDes().serialize( reqCar ) )
-                .addCallback( new ListenableFutureCallback<>() {
-                    @Override
-                    public void onFailure( @NonNull Throwable ex ) { logger.warning( "Kafka does not work since: receive"
-                            + LocalDateTime.now() );
-                        clear(); }
-
-                    @Override
-                    public void onSuccess( SendResult< String, String > result ) {
-                        logger.info( "Kafka got ReqCar: " + reqCar.getTrackerId() +
-                                " with offset: " + result.getRecordMetadata().offset() ); } } );
-        return reqCar; };
+    private final Consumer< Position > writeToKafkaPosition = position -> this.getKafkaSender()
+            .createOutbound()
+            .send( Mono.just( new ProducerRecord<>( this.getWEBSOCKET_SERVICE_TOPIC_FOR_ONLINE(), super.serialize( position ) ) ) )
+            .then()
+            .doOnError( super::logging )
+            .doOnSuccess( success -> super.logging(
+                    "Kafka got: " + position.getDeviceId() +
+                            " at: " + position.getDeviceTime() ) )
+            .subscribe();
 
     private final Function< TupleOfCar, TupleOfCar > writeToKafkaTupleOfCar = tupleOfCar -> {
-        this.getKafkaTemplate().send( this.getNEW_TUPLE_OF_CAR_TOPIC(), SerDes.getSerDes().serialize( tupleOfCar ) )
-                .addCallback( new ListenableFutureCallback<>() {
-                    @Override
-                    public void onFailure( @NonNull Throwable ex ) { logger.warning( "Kafka does not work since: receive" + LocalDateTime.now() ); }
-
-                    @Override
-                    public void onSuccess( SendResult< String, String > result ) {
-                        logger.info( "Kafka got TupleOfCar " + tupleOfCar.getTrackerId() +
-                                " with offset: " + result.getRecordMetadata().offset() );
-                        clear(); } } );
+        this.getKafkaSender()
+                .createOutbound()
+                .send( Mono.just( new ProducerRecord<>( this.getNEW_TUPLE_OF_CAR_TOPIC(), super.serialize( tupleOfCar ) ) ) )
+                .then()
+                .doOnError( super::logging )
+                .doOnSuccess( success -> super.logging( "Kafka got TupleOfCar: " + tupleOfCar.getTrackerId() ) )
+                .subscribe();
         return tupleOfCar; };
+
+    private final Function< ReqCar, ReqCar > writeToKafka = reqCar -> {
+        this.getKafkaSender()
+                .createOutbound()
+                .send( Mono.just( new ProducerRecord<>( this.getNEW_CAR_TOPIC(), super.serialize( reqCar ) ) ) )
+                .then()
+                .doOnError( super::logging )
+                .doOnSuccess( success -> super.logging( "Kafka got ReqCar: " + reqCar.getTrackerId() ) )
+                .subscribe();
+        return reqCar; };
 
     public void clear () {
         CassandraDataControl.getInstance().clear();
-        this.logger.info( "Kafka was closed" );
-        this.getKafkaTemplate().destroy();
-        this.getKafkaTemplate().flush();
-        Inspector.getInspector().stop();
+        super.logging( "Kafka was closed" );
         this.getProperties().clear();
         this.setProperties( null );
-        this.getClient().close();
-        instance = null; }
+        instance = null;
+        super.stop(); }
 }

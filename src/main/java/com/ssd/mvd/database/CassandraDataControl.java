@@ -1,24 +1,21 @@
 package com.ssd.mvd.database;
 
-import lombok.Data;
 import java.util.Map;
 import java.util.Date;
 import java.util.Calendar;
-import java.util.logging.Logger;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.function.Predicate;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import com.ssd.mvd.entity.*;
-import com.ssd.mvd.kafka.Inspector;
 import com.ssd.mvd.GpsTrackerApplication;
 import com.ssd.mvd.kafka.KafkaDataControl;
+import com.ssd.mvd.inspectors.LogInspector;
 import com.ssd.mvd.constants.CassandraTables;
 import com.ssd.mvd.controller.UnirestController;
 
@@ -27,15 +24,26 @@ import com.datastax.driver.core.policies.TokenAwarePolicy;
 import com.datastax.driver.core.policies.DefaultRetryPolicy;
 import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
 
-@Data
-public class CassandraDataControl {
+@lombok.Data
+public class CassandraDataControl extends LogInspector {
     private final Cluster cluster;
     private final Session session;
-    private final Date date = new Date( 1605006666774L );
     private static CassandraDataControl instance = new CassandraDataControl();
-    private final Logger logger = Logger.getLogger( CassandraDataControl.class.toString() );
 
     public static CassandraDataControl getInstance () { return instance != null ? instance : ( instance = new CassandraDataControl() ); }
+
+    public void register () {
+        this.getGetAllTrackers()
+                .get()
+                .subscribe( trackerInfo -> super.getTrackerInfoMap()
+                        .putIfAbsent( trackerInfo.getTrackerId(), trackerInfo ) );
+
+        CassandraDataControlForEscort
+                .getInstance()
+                .getGetAllTrackers()
+                .get()
+                .subscribe( trackerInfo -> this.getTupleOfCarMap()
+                        .putIfAbsent( trackerInfo.getTrackerId(), trackerInfo ) ); }
 
     private CassandraDataControl () {
         SocketOptions options = new SocketOptions();
@@ -119,7 +127,7 @@ public class CassandraDataControl {
                 "distance double, " +
                 "PRIMARY KEY ( (imei), date ) );" );
 
-        this.logger.info( "Cassandra is ready" ); }
+        super.logging( "Cassandra is ready" ); }
 
     private final Consumer< ReqCar > updateReqCarPosition = reqCar -> this.getSession()
             .executeAsync( "UPDATE "
@@ -130,10 +138,7 @@ public class CassandraDataControl {
                     + " WHERE uuid = " + reqCar.getUuid() + " IF EXISTS;" );
 
     private final Function< Position, String > addPosition = position -> {
-        if ( Inspector
-                .getInspector()
-                .getTupleOfCarMap()
-                .containsKey( position.getDeviceId() ) ) CassandraDataControlForEscort
+        if ( super.getCheckTupleTrackerId().test( position.getDeviceId() ) ) CassandraDataControlForEscort
                 .getInstance()
                 .getGetTupleOfCarByTracker()
                 .apply( position.getDeviceId() )
@@ -142,34 +147,29 @@ public class CassandraDataControl {
                                     .getInstance()
                                     .getSavePosition()
                                     .accept( position );
-                            if ( tupleOfCar.getUuidOfPatrul() != null ) this.getGetPatrul()
+                            if ( super.getCheckParam().test( tupleOfCar.getUuidOfPatrul() ) ) this.getGetPatrul()
                                     .apply( Map.of( "uuid", tupleOfCar.getUuidOfPatrul().toString() ) )
                                     .subscribe( patrul -> KafkaDataControl
                                             .getInstance()
                                             .getWriteToKafkaEscort()
-                                            .accept( Inspector
-                                                    .getInspector()
-                                                    .getTupleOfCarMap()
+                                            .accept( super.getTupleOfCarMap()
                                                     .get( position.getDeviceId() )
                                                     .updateTime( position, tupleOfCar, patrul ) ) );
                             else KafkaDataControl
                                     .getInstance()
                                     .getWriteToKafkaEscort()
-                                    .accept( Inspector
-                                            .getInspector()
-                                            .getTupleOfCarMap()
+                                    .accept( super.getTupleOfCarMap()
                                             .get( position.getDeviceId() )
                                             .updateTime( position, tupleOfCar ) ); } );
 
         else Mono.just( position )
                 .flatMap( position1 -> this.getGetCarByNumber().apply( Map.of( "trackerId", position.getDeviceId() ) ) )
                 .subscribe( reqCar1 -> {
-                    if ( reqCar1 != null && Inspector
-                            .getInspector()
-                            .getTrackerInfoMap()
-                            .containsKey( position.getDeviceId() ) ) {
+                    if ( super.getCheckParam().test( reqCar1 )
+                            && super.getCheckReqCarTrackerId()
+                            .test( position.getDeviceId() ) ) {
                         // сохраняем в базу только если машина двигается
-                        if ( this.getCheckPosition().test( position ) )
+                        if ( super.getCheckPosition().test( position ) )
                             this.getSession().executeAsync( "INSERT INTO "
                                     + CassandraTables.TRACKERS.name() + "."
                                     + CassandraTables.TRACKERS_LOCATION_TABLE.name()
@@ -190,25 +190,16 @@ public class CassandraDataControl {
                                 .subscribe( patrul -> KafkaDataControl
                                         .getInstance()
                                         .getWriteToKafkaPosition()
-                                        .accept( Inspector
-                                                .getInspector()
-                                                .getTrackerInfoMap()
+                                        .accept( super.getTrackerInfoMap()
                                                 .get( position.getDeviceId() )
                                                 .updateTime( position, reqCar1, patrul ) ) ); }
 
-                    else if ( reqCar1 != null
-                            && reqCar1.getPatrulPassportSeries() != null
-                            && reqCar1.getPatrulPassportSeries().length() > 1
-                            && reqCar1.getPatrulPassportSeries().compareTo( "null" ) != 0
-                            && !Inspector
-                            .getInspector()
-                            .getTrackerInfoMap()
-                            .containsKey( position.getDeviceId() ) )
+                    else if ( super.getCheckReqCar().test( reqCar1 )
+                            && !super.getCheckReqCarTrackerId()
+                            .test( position.getDeviceId() ) )
                         this.getGetPatrul()
                                 .apply( Map.of( "passportNumber", reqCar1.getPatrulPassportSeries() ) )
-                                .subscribe( patrul -> Inspector
-                                        .getInspector()
-                                        .getTrackerInfoMap()
+                                .subscribe( patrul -> super.getTrackerInfoMap()
                                         .put( reqCar1.getTrackerId(),
                                                 this.getAddTackerInfo()
                                                         .apply( new TrackerInfo( patrul,
@@ -256,12 +247,6 @@ public class CassandraDataControl {
                 + speed + ", "
                 + ( speed * 10 / 36 ) * 15 + ");" ); }
 
-    private final Predicate< Position > checkPosition = position ->
-            position.getLatitude() > 0
-            && position.getSpeed() > 0
-            && position.getLongitude() > 0
-            && position.getDeviceTime().after( this.getDate() );
-
     private final Function< Map< String, String >, Mono< ReqCar > > getCarByNumber = map -> {
         Row row = this.getSession().execute( "SELECT * FROM " +
                 CassandraTables.TABLETS.name() + "." +
@@ -269,7 +254,7 @@ public class CassandraDataControl {
                 ( map.containsKey( "trackerId" )
                         ? " WHERE trackerId = '" + map.get( "trackerId" )
                         : " WHERE gosnumber = '" + map.get( "gosnumber" ) ) + "';" ).one();
-        return Mono.justOrEmpty( row != null ? new ReqCar( row ) : null ); };
+        return Mono.justOrEmpty( super.getCheckParam().test( row ) ? new ReqCar( row ) : null ); };
 
     private final Function< Request, Flux< PositionInfo > > getHistoricalPosition = request -> Flux.fromStream(
             this.getSession().execute( "SELECT * FROM "
@@ -302,8 +287,6 @@ public class CassandraDataControl {
                     + CassandraTables.POLICE_TYPE.name()
                     + " WHERE policeType = '" + policeType + "';" ).one() );
 
-    private final Predicate< Row > checkTrackerTime = row -> Math.abs( row.getDouble( "totalActivityTime" ) ) > 0;
-
     private final Supplier< Flux< TrackerInfo > > getAllTrackers = () -> Flux.fromStream(
             this.getSession().execute( "SELECT * FROM "
                     + CassandraTables.TRACKERS.name() + "."
@@ -313,7 +296,6 @@ public class CassandraDataControl {
                     .parallel() )
             .parallel()
             .runOn( Schedulers.parallel() )
-//            .filter( this.getCheckTrackerTime() )
             .flatMap( row -> this.getGetCarByNumber()
                     .apply( Map.of( "gosnumber", row.getString( "gosnumber" ) ) )
                     .flatMap( reqCar -> this.getGetPatrul()
@@ -324,10 +306,6 @@ public class CassandraDataControl {
 
     private Calendar end;
     private Calendar start;
-
-    private final Predicate< Request > checkRequest = request ->
-            request.getStartTime() == null
-            && request.getEndTime() == null;
 
     private final Function< Request, Mono< PatrulFuelStatistics > > calculate_average_fuel_consumption = request -> {
         PatrulFuelStatistics patrulFuelStatistics = new PatrulFuelStatistics();
@@ -343,7 +321,7 @@ public class CassandraDataControl {
                                             + CassandraTables.TRACKERS.name() + "."
                                             + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()
                                             + " WHERE imei = '" + reqCar.getTrackerId() + "'"
-                                            + ( this.checkRequest.test( request ) ? ""
+                                            + ( super.getCheckRequest().test( request ) ? ""
                                             : " AND date >= '" + request.getStartTime().toInstant()
                                             + "' AND date <= '" + request.getEndTime().toInstant() + "'" ) + ";" )
                                     .one().getTimestamp( "min_date" ) );
@@ -354,7 +332,7 @@ public class CassandraDataControl {
                                             + CassandraTables.TRACKERS.name() + "."
                                             + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()
                                             + " WHERE imei = '" + reqCar.getTrackerId() + "'"
-                                            + ( this.checkRequest.test( request ) ? ""
+                                            + ( super.getCheckRequest().test( request ) ? ""
                                             : " AND date >= '" + request.getStartTime().toInstant()
                                             + "' AND date <= '" + request.getEndTime().toInstant() + "'" ) + ";" )
                                     .one().getTimestamp( "max_date" ) );
@@ -396,6 +374,6 @@ public class CassandraDataControl {
         instance = null;
         this.getSession().close();
         this.getCluster().close();
-        this.logger.info( "Cassandra is closed" );
+        super.logging( "Cassandra is closed" );
         CassandraDataControlForEscort.getInstance().clear(); }
 }

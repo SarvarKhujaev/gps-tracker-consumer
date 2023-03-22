@@ -10,7 +10,6 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.Data;
 
-import java.util.HashMap;
 import java.util.Date;
 import java.util.UUID;
 import java.util.Map;

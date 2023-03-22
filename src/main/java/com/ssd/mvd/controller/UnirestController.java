@@ -6,19 +6,16 @@ import com.google.gson.Gson;
 import com.mashape.unirest.http.ObjectMapper;
 import com.mashape.unirest.http.Unirest;
 
+import com.ssd.mvd.inspectors.LogInspector;
 import com.ssd.mvd.GpsTrackerApplication;
 import com.ssd.mvd.address.Address;
-
-import lombok.extern.slf4j.Slf4j;
-import lombok.Data;
 
 import java.util.function.BiFunction;
 import java.util.Arrays;
 import java.util.List;
 
-@Data
-@Slf4j
-public class UnirestController {
+@lombok.Data
+public class UnirestController extends LogInspector {
     private final String ADDRESS_LOCATION_API = GpsTrackerApplication
             .context
             .getEnvironment()
@@ -58,5 +55,7 @@ public class UnirestController {
                     Address[].class )
             .get( 0 )
             .getDisplay_name();
-        } catch ( Exception e ) { return "address not found"; } };
+        } catch ( Exception e ) {
+            super.logging( e );
+            return "address not found"; } };
 }

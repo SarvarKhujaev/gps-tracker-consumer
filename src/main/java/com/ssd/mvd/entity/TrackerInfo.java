@@ -2,6 +2,7 @@ package com.ssd.mvd.entity;
 
 import com.ssd.mvd.database.CassandraDataControlForEscort;
 import com.ssd.mvd.database.CassandraDataControl;
+import com.ssd.mvd.inspectors.LogInspector;
 import com.datastax.driver.core.Row;
 
 import lombok.AllArgsConstructor;
@@ -15,7 +16,7 @@ import java.util.Date;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TrackerInfo {
+public class TrackerInfo extends LogInspector {
     private ReqCar reqCar;
     private Patrul patrul;
     private TupleOfCar tupleOfCar;
@@ -131,10 +132,7 @@ public class TrackerInfo {
         this.setLatitude( position.getLatitude() );
         this.setGosNumber( reqCar.getGosNumber() );
         this.setReqCar( reqCar );
-        if ( CassandraDataControl
-                .getInstance()
-                .getCheckPosition()
-                .test( position ) ) CassandraDataControl
+        if ( super.getCheckPosition().test( position ) ) CassandraDataControl
                 .getInstance()
                 .getUpdateReqCarPosition()
                 .accept( this.getReqCar() );

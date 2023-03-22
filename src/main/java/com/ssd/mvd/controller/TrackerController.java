@@ -11,11 +11,8 @@ import reactor.core.publisher.Mono;
 
 @RestController
 public class TrackerController {
-    @MessageMapping ( value = "getAllTrackers" )
-    public Flux< TrackerInfo > getAllTrackers () { return CassandraDataControl
-            .getInstance()
-            .getGetAllTrackers()
-            .get(); }
+    @MessageMapping ( value = "ping" )
+    public Mono< Boolean > ping () { return Mono.just( true ); }
 
     @MessageMapping( value = "online" )
     public Flux< TrackerInfo > online () { return CassandraDataControl.getInstance()
@@ -30,6 +27,12 @@ public class TrackerController {
             .get()
             .filter( trackerInfo -> !trackerInfo.getStatus() ); }
 
+    @MessageMapping ( value = "getAllTrackers" )
+    public Flux< TrackerInfo > getAllTrackers () { return CassandraDataControl
+            .getInstance()
+            .getGetAllTrackers()
+            .get(); }
+
     @MessageMapping ( value = "getAllTrackersId" )
     public Flux< LastPosition > getAllTrackersId () { return CassandraDataControl
             .getInstance()
@@ -42,9 +45,6 @@ public class TrackerController {
             .getInstance()
             .getGetHistoricalPosition()
             .apply( request ); }
-
-    @MessageMapping ( value = "ping" )
-    public Mono< Boolean > ping () { return Mono.just( true ); }
 
     @MessageMapping ( value = "calculate_average_fuel_consumption" )
     public Mono< PatrulFuelStatistics > calculate_average_fuel_consumption ( Request request ) {

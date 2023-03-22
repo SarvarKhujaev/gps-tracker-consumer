@@ -1,17 +1,15 @@
 package com.ssd.mvd.database;
 
+import com.ssd.mvd.inspectors.LogInspector;
 import java.lang.reflect.Field;
 import java.util.stream.Stream;
+
 import lombok.Data;
 import java.util.*;
 
 @Data
-public class CassandraConverter {
+public class CassandraConverter extends LogInspector {
     private String result;
-
-    private static CassandraConverter cassandraConverter = new CassandraConverter();
-
-    public static CassandraConverter getInstance() { return cassandraConverter; }
 
     public Stream< Field > getFields ( Class object ) { return Arrays.stream(
                     object.getDeclaredFields() )
