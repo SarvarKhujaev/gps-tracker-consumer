@@ -31,6 +31,7 @@ import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
 public class CassandraDataControl {
     private final Cluster cluster;
     private final Session session;
+    private final Date date = new Date( 1605006666774L );
     private static CassandraDataControl instance = new CassandraDataControl();
     private final Logger logger = Logger.getLogger( CassandraDataControl.class.toString() );
 
@@ -259,7 +260,7 @@ public class CassandraDataControl {
             position.getLatitude() > 0
             && position.getSpeed() > 0
             && position.getLongitude() > 0
-            && position.getDeviceTime().after( new Date( 1605006666774L ) );
+            && position.getDeviceTime().after( this.getDate() );
 
     private final Function< Map< String, String >, Mono< ReqCar > > getCarByNumber = map -> {
         Row row = this.getSession().execute( "SELECT * FROM " +
