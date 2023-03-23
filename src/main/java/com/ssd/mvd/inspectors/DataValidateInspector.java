@@ -14,11 +14,14 @@ import java.util.Objects;
 import java.util.Date;
 import java.util.List;
 
-import static java.lang.Math.*;
 import static java.lang.Math.cos;
+import static java.lang.Math.*;
 
 @lombok.Data
 public class DataValidateInspector extends Inspector {
+    private final static DataValidateInspector INSPECTOR = new DataValidateInspector();
+    public static DataValidateInspector getInstance() { return INSPECTOR; }
+
     private final Date date = new Date( 1605006666774L );
     private final Predicate< Object > checkParam = Objects::nonNull;
 

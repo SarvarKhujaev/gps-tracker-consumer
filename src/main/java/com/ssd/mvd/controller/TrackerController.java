@@ -15,7 +15,8 @@ public class TrackerController {
     public Mono< Boolean > ping () { return Mono.just( true ); }
 
     @MessageMapping( value = "online" )
-    public Flux< TrackerInfo > online () { return CassandraDataControl.getInstance()
+    public Flux< TrackerInfo > online () { return CassandraDataControl
+            .getInstance()
             .getGetAllTrackers()
             .get()
             .filter( TrackerInfo::getStatus ); }
