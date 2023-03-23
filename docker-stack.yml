@@ -12,7 +12,6 @@ services:
             SERVER_PORT: ${SERVER_PORT}
             SERVER_ADDR: ${SERVER_ADDR}
 
-            TRACKER_PORT: ${TRACKER_PORT}
             RSOCKET_PORT: ${RSOCKET_PORT}
 
             KAFKA_BROKER: ${KAFKA_BROKER}

@@ -1,45 +1,46 @@
 server:
-    port: 9090
-    address: localhost
+    port: ${SERVER_PORT}
+    address: ${SERVER_ADDR}
 
 spring:
     data:
         cassandra:
-            port: 9942
-            keyspace-name: SSD.TABLETS
-            contact-points: 10.254.5.1, 10.254.5.2, 10.254.5.3
-            local-datacenter: datacenter1
+            port: ${CASSANDRA_PORT}
+            keyspace-name: ${KEYSPACE_NAME}
+            contact-points: ${CASSANDRA_HOST}
+            local-datacenter: ${CASSANDRA_DC}
             schema-action: CREATE_IF_NOT_EXISTS
 
             request:
-                timeout: 10s
+                timeout: ${REQUEST_TIMEOUT_FOR_CASSANDRA}
                 consistency: quorum
 
             connection:
-                connect-timeout: 10s
-                init-query-timeout: 10s
+                connect-timeout: ${CONNECTION_TIMEOUT_FOR_CASSANDRA}
+                init-query-timeout: ${INIT_QUERY_TIMEOUT_FOR_CASSANDRA}
 
     rsocket:
         server:
-            port: 6060
-            address: localhost
+            port: ${RSOCKET_PORT}
+            address: ${SERVER_ADDR}
 
 variables:
-    KAFKA_BROKER: 10.254.6.1:9092, 10.254.6.2:9092, 10.254.6.3:9092
-    GROUP_ID_FOR_KAFKA: SSD.GPS.DATA.TEST
+    KAFKA_BROKER: ${KAFKA_BROKER}
+    GROUP_ID_FOR_KAFKA: ${GROUP_ID_FOR_KAFKA}
 
-    NEW_CAR_TOPIC: NEW_CAR_TOPIC_DEV
-    NEW_TUPLE_OF_CAR_TOPIC: newTupleOfCarTopicDev
-    RAW_GPS_LOCATION_TOPIC: RAW_GPS_LOCATION_TOPIC_DEV
-    TUPLE_OF_CAR_LOCATION_TOPIC: TUPLE_OF_CAR_LOCATION_TOPIC_DEV
-    WEBSOCKET_SERVICE_TOPIC_FOR_ONLINE: webSocketServiceTopicForOnlineDev
+    KEYSPACE_NAME : ${KEYSPACE_NAME}
+    CASSANDRA_PORT: ${CASSANDRA_PORT}
 
-    CASSANDRA_PORT: 9942
+    CASSANDRA_MAX_CONN_LOCAL: ${CASSANDRA_MAX_CONN_LOCAL}
+    CASSANDRA_MAX_CONN_REMOTE: ${CASSANDRA_MAX_CONN_REMOTE}
 
-    CASSANDRA_MAX_CONN_LOCAL: 10
-    CASSANDRA_MAX_CONN_REMOTE: 4
+    CASSANDRA_CORE_CONN_LOCAL: ${CASSANDRA_CORE_CONN_LOCAL}
+    CASSANDRA_CORE_CONN_REMOTE: ${CASSANDRA_CORE_CONN_REMOTE}
 
-    CASSANDRA_CORE_CONN_LOCAL: 4
-    CASSANDRA_CORE_CONN_REMOTE: 2
+    NEW_CAR_TOPIC: ${NEW_CAR_TOPIC}
+    NEW_TUPLE_OF_CAR_TOPIC : ${NEW_TUPLE_OF_CAR_TOPIC}
+    RAW_GPS_LOCATION_TOPIC : ${RAW_GPS_LOCATION_TOPIC}
+    TUPLE_OF_CAR_LOCATION_TOPIC : ${TUPLE_OF_CAR_LOCATION_TOPIC}
+    WEBSOCKET_SERVICE_TOPIC_FOR_ONLINE: ${WEBSOCKET_SERVICE_TOPIC_FOR_ONLINE}
 
     ADDRESS_LOCATION_API : http://ms-dev.ssd.uz/nominatim/search?q=
