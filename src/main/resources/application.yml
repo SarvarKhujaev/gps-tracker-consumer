@@ -1,46 +1,48 @@
 server:
-    port: ${SERVER_PORT}
-    address: ${SERVER_ADDR}
+    port: ${SERVER_PORT:9090}
+    address: ${SERVER_ADDR:localhost}
 
 spring:
     data:
         cassandra:
-            port: ${CASSANDRA_PORT}
-            keyspace-name: ${KEYSPACE_NAME}
-            contact-points: ${CASSANDRA_HOST}
-            local-datacenter: ${CASSANDRA_DC}
+            port: ${CASSANDRA_PORT:9942}
+            keyspace-name: ${KEYSPACE_NAME:GpsTracker}
+            contact-points: ${CASSANDRA_HOST:10.254.5.1}
+            local-datacenter: ${CASSANDRA_DC:datacenter1}
             schema-action: CREATE_IF_NOT_EXISTS
 
             request:
-                timeout: ${REQUEST_TIMEOUT_FOR_CASSANDRA}
+                timeout: ${REQUEST_TIMEOUT_FOR_CASSANDRA:10s}
                 consistency: quorum
 
             connection:
-                connect-timeout: ${CONNECTION_TIMEOUT_FOR_CASSANDRA}
-                init-query-timeout: ${INIT_QUERY_TIMEOUT_FOR_CASSANDRA}
+                connect-timeout: ${CONNECTION_TIMEOUT_FOR_CASSANDRA:10s}
+                init-query-timeout: ${INIT_QUERY_TIMEOUT_FOR_CASSANDRA:10s}
 
     rsocket:
         server:
-            port: ${RSOCKET_PORT}
-            address: ${SERVER_ADDR}
+            port: ${RSOCKET_PORT:6060}
+            address: ${SERVER_ADDR:localhost}
 
 variables:
-    KAFKA_BROKER: ${KAFKA_BROKER}
-    GROUP_ID_FOR_KAFKA: ${GROUP_ID_FOR_KAFKA}
+    KAFKA_VARIABLES:
+        KAFKA_BROKER: ${KAFKA_BROKER:10.254.1.209:9092, 10.254.1.212:9092, 10.254.1.211:9092}
+        GROUP_ID_FOR_KAFKA: ${GROUP_ID_FOR_KAFKA:SSD.GPS.DATA.DEV}
 
-    KEYSPACE_NAME : ${KEYSPACE_NAME}
-    CASSANDRA_PORT: ${CASSANDRA_PORT}
+        KAFKA_TOPICS:
+            NEW_CAR_TOPIC: ${NEW_CAR_TOPIC:NEW_CAR_TOPIC_DEV}
+            NEW_TUPLE_OF_CAR_TOPIC: ${NEW_TUPLE_OF_CAR_TOPIC:newTupleOfCarTopicDev}
+            RAW_GPS_LOCATION_TOPIC: ${RAW_GPS_LOCATION_TOPIC:RAW_GPS_LOCATION_TOPIC_DEV}
+            TUPLE_OF_CAR_LOCATION_TOPIC: ${TUPLE_OF_CAR_LOCATION_TOPIC:TUPLE_OF_CAR_LOCATION_TOPIC_DEV}
+            WEBSOCKET_SERVICE_TOPIC_FOR_ONLINE: ${WEBSOCKET_SERVICE_TOPIC_FOR_ONLINE:webSocketServiceTopicForOnlineDev}
 
-    CASSANDRA_MAX_CONN_LOCAL: ${CASSANDRA_MAX_CONN_LOCAL}
-    CASSANDRA_MAX_CONN_REMOTE: ${CASSANDRA_MAX_CONN_REMOTE}
+    KEYSPACE_NAME : ${KEYSPACE_NAME:GpsTracker}
+    CASSANDRA_PORT: ${CASSANDRA_PORT:9942}
 
-    CASSANDRA_CORE_CONN_LOCAL: ${CASSANDRA_CORE_CONN_LOCAL}
-    CASSANDRA_CORE_CONN_REMOTE: ${CASSANDRA_CORE_CONN_REMOTE}
+    CASSANDRA_MAX_CONN_LOCAL: ${CASSANDRA_MAX_CONN_LOCAL:1024}
+    CASSANDRA_MAX_CONN_REMOTE: ${CASSANDRA_MAX_CONN_REMOTE:4}
 
-    NEW_CAR_TOPIC: ${NEW_CAR_TOPIC}
-    NEW_TUPLE_OF_CAR_TOPIC : ${NEW_TUPLE_OF_CAR_TOPIC}
-    RAW_GPS_LOCATION_TOPIC : ${RAW_GPS_LOCATION_TOPIC}
-    TUPLE_OF_CAR_LOCATION_TOPIC : ${TUPLE_OF_CAR_LOCATION_TOPIC}
-    WEBSOCKET_SERVICE_TOPIC_FOR_ONLINE: ${WEBSOCKET_SERVICE_TOPIC_FOR_ONLINE}
+    CASSANDRA_CORE_CONN_LOCAL: ${CASSANDRA_CORE_CONN_LOCAL:4}
+    CASSANDRA_CORE_CONN_REMOTE: ${CASSANDRA_CORE_CONN_REMOTE:2}
 
     ADDRESS_LOCATION_API : http://ms-dev.ssd.uz/nominatim/search?q=
