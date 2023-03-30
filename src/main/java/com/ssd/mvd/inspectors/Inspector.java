@@ -8,10 +8,13 @@ import reactor.core.publisher.Mono;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.HashMap;
+import java.util.Date;
 import java.util.Map;
 
 @lombok.Data
 public class Inspector {
+    // хранит все не зарегистрированные трекеры
+    private final Map< String, Date > unregisteredTrackers = new HashMap<>();
     private final Map< String, TrackerInfo > tupleOfCarMap = new HashMap<>();
     private final Map< String, TrackerInfo > trackerInfoMap = new HashMap<>();
 
@@ -37,8 +40,4 @@ public class Inspector {
                             .code( 201 )
                             .build() )
                     .build() );
-
-    public void stop () {
-        this.getTupleOfCarMap().clear();
-        this.getTrackerInfoMap().clear(); } // stopping all consumers
 }

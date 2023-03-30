@@ -44,18 +44,18 @@ public class UnirestController extends LogInspector {
     private <T> List<T> stringToArrayList ( String object, Class< T[] > clazz ) { return Arrays.asList( this.getGson().fromJson( object, clazz ) ); }
 
     private final BiFunction< Double, Double, String > getAddressByLocation = ( latitude, longitude ) -> {
-        try { return this.stringToArrayList(
+            try { return this.stringToArrayList(
                     Unirest.get( this.getADDRESS_LOCATION_API()
-                            + latitude + "," + longitude
-                            + "&limit=5&format=json&addressdetails=1" )
-                            .asJson()
-                            .getBody()
-                            .getArray()
-                            .toString(),
-                    Address[].class )
-            .get( 0 )
-            .getDisplay_name();
-        } catch ( Exception e ) {
-            super.logging( e );
-            return "address not found"; } };
+                                    + latitude + "," + longitude
+                                    + "&limit=5&format=json&addressdetails=1" )
+                                    .asJson()
+                                    .getBody()
+                                    .getArray()
+                                    .toString(),
+                            Address[].class )
+                    .get( 0 )
+                    .getDisplay_name(); }
+            catch ( Exception e ) {
+                super.logging( e, "address not found" );
+                return "address not found"; } };
 }
