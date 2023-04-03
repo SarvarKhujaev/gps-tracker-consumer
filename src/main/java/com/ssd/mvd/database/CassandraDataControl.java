@@ -178,11 +178,7 @@ public class CassandraDataControl extends LogInspector {
                                     + "', " + position.getSpeed()
                                     + ", " + position.getLongitude()
                                     + ", " + position.getLatitude()
-                                    + ", '" + UnirestController
-                                    .getInstance()
-                                    .getGetAddressByLocation()
-                                    .apply( position.getLatitude(), position.getLongitude() )
-                                    .replaceAll( "'", "`" ) + "' );" );
+                                    + ", '' );" );
 
                         this.getGetPatrul()
                                 .apply( Map.of( "passportNumber", reqCar1.getPatrulPassportSeries() ) )
@@ -311,11 +307,9 @@ public class CassandraDataControl extends LogInspector {
 
     private final Function< Request, Mono< PatrulFuelStatistics > > calculate_average_fuel_consumption = request -> {
             PatrulFuelStatistics patrulFuelStatistics = new PatrulFuelStatistics();
-            return this.getGetPatrul()
-                    .apply( Map.of( "uuid", request.getTrackerId() ) )
+            return this.getGetPatrul().apply( Map.of( "uuid", request.getTrackerId() ) )
                     .flatMap( patrul -> !patrul.getCarNumber().equals( "null" )
-                            ? this.getGetCarByNumber()
-                            .apply( Map.of( "gosnumber", patrul.getCarNumber() ) )
+                            ? this.getGetCarByNumber().apply( Map.of( "gosnumber", patrul.getCarNumber() ) )
                             .map( reqCar -> {
                                 this.setStart( Calendar.getInstance() );
                                 this.getStart().setTime( this.getSession()

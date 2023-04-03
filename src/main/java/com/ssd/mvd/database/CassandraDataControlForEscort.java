@@ -81,11 +81,7 @@ public class CassandraDataControlForEscort extends CassandraConverter {
                 + "', " + position.getSpeed()
                 + ", " + position.getLongitude()
                 + ", " + position.getLatitude()
-                + ", '" + UnirestController
-                .getInstance()
-                .getGetAddressByLocation()
-                .apply( position.getLatitude(), position.getLongitude() )
-                .replaceAll( "'", "`" ) + "' );" ); };
+                + ", '" + "' );" ); };
 
     private final Function< TrackerInfo, TrackerInfo > saveTackerInfo = trackerInfo -> {
         this.getSession().execute( ( "INSERT INTO "
