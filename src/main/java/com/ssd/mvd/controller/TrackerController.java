@@ -18,6 +18,17 @@ public class TrackerController extends Inspector {
     @MessageMapping ( value = "PING" )
     public Mono< Boolean > ping () { return Mono.just( true ); }
 
+    @MessageMapping ( value = "GET_ADDRESS" )
+    public Mono< String > getAddress ( Point point ) {
+        return point != null
+                && point.getLatitude() != null
+                && point.getLongitude() != null
+                ? Mono.just( UnirestController
+                .getInstance()
+                .getGetAddressByLocation()
+                .apply( point.getLatitude(), point.getLongitude() ) )
+                : Mono.empty(); }
+
     @MessageMapping( value = "ONLINE" )
     public Flux< TrackerInfo > online () { return CassandraDataControl
             .getInstance()

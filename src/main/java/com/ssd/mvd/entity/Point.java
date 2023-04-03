@@ -1,8 +1,6 @@
 package com.ssd.mvd.entity;
 
-import lombok.Data;
-
-@Data
+@lombok.Data
 public class Point {
     private Double radius;
     private Double latitude;
