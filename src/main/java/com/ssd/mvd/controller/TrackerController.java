@@ -33,27 +33,27 @@ public class TrackerController extends Inspector {
     public Flux< TrackerInfo > online () { return CassandraDataControl
             .getInstance()
             .getGetAllTrackers()
-            .get()
+            .apply( true )
             .filter( TrackerInfo::getStatus ); }
 
     @MessageMapping( value = "OFFLINE" )
     public Flux< TrackerInfo > offline () { return CassandraDataControl
             .getInstance()
             .getGetAllTrackers()
-            .get()
+            .apply( true )
             .filter( trackerInfo -> !trackerInfo.getStatus() ); }
 
     @MessageMapping ( value = "GET_ALL_TRACKERS" )
     public Flux< TrackerInfo > getAllTrackers () { return CassandraDataControl
             .getInstance()
             .getGetAllTrackers()
-            .get(); }
+            .apply( true ); }
 
     @MessageMapping ( value = "GET_ALL_TRACKERS_ID" )
     public Flux< LastPosition > getAllTrackersId () { return CassandraDataControl
             .getInstance()
             .getGetAllTrackers()
-            .get()
+            .apply( true )
             .map( LastPosition::new ); }
 
     @MessageMapping ( "GET_TRACKER_HISTORY" )

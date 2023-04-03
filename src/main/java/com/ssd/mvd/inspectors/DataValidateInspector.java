@@ -35,6 +35,10 @@ public class DataValidateInspector extends Inspector {
             && position.getLongitude() > 0
             && position.getDeviceTime().after( this.getDate() );
 
+    private final Predicate< Row > checkRow = row ->
+            row.getDouble( "longitude" ) > 0
+            && row.getDouble( "latitude" ) > 0;
+
     private final Predicate< ReqCar > checkReqCar = reqCar ->
             reqCar != null
             && reqCar.getPatrulPassportSeries() != null

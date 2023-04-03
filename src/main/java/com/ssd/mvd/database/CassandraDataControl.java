@@ -34,7 +34,7 @@ public class CassandraDataControl extends LogInspector {
 
     public void register () {
         this.getGetAllTrackers()
-                .get()
+                .apply( false )
                 .subscribe( trackerInfo -> super.getTrackerInfoMap()
                         .putIfAbsent( trackerInfo.getTrackerId(), trackerInfo ) );
 
@@ -285,7 +285,7 @@ public class CassandraDataControl extends LogInspector {
                     + CassandraTables.POLICE_TYPE.name()
                     + " WHERE policeType = '" + policeType + "';" ).one() );
 
-    private final Supplier< Flux< TrackerInfo > > getAllTrackers = () -> Flux.fromStream(
+    private final Function< Boolean, Flux< TrackerInfo > > getAllTrackers = aBoolean -> Flux.fromStream(
             this.getSession().execute( "SELECT * FROM "
                     + CassandraTables.TRACKERS.name() + "."
                     + CassandraTables.TRACKERSID.name() + ";" )
@@ -293,6 +293,7 @@ public class CassandraDataControl extends LogInspector {
                     .stream()
                     .parallel() )
             .parallel()
+            .filter( row -> !aBoolean || super.getCheckRow().test( row ) )
             .runOn( Schedulers.parallel() )
             .flatMap( row -> this.getGetCarByNumber()
                     .apply( Map.of( "gosnumber", row.getString( "gosnumber" ) ) )
