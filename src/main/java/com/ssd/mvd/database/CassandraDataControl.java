@@ -6,7 +6,6 @@ import java.util.Calendar;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -17,7 +16,6 @@ import com.ssd.mvd.GpsTrackerApplication;
 import com.ssd.mvd.kafka.KafkaDataControl;
 import com.ssd.mvd.inspectors.LogInspector;
 import com.ssd.mvd.constants.CassandraTables;
-import com.ssd.mvd.controller.UnirestController;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.policies.TokenAwarePolicy;
