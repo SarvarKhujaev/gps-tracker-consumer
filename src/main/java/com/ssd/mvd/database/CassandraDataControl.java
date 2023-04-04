@@ -252,21 +252,24 @@ public class CassandraDataControl extends LogInspector {
                             : " WHERE gosnumber = '" + map.get( "gosnumber" ) ) + "';" ).one();
             return Mono.justOrEmpty( super.getCheckParam().test( row ) ? new ReqCar( row ) : null ); };
 
-    private final Function< Request, Flux< PositionInfo > > getHistoricalPosition = request -> Flux.fromStream(
-            this.getSession().execute( "SELECT * FROM "
-                    + CassandraTables.TRACKERS.name() + "."
-                    + CassandraTables.TRACKERS_LOCATION_TABLE.name()
-                    + " WHERE imei = '" + request.getTrackerId()
-                    + "' AND date >= '" + request.getStartTime().toInstant()
-                    + "' AND date <= '" + request.getEndTime().toInstant() + "';" )
-                    .all()
-                    .stream()
-                    .parallel() )
-            .parallel()
-            .runOn( Schedulers.parallel() )
-            .map( PositionInfo::new )
-            .sequential()
-            .publishOn( Schedulers.single() );
+    private final Function< Request, Flux< PositionInfo > > getHistoricalPosition = request ->
+            super.getCheckRequest().test( request )
+            ? Flux.fromStream( this.getSession().execute(
+                    "SELECT * FROM "
+                            + CassandraTables.TRACKERS.name() + "."
+                            + CassandraTables.TRACKERS_LOCATION_TABLE.name()
+                            + " WHERE imei = '" + request.getTrackerId()
+                            + "' AND date >= '" + request.getStartTime().toInstant()
+                            + "' AND date <= '" + request.getEndTime().toInstant() + "';" )
+                            .all()
+                            .stream()
+                            .parallel() )
+                    .parallel()
+                    .runOn( Schedulers.parallel() )
+                    .map( PositionInfo::new )
+                    .sequential()
+                    .publishOn( Schedulers.single() )
+                    : Flux.empty();
 
     private final Function< Map< String, String >, Mono< Patrul > > getPatrul = map -> Mono.just(
             this.getSession().execute( "SELECT * FROM "
