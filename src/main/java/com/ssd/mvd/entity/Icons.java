@@ -1,9 +1,8 @@
 package com.ssd.mvd.entity;
 
 import com.datastax.driver.core.Row;
-import lombok.Data;
 
-@Data
+@lombok.Data
 public class Icons {
     private String icon1;
     private String icon2;

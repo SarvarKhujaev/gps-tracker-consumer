@@ -1,15 +1,11 @@
 package com.ssd.mvd.entity;
 
 import com.datastax.driver.core.Row;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import lombok.Data;
-
 import java.util.UUID;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+@lombok.Data
+@lombok.NoArgsConstructor
+@lombok.AllArgsConstructor
 public class TupleOfCar {
     private UUID uuid;
     private UUID uuidOfEscort; // UUID of the Escort which this car is linked to

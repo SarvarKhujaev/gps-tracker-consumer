@@ -3,9 +3,8 @@ package com.ssd.mvd.entity;
 import com.ssd.mvd.database.CassandraDataControl;
 import com.ssd.mvd.constants.Status;
 import java.util.UUID;
-import lombok.Data;
 
-@Data
+@lombok.Data
 public class LastPosition {
     // Car data
     private String icon; // иконка патрульного выбирается исходя из типа патрульного

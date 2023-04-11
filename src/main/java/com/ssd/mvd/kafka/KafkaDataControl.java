@@ -1,6 +1,8 @@
 package com.ssd.mvd.kafka;
 
 import java.util.*;
+import com.google.gson.Gson;
+
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -11,6 +13,7 @@ import com.ssd.mvd.entity.TupleOfCar;
 import com.ssd.mvd.GpsTrackerApplication;
 import com.ssd.mvd.database.CassandraDataControl;
 
+import com.ssd.mvd.inspectors.LogInspector;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -26,7 +29,8 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.ProducerConfig;
 
 @lombok.Data
-public class KafkaDataControl extends SerDes {
+public class KafkaDataControl extends LogInspector {
+    private final Gson gson = new Gson();
     private Properties properties = new Properties();
     private static KafkaDataControl instance = new KafkaDataControl();
 
@@ -99,36 +103,34 @@ public class KafkaDataControl extends SerDes {
             kStream.mapValues( values -> CassandraDataControl
                     .getInstance()
                     .getAddPosition()
-                    .apply( super.deserialize( values ) ) );
+                    .apply( this.getGson().fromJson( values, Position.class ) ) );
 
             this.setKafkaStreams( new KafkaStreams( this.getBuilder().build(), this.getSetStreamProperties().get() ) );
             this.getKafkaStreams().start(); }
 
     private final Consumer< Position > writeToKafkaEscort = position -> this.getKafkaSender()
             .createOutbound()
-            .send( Mono.just( new ProducerRecord<>( this.getTUPLE_OF_CAR_LOCATION_TOPIC(), super.serialize( position ) ) ) )
+            .send( Mono.just( new ProducerRecord<>( this.getTUPLE_OF_CAR_LOCATION_TOPIC(), this.getGson().toJson( position ) ) ) )
             .then()
             .doOnError( super::logging )
-            .doOnSuccess( success -> super.logging(
-                    "Kafka got Escort car location: "
-                            + position.getDeviceId()
-                            + " at: " + position.getDeviceTime() ) )
+            .doOnSuccess( success -> super.logging( "Kafka got Escort car location: "
+                    + position.getDeviceId() + " at: " + position.getDeviceTime() ) )
             .subscribe();
 
     private final Consumer< Position > writeToKafkaPosition = position -> this.getKafkaSender()
             .createOutbound()
-            .send( Mono.just( new ProducerRecord<>( this.getWEBSOCKET_SERVICE_TOPIC_FOR_ONLINE(), super.serialize( position ) ) ) )
+            .send( Mono.just( new ProducerRecord<>( this.getWEBSOCKET_SERVICE_TOPIC_FOR_ONLINE(), this.getGson().toJson( position ) ) ) )
             .then()
             .doOnError( super::logging )
-            .doOnSuccess( success -> super.logging(
-                    "Kafka got: " + position.getDeviceId() +
-                            " at: " + position.getDeviceTime() ) )
+            .doOnSuccess( success -> super.logging( "Kafka got: " + position.getDeviceId()
+                    + " at: " + position.getDeviceTime() ) )
             .subscribe();
 
     private final Function< TupleOfCar, TupleOfCar > writeToKafkaTupleOfCar = tupleOfCar -> {
             this.getKafkaSender()
                     .createOutbound()
-                    .send( Mono.just( new ProducerRecord<>( this.getNEW_TUPLE_OF_CAR_TOPIC(), super.serialize( tupleOfCar ) ) ) )
+                    .send( Mono.just( new ProducerRecord<>(
+                            this.getNEW_TUPLE_OF_CAR_TOPIC(), this.getGson().toJson( tupleOfCar ) ) ) )
                     .then()
                     .doOnError( super::logging )
                     .doOnSuccess( success -> super.logging( "Kafka got TupleOfCar: " + tupleOfCar.getTrackerId() ) )
@@ -138,7 +140,7 @@ public class KafkaDataControl extends SerDes {
     private final Function< ReqCar, ReqCar > writeToKafka = reqCar -> {
             this.getKafkaSender()
                     .createOutbound()
-                    .send( Mono.just( new ProducerRecord<>( this.getNEW_CAR_TOPIC(), super.serialize( reqCar ) ) ) )
+                    .send( Mono.just( new ProducerRecord<>( this.getNEW_CAR_TOPIC(), this.getGson().toJson( reqCar ) ) ) )
                     .then()
                     .doOnError( super::logging )
                     .doOnSuccess( success -> super.logging( "Kafka got ReqCar: " + reqCar.getTrackerId() ) )

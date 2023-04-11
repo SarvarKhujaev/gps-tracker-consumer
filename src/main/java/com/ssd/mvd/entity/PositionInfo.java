@@ -2,9 +2,8 @@ package com.ssd.mvd.entity;
 
 import com.datastax.driver.core.Row;
 import java.util.Date;
-import lombok.Data;
 
-@Data // used in case of historical request for some time duration
+@lombok.Data // used in case of historical request for some time duration
 public class PositionInfo {
     private Double lat;
     private Double lng;
