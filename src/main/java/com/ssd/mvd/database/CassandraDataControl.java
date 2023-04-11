@@ -258,7 +258,7 @@ public class CassandraDataControl extends LogInspector {
                         + CassandraTables.TRACKERS_LOCATION_TABLE.name()
                         + " WHERE imei = '" + request.getTrackerId()
                         + "' AND date >= '" + request.getStartTime().toInstant()
-                        + "' AND date <= '" + request.getEndTime().toInstant() + "';" )
+                        + "' AND date <= '" + request.getEndTime().toInstant() + "' ORDER BY date ASC;" )
                     .all()
                     .stream()
                     .parallel() )

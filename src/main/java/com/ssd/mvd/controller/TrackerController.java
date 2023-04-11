@@ -10,6 +10,7 @@ import com.ssd.mvd.entity.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Map;
 
@@ -60,7 +61,8 @@ public class TrackerController extends Inspector {
     public Flux< PositionInfo > getTrackerHistory ( Request request ) { return CassandraDataControl
             .getInstance()
             .getGetHistoricalPosition()
-            .apply( request ); }
+            .apply( request )
+            .sort( Comparator.comparing( PositionInfo::getPositionWasSavedDate ) ); }
 
     @MessageMapping ( value = "GET_ALL_UNREGISTERED_TRACKERS" )
     public Mono< Map< String, Date > > GET_ALL_UNREGISTERED_TRACKERS () { return Mono.just( super.getUnregisteredTrackers() ); }

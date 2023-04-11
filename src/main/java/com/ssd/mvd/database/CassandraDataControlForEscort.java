@@ -158,14 +158,14 @@ public class CassandraDataControlForEscort extends CassandraConverter {
                                     "success", false ) ); } );
 
     public void updateEscortCar ( Double longitude, Double latitude, TupleOfCar tupleOfCar ) {
-        this.getSession().execute ( "UPDATE "
-                + CassandraTables.ESCORT.name() + "."
-                + CassandraTables.TUPLE_OF_CAR.name()
-                + " SET longitude = " + longitude
-                + ", latitude = " + latitude
-                + " where uuid = " + tupleOfCar.getUuid()
-                + " and trackerid = '"
-                + tupleOfCar.getTrackerId() + "' IF EXISTS;" ); }
+            this.getSession().execute ( "UPDATE "
+                    + CassandraTables.ESCORT.name() + "."
+                    + CassandraTables.TUPLE_OF_CAR.name()
+                    + " SET longitude = " + longitude
+                    + ", latitude = " + latitude
+                    + " where uuid = " + tupleOfCar.getUuid()
+                    + " and trackerid = '"
+                    + tupleOfCar.getTrackerId() + "' IF EXISTS;" ); }
 
     private final Function< UUID, Mono< TupleOfCar > > getCurrentTupleofCar = uuid ->
             Mono.just( this.getSession().execute( "SELECT * FROM "
