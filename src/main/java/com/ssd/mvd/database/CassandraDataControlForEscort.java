@@ -166,9 +166,9 @@ public class CassandraDataControlForEscort extends CassandraConverter {
 
     private final Function< UUID, Mono< TupleOfCar > > getCurrentTupleOfCar = uuid ->
             Mono.just( new TupleOfCar( this.getSession().execute( "SELECT * FROM "
-                            + CassandraTables.ESCORT.name() + "."
-                            + CassandraTables.TUPLE_OF_CAR.name()
-                            + " WHERE uuid = " + uuid + ";" ).one() ) );
+                    + CassandraTables.ESCORT.name() + "."
+                    + CassandraTables.TUPLE_OF_CAR.name()
+                    + " WHERE uuid = " + uuid + ";" ).one() ) );
 
     private final Function< String, Mono< ApiResponseModel > > deleteTupleOfCar = uuid ->
             this.getGetCurrentTupleOfCar().apply( UUID.fromString( uuid ) )
@@ -245,15 +245,11 @@ public class CassandraDataControlForEscort extends CassandraConverter {
                             : super.getFunction().apply(
                                     Map.of( "message", "Escort was saved successfully",
                                             "success", super.getCheckParam().test(
-                            super.getTupleOfCarMap()
-                                    .putIfAbsent( tupleOfCar.getTrackerId(),
-                                            this.getSaveTackerInfo().apply( new TrackerInfo( tupleOfCar ) ) ) ) ) )
-                    : super.getFunction().apply(
-                            Map.of( "message", "This car is already exists",
-                            "code", 201 ) )
+                            super.getTupleOfCarMap().putIfAbsent(
+                                    tupleOfCar.getTrackerId(), this.getSaveTackerInfo().apply( new TrackerInfo( tupleOfCar ) ) ) ) ) )
+                    : super.getFunction().apply( Map.of( "message", "This car is already exists", "code", 201 ) )
             : super.getFunction().apply(
-                    Map.of( "message", "This trackers or gosnumber is already registered to another car, so choose another one",
-                    "code", 201 ) );
+                    Map.of( "message", "This trackers or gosnumber is already registered to another car, so choose another one", "code", 201 ) );
 
     private final Function< String, Mono< TupleOfCar > > getTupleOfCarByTracker = trackersId -> {
         final Row row = this.getSession().execute( "SELECT * FROM "
@@ -296,10 +292,9 @@ public class CassandraDataControlForEscort extends CassandraConverter {
                     .all()
                     .stream()
                     .parallel() )
-            .parallel( super.getTupleOfCarMap().size() > 0 ? super.getTupleOfCarMap().size() : 5 )
+            .parallel( super.getCheckDifference().apply( super.getTupleOfCarMap().size() ) )
             .runOn( Schedulers.parallel() )
-            .flatMap( row -> this.getGetTupleOfCar()
-                    .apply( row.getString( "gosnumber" ), row.getString( "trackersid" ) )
+            .flatMap( row -> this.getGetTupleOfCar().apply( row.getString( "gosnumber" ), row.getString( "trackersid" ) )
                     .flatMap( tupleOfCar -> tupleOfCar.getUuidOfPatrul() != null
                             ? CassandraDataControl
                                     .getInstance()
@@ -317,7 +312,7 @@ public class CassandraDataControlForEscort extends CassandraConverter {
             .all()
             .stream()
             .parallel() )
-            .parallel()
+            .parallel( super.getCheckDifference().apply( super.getTupleOfCarMap().size() ) )
             .runOn( Schedulers.parallel() )
             .map( TupleOfCar::new )
             .sequential()
@@ -330,7 +325,7 @@ public class CassandraDataControlForEscort extends CassandraConverter {
                     .all()
                     .stream()
                     .parallel() )
-            .parallel()
+            .parallel( super.getCheckDifference().apply( super.getTupleOfCarMap().size() ) )
             .runOn( Schedulers.parallel() )
             .filter( tupleOfCar -> super.getCalculate().apply( point, tupleOfCar ) <= point.getRadius() )
             .map( TupleOfCar::new )
@@ -344,7 +339,7 @@ public class CassandraDataControlForEscort extends CassandraConverter {
                     .all()
                     .stream()
                     .parallel() )
-            .parallel()
+            .parallel( super.getCheckDifference().apply( point.size() ) )
             .runOn( Schedulers.parallel() )
             .filter( tupleOfCar -> super.getCalculateDistanceInSquare().apply( point, tupleOfCar ) )
             .map( TupleOfCar::new )

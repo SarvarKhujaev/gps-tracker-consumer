@@ -10,6 +10,7 @@ import com.ssd.mvd.entity.Point;
 
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
+import java.util.function.Function;
 import java.util.Objects;
 import java.util.Date;
 import java.util.List;
@@ -23,7 +24,10 @@ public class DataValidateInspector extends Inspector {
     public static DataValidateInspector getInstance() { return INSPECTOR; }
 
     private final Date date = new Date( 1605006666774L );
+
     private final Predicate< Object > checkParam = Objects::nonNull;
+
+    private final Function< Integer, Integer > checkDifference = integer -> integer > 0 && integer < 100 ? integer : 10;
 
     private final Predicate< String > checkTupleTrackerId = s -> super.getTupleOfCarMap().containsKey( s );
 
@@ -35,9 +39,7 @@ public class DataValidateInspector extends Inspector {
             && position.getLongitude() > 0
             && position.getDeviceTime().after( this.getDate() );
 
-    private final Predicate< Row > checkRow = row ->
-            row.getDouble( "longitude" ) > 0
-            && row.getDouble( "latitude" ) > 0;
+    private final Predicate< Row > checkRow = row -> row.getDouble( "longitude" ) > 0 && row.getDouble( "latitude" ) > 0;
 
     private final Predicate< ReqCar > checkReqCar = reqCar ->
             reqCar != null
@@ -71,21 +73,22 @@ public class DataValidateInspector extends Inspector {
                     + cos( first.getLatitude() * p ) * cos( second.getDouble( "latitude" ) * p )
                     * ( 1 - cos( ( second.getDouble( "longitude" ) - first.getLongitude() ) * p ) ) / 2 ) ) * 1000;
 
-    private final Predicate< String > checkTracker = trackerId -> !this.getCheckParam()
-            .test( CassandraDataControl
+    private final Predicate< String > checkTracker = trackerId -> !this.getCheckParam().test(
+            CassandraDataControl
                     .getInstance()
                     .getSession()
                     .execute ( "SELECT * FROM "
                             + CassandraTables.ESCORT + "."
                             + CassandraTables.TRACKERSID
                             + " WHERE trackersId = '" + trackerId + "';" ).one() )
-            && !this.getCheckParam().test( CassandraDataControl
-            .getInstance()
-            .getSession()
-            .execute( "SELECT * FROM "
-            + CassandraTables.TRACKERS + "."
-            + CassandraTables.TRACKERSID
-            + " WHERE trackersId = '" + trackerId + "';" ).one() );
+            && !this.getCheckParam().test(
+                    CassandraDataControl
+                            .getInstance()
+                            .getSession()
+                            .execute( "SELECT * FROM "
+                            + CassandraTables.TRACKERS + "."
+                            + CassandraTables.TRACKERSID
+                            + " WHERE trackersId = '" + trackerId + "';" ).one() );
 
     private final Predicate< String > checkCarNumber = carNumber ->
             !this.getCheckParam().test(

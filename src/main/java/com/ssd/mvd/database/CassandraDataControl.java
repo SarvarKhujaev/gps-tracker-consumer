@@ -3,6 +3,7 @@ package com.ssd.mvd.database;
 import java.util.Map;
 import java.util.Date;
 import java.util.Calendar;
+import java.time.Duration;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -255,7 +256,8 @@ public class CassandraDataControl extends LogInspector {
                     .all()
                     .stream()
                     .parallel() )
-            .parallel()
+            .parallel( super.getCheckDifference().apply(
+                    (int) Math.abs( Duration.between( request.getStartTime().toInstant(), request.getEndTime().toInstant() ).toDays() ) ) )
             .runOn( Schedulers.parallel() )
             .map( PositionInfo::new )
             .sequential()
@@ -282,7 +284,7 @@ public class CassandraDataControl extends LogInspector {
                     .all()
                     .stream()
                     .parallel() )
-            .parallel( super.getTrackerInfoMap().size() > 0 ? super.getTrackerInfoMap().size() : 5 )
+            .parallel( super.getCheckDifference().apply( super.getTrackerInfoMap().size() ) )
             .runOn( Schedulers.parallel() )
             .filter( row -> !aBoolean || super.getCheckRow().test( row ) )
             .flatMap( row -> this.getGetCarByNumber().apply( Map.of( "gosnumber", row.getString( "gosnumber" ) ) )
@@ -301,32 +303,34 @@ public class CassandraDataControl extends LogInspector {
                             ? this.getGetCarByNumber().apply( Map.of( "gosnumber", patrul.getCarNumber() ) )
                             .map( reqCar -> {
                                 this.setStart( Calendar.getInstance() );
-                                this.getStart().setTime( this.getSession()
-                                        .execute( "SELECT min(date) AS min_date FROM "
+                                this.getStart().setTime( this.getSession().execute(
+                                        "SELECT min(date) AS min_date FROM "
                                                 + CassandraTables.TRACKERS.name() + "."
                                                 + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()
                                                 + " WHERE imei = '" + reqCar.getTrackerId() + "'"
                                                 + ( super.getCheckRequest().test( request ) ? ""
                                                 : " AND date >= '" + request.getStartTime().toInstant()
                                                 + "' AND date <= '" + request.getEndTime().toInstant() + "'" ) + ";" )
-                                        .one().getTimestamp( "min_date" ) );
+                                        .one()
+                                        .getTimestamp( "min_date" ) );
 
                                 this.setEnd( Calendar.getInstance() );
-                                this.getEnd().setTime( this.getSession()
-                                        .execute( "SELECT max(date) AS max_date FROM "
+                                this.getEnd().setTime( this.getSession().execute(
+                                        "SELECT max(date) AS max_date FROM "
                                                 + CassandraTables.TRACKERS.name() + "."
                                                 + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()
                                                 + " WHERE imei = '" + reqCar.getTrackerId() + "'"
                                                 + ( super.getCheckRequest().test( request ) ? ""
                                                 : " AND date >= '" + request.getStartTime().toInstant()
                                                 + "' AND date <= '" + request.getEndTime().toInstant() + "'" ) + ";" )
-                                        .one().getTimestamp( "max_date" ) );
+                                        .one()
+                                        .getTimestamp( "max_date" ) );
 
                                 Date date;
                                 while ( this.getStart().before( this.getEnd() ) ) {
                                     date = this.getStart().getTime();
                                     this.getStart().add( Calendar.DATE, 1 );
-                                    ConsumptionData consumptionData = new ConsumptionData();
+                                    final ConsumptionData consumptionData = new ConsumptionData();
                                     consumptionData.setDistance( this.getSession()
                                             .execute( "SELECT sum(distance) AS distance_summary FROM "
                                                     + CassandraTables.TRACKERS.name() + "."
@@ -345,11 +349,9 @@ public class CassandraDataControl extends LogInspector {
                                             patrulFuelStatistics.getAverageDistance()
                                             + consumptionData.getDistance() ); }
                                 patrulFuelStatistics.setAverageFuelConsumption(
-                                        patrulFuelStatistics.getAverageFuelConsumption() /
-                                                patrulFuelStatistics.getMap().size() );
+                                        patrulFuelStatistics.getAverageFuelConsumption() / patrulFuelStatistics.getMap().size() );
                                 patrulFuelStatistics.setAverageDistance(
-                                        patrulFuelStatistics.getAverageDistance() /
-                                                patrulFuelStatistics.getMap().size() );
+                                        patrulFuelStatistics.getAverageDistance() / patrulFuelStatistics.getMap().size() );
                                 patrulFuelStatistics.setUuid( patrul.getUuid() );
                                 return patrulFuelStatistics; } )
                             .onErrorReturn( new PatrulFuelStatistics() )
