@@ -162,7 +162,7 @@ public class CassandraDataControlForEscort extends CassandraConverter {
                     + ", latitude = " + latitude
                     + " where uuid = " + tupleOfCar.getUuid()
                     + " and trackerid = '"
-                    + tupleOfCar.getTrackerId() + "' IF EXISTS;" ); }
+                    + tupleOfCar.getTrackerId() + "';" ); }
 
     private final Function< UUID, Mono< TupleOfCar > > getCurrentTupleOfCar = uuid ->
             Mono.just( new TupleOfCar( this.getSession().execute( "SELECT * FROM "

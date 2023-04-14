@@ -133,7 +133,7 @@ public class CassandraDataControl extends LogInspector {
                     + CassandraTables.CARS
                     + " SET longitude = " + reqCar.getLongitude()
                     + ", latitude = " + reqCar.getLatitude()
-                    + " WHERE uuid = " + reqCar.getUuid() + " IF EXISTS;" );
+                    + " WHERE uuid = " + reqCar.getUuid() + ";" );
 
     private final Function< Position, String > addPosition = position -> {
         if ( super.getCheckTupleTrackerId().test( position.getDeviceId() ) ) CassandraDataControlForEscort
@@ -163,43 +163,36 @@ public class CassandraDataControl extends LogInspector {
         else Mono.just( position )
                 .flatMap( position1 -> this.getGetCarByNumber().apply( Map.of( "trackerId", position.getDeviceId() ) ) )
                 .subscribe( reqCar1 -> {
-                    if ( super.getCheckParam().test( reqCar1 )
-                            && super.getCheckReqCarTrackerId().test( position.getDeviceId() ) ) {
-                        // сохраняем в базу только если машина двигается
-                        if ( super.getCheckPosition().test( position ) )
-                            this.getSession().executeAsync( "INSERT INTO "
-                                    + CassandraTables.TRACKERS.name() + "."
-                                    + CassandraTables.TRACKERS_LOCATION_TABLE.name()
-                                    + "( imei, date, speed, latitude, longitude, address ) "
-                                    +  "VALUES ('" + position.getDeviceId()
-                                    + "', '" + position.getDeviceTime().toInstant()
-                                    + "', " + position.getSpeed()
-                                    + ", " + position.getLongitude()
-                                    + ", " + position.getLatitude()
-                                    + ", '' );" );
+                    if ( super.getCheckReqCar().test( reqCar1 ) ) {
+                        if ( super.getCheckReqCarTrackerId().test( position.getDeviceId() ) ) {
+                            // сохраняем в базу только если машина двигается
+                            if ( super.getCheckPosition().test( position ) )
+                                this.getSession().executeAsync( "INSERT INTO "
+                                        + CassandraTables.TRACKERS.name() + "."
+                                        + CassandraTables.TRACKERS_LOCATION_TABLE.name()
+                                        + "( imei, date, speed, latitude, longitude, address ) "
+                                        +  "VALUES ('" + position.getDeviceId()
+                                        + "', '" + position.getDeviceTime().toInstant()
+                                        + "', " + position.getSpeed()
+                                        + ", " + position.getLongitude()
+                                        + ", " + position.getLatitude() + ", '' );" );
 
-                        this.getGetPatrul()
-                                .apply( Map.of( "passportNumber", reqCar1.getPatrulPassportSeries() ) )
-                                .subscribe( patrul -> KafkaDataControl
-                                        .getInstance()
-                                        .getWriteToKafkaPosition()
-                                        .accept( super.getTrackerInfoMap()
-                                                .get( position.getDeviceId() )
-                                                .updateTime( position, reqCar1, patrul ) ) ); }
-
-                    else if ( super.getCheckReqCar().test( reqCar1 )
-                            && !super.getCheckReqCarTrackerId().test( position.getDeviceId() ) )
-                        this.getGetPatrul()
-                                .apply( Map.of( "passportNumber", reqCar1.getPatrulPassportSeries() ) )
-                                .subscribe( patrul -> super.getTrackerInfoMap()
-                                        .put( reqCar1.getTrackerId(),
-                                                this.getAddTackerInfo()
-                                                        .apply( new TrackerInfo(
-                                                                patrul,
-                                                                KafkaDataControl
-                                                                        .getInstance()
-                                                                        .getWriteToKafka()
-                                                                        .apply( reqCar1 ) ) ) ) );
+                            this.getGetPatrul().apply( Map.of( "passportNumber", reqCar1.getPatrulPassportSeries() ) )
+                                    .subscribe( patrul -> KafkaDataControl
+                                            .getInstance()
+                                            .getWriteToKafkaPosition()
+                                            .accept( super.getTrackerInfoMap()
+                                                    .get( position.getDeviceId() )
+                                                    .updateTime( position, reqCar1, patrul ) ) ); }
+                        else this.getGetPatrul().apply( Map.of( "passportNumber", reqCar1.getPatrulPassportSeries() ) )
+                                .subscribe( patrul -> super.getTrackerInfoMap().put(
+                                        reqCar1.getTrackerId(), this.getAddTackerInfo().apply(
+                                                new TrackerInfo(
+                                                        patrul,
+                                                        KafkaDataControl
+                                                                .getInstance()
+                                                                .getWriteToKafka()
+                                                                .apply( reqCar1 ) ) ) ) ); }
 
                     // в случае если попался не зарешистрированный трекер
                     else super.getUnregisteredTrackers().put( position.getDeviceId(), new Date() ); } );
