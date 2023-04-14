@@ -32,17 +32,14 @@ public class CassandraDataControl extends LogInspector {
     public static CassandraDataControl getInstance () { return instance != null ? instance : ( instance = new CassandraDataControl() ); }
 
     public void register () {
-        this.getGetAllTrackers()
-                .apply( false )
-                .subscribe( trackerInfo -> super.getTrackerInfoMap()
-                        .putIfAbsent( trackerInfo.getTrackerId(), trackerInfo ) );
+        this.getGetAllTrackers().apply( false )
+                .subscribe( trackerInfo -> super.getTrackerInfoMap().putIfAbsent( trackerInfo.getTrackerId(), trackerInfo ) );
 
         CassandraDataControlForEscort
                 .getInstance()
                 .getGetAllTrackers()
                 .get()
-                .subscribe( trackerInfo -> this.getTupleOfCarMap()
-                        .putIfAbsent( trackerInfo.getTrackerId(), trackerInfo ) ); }
+                .subscribe( trackerInfo -> this.getTupleOfCarMap().putIfAbsent( trackerInfo.getTrackerId(), trackerInfo ) ); }
 
     private CassandraDataControl () {
         SocketOptions options = new SocketOptions();
