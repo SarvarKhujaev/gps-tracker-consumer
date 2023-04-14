@@ -3,9 +3,7 @@ package com.ssd.mvd.entity;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.datastax.driver.core.Row;
 import com.ssd.mvd.constants.Status;
-
 import java.util.UUID;
-import java.util.Map;
 
 @lombok.Data
 @lombok.NoArgsConstructor
@@ -26,7 +24,6 @@ public class Patrul {
     private String passportNumber;
 
     private Status status; // busy, free by default, available or not available
-    private Map< String, String > listOfTasks; // the list which will store ids of all tasks which have been completed by Patrul
 
     public Patrul ( Row row ) {
         this.setUuid( row.getUUID( "uuid" ) );

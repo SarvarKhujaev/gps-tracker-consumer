@@ -49,7 +49,7 @@ public class CarForEscortController extends LogInspector {
     public Mono< TupleOfCar > getCurrentForEscort ( String gosNumber ) {
         return CassandraDataControlForEscort
             .getInstance()
-            .getGetCurrentTupleofCar()
+            .getGetCurrentTupleOfCar()
             .apply( UUID.fromString( gosNumber ) )
             .onErrorContinue( super::logging ); }
 

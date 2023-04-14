@@ -1,6 +1,5 @@
 package com.ssd.mvd.database;
 
-import com.ssd.mvd.controller.UnirestController;
 import com.ssd.mvd.constants.CassandraTables;
 import com.ssd.mvd.kafka.KafkaDataControl;
 import com.ssd.mvd.entity.*;
@@ -108,13 +107,12 @@ public class CassandraDataControlForEscort extends CassandraConverter {
         return trackerInfo; };
 
     private final Function< TupleOfCar, Mono< ApiResponseModel > > updateEscortCar = tupleOfCar ->
-            this.getGetCurrentTupleofCar()
+            this.getGetCurrentTupleOfCar()
                 .apply( tupleOfCar.getUuid() )
                 .flatMap( tupleOfCar1 -> {
                     if ( !tupleOfCar1.getTrackerId().equals( tupleOfCar.getTrackerId() )
                             && !super.getCheckTracker().test( tupleOfCar.getTrackerId() ) )
-                        return super.getFunction().apply( Map.of( "message", "Wrong TrackerId",
-                                    "code", 201 ) );
+                        return super.getFunction().apply( Map.of( "message", "Wrong TrackerId", "code", 201 ) );
 
                     if ( super.getCheckParam().test( tupleOfCar1.getUuidOfPatrul() )
                             && super.getCheckParam().test( tupleOfCar.getUuidOfPatrul() )
@@ -150,10 +148,10 @@ public class CassandraDataControlForEscort extends CassandraConverter {
                             + tupleOfCar.getLongitude() + ", " +
                             tupleOfCar.getAverageFuelConsumption() + " );" )
                             .wasApplied()
-                            ? super.getFunction().apply( Map.of( "message", "Car" + tupleOfCar.getGosNumber()
-                                    + " was updated successfully" ) )
-                            : super.getFunction().apply( Map.of(
-                                    "message", "This car does not exists",
+                            ? super.getFunction().apply(
+                                    Map.of( "message", "Car" + tupleOfCar.getGosNumber() + " was updated successfully" ) )
+                            : super.getFunction().apply(
+                                    Map.of( "message", "This car does not exists",
                                     "code", 201,
                                     "success", false ) ); } );
 
@@ -167,34 +165,32 @@ public class CassandraDataControlForEscort extends CassandraConverter {
                     + " and trackerid = '"
                     + tupleOfCar.getTrackerId() + "' IF EXISTS;" ); }
 
-    private final Function< UUID, Mono< TupleOfCar > > getCurrentTupleofCar = uuid ->
-            Mono.just( this.getSession().execute( "SELECT * FROM "
-                    + CassandraTables.ESCORT.name() + "."
-                    + CassandraTables.TUPLE_OF_CAR.name()
-                    + " WHERE uuid = " + uuid + ";" ).one() )
-            .map( TupleOfCar::new );
+    private final Function< UUID, Mono< TupleOfCar > > getCurrentTupleOfCar = uuid ->
+            Mono.just( new TupleOfCar( this.getSession().execute( "SELECT * FROM "
+                            + CassandraTables.ESCORT.name() + "."
+                            + CassandraTables.TUPLE_OF_CAR.name()
+                            + " WHERE uuid = " + uuid + ";" ).one() ) );
 
-    private final Function< String, Mono< ApiResponseModel > > deleteTupleOfCar = gosNumber ->
-            this.getGetCurrentTupleofCar()
-            .apply( UUID.fromString( gosNumber ) )
+    private final Function< String, Mono< ApiResponseModel > > deleteTupleOfCar = uuid ->
+            this.getGetCurrentTupleOfCar().apply( UUID.fromString( uuid ) )
             .flatMap( tupleOfCar1 -> !super.getCheckParam().test( tupleOfCar1.getUuidOfPatrul() )
                     && !super.getCheckParam().test( tupleOfCar1.getUuidOfEscort() )
-                    ? super.getFunction().apply( Map.of(
-                            "message", gosNumber + " was removed successfully",
+                    ? super.getFunction().apply(
+                            Map.of( "message", uuid + " was removed successfully",
                             "success", this.getSession().execute (
                                     "BEGIN BATCH " +
                                             "DELETE FROM "
                                             + CassandraTables.ESCORT.name() + "."
                                             + CassandraTables.TUPLE_OF_CAR.name()
-                                            + " where uuid = " + UUID.fromString( gosNumber ) + ";" +
+                                            + " where uuid = " + UUID.fromString( uuid ) + ";" +
                                             " DELETE FROM "
                                             + CassandraTables.ESCORT.name() + "."
                                             + CassandraTables.TRACKERSID.name()
                                             + " WHERE trackersId = '" + tupleOfCar1.getTrackerId() + "';"
                                             + " APPLY BATCH;" )
                                     .wasApplied() ) )
-                    : super.getFunction().apply( Map.of(
-                            "message", "You cannot delete this car, it is linked to Patrul or Escort",
+                    : super.getFunction().apply(
+                            Map.of( "message", "You cannot delete this car, it is linked to Patrul or Escort",
                             "code", 201,
                             "success", false ) ) );
 
@@ -236,10 +232,10 @@ public class CassandraDataControlForEscort extends CassandraConverter {
                                         + ", carType = '" + patrul.getCarType() + "'"
                                         + ", carNumber = '" + patrul.getCarNumber() + "'"
                                         + " where uuid = " + patrul.getUuid() + ";" );
-                                return super.getFunction().apply( Map.of(
-                                                "message", "Escort was saved successfully",
+                                return super.getFunction().apply(
+                                        Map.of( "message", "Escort was saved successfully",
                                                 "success", super.getCheckParam().test(
-                                                super.getTupleOfCarMap().putIfAbsent(
+                                                        super.getTupleOfCarMap().putIfAbsent(
                                                         KafkaDataControl
                                                                 .getInstance()
                                                                 .getWriteToKafkaTupleOfCar()
@@ -247,22 +243,21 @@ public class CassandraDataControlForEscort extends CassandraConverter {
                                                                 .getTrackerId(),
                                                         this.getSaveTackerInfo()
                                                                 .apply( new TrackerInfo( patrul, tupleOfCar ) ) ) ) ) ); } )
-                            : super.getFunction().apply( Map.of(
-                                            "message", "Escort was saved successfully",
+                            : super.getFunction().apply(
+                                    Map.of( "message", "Escort was saved successfully",
                                             "success", super.getCheckParam().test(
                             super.getTupleOfCarMap()
                                     .putIfAbsent( tupleOfCar.getTrackerId(),
-                                            this.getSaveTackerInfo()
-                                                    .apply( new TrackerInfo( tupleOfCar ) ) ) ) ) )
-                    : super.getFunction().apply( Map.of(
-                            "message", "This car is already exists",
+                                            this.getSaveTackerInfo().apply( new TrackerInfo( tupleOfCar ) ) ) ) ) )
+                    : super.getFunction().apply(
+                            Map.of( "message", "This car is already exists",
                             "code", 201 ) )
-            : super.getFunction().apply( Map.of(
-                    "message", "This trackers or gosnumber is already registered to another car, so choose another one",
+            : super.getFunction().apply(
+                    Map.of( "message", "This trackers or gosnumber is already registered to another car, so choose another one",
                     "code", 201 ) );
 
     private final Function< String, Mono< TupleOfCar > > getTupleOfCarByTracker = trackersId -> {
-        Row row = this.getSession().execute( "SELECT * FROM "
+        final Row row = this.getSession().execute( "SELECT * FROM "
                 + CassandraTables.ESCORT.name() + "."
                 + CassandraTables.TUPLE_OF_CAR.name()
                 + " where trackerId = '" + trackersId + "';" ).one();
@@ -312,7 +307,7 @@ public class CassandraDataControlForEscort extends CassandraConverter {
                                     .getInstance()
                                     .getGetPatrul()
                                     .apply( Map.of( "uuid", tupleOfCar.getUuidOfPatrul().toString() ) )
-                                    .flatMap( patrul -> Mono.just( new TrackerInfo( patrul, tupleOfCar, row ) ) )
+                                    .map( patrul -> new TrackerInfo( patrul, tupleOfCar, row ) )
                             : Mono.just( new TrackerInfo( tupleOfCar, row ) ) ) )
             .sequential()
             .publishOn( Schedulers.single() );
@@ -357,10 +352,4 @@ public class CassandraDataControlForEscort extends CassandraConverter {
             .map( TupleOfCar::new )
             .sequential()
             .publishOn( Schedulers.single() );
-
-    public void clear () {
-        this.getSession().close();
-        this.getCluster().close();
-        cassandraDataControl = null;
-        super.logging( this.getClass().getName() + " is closed" ); }
 }
