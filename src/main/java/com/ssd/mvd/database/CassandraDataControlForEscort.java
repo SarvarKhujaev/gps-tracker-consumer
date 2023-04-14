@@ -296,7 +296,7 @@ public class CassandraDataControlForEscort extends CassandraConverter {
                     .all()
                     .stream()
                     .parallel() )
-            .parallel( super.getTupleOfCarMap().size() )
+            .parallel( super.getTupleOfCarMap().size() > 0 ? super.getTupleOfCarMap().size() : 5 )
             .runOn( Schedulers.parallel() )
             .flatMap( row -> this.getGetTupleOfCar()
                     .apply( row.getString( "gosnumber" ), row.getString( "trackersid" ) )

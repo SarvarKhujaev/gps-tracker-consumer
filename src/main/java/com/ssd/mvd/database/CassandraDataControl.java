@@ -289,7 +289,7 @@ public class CassandraDataControl extends LogInspector {
                     .all()
                     .stream()
                     .parallel() )
-            .parallel( super.getTrackerInfoMap().size() )
+            .parallel( super.getTrackerInfoMap().size() > 0 ? super.getTrackerInfoMap().size() : 5 )
             .runOn( Schedulers.parallel() )
             .filter( row -> !aBoolean || super.getCheckRow().test( row ) )
             .flatMap( row -> this.getGetCarByNumber().apply( Map.of( "gosnumber", row.getString( "gosnumber" ) ) )
