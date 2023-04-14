@@ -32,7 +32,7 @@ public class TrackerInfo {
     private Date lastActiveDate;
     private Date dateOfRegistration = new Date();
 
-    public TrackerInfo ( TupleOfCar tupleOfCar ) {
+    public TrackerInfo ( final TupleOfCar tupleOfCar ) {
         this.setStatus( true );
         this.setReqCar( null );
         this.setPatrul( null );
@@ -44,7 +44,7 @@ public class TrackerInfo {
         this.setGosNumber( tupleOfCar.getGosNumber() );
         this.setTrackerId( tupleOfCar.getTrackerId() ); }
 
-    public TrackerInfo ( Patrul patrul, ReqCar reqCar ) {
+    public TrackerInfo ( final Patrul patrul,  final ReqCar reqCar ) {
         this.setStatus( true );
         this.setTupleOfCar( null );
 
@@ -66,7 +66,7 @@ public class TrackerInfo {
         this.setTrackerId( reqCar.getTrackerId() );
         this.setPatrulPassportSeries( patrul.getPassportNumber() ); }
 
-    public TrackerInfo ( TupleOfCar tupleOfCar, Row row ) {
+    public TrackerInfo ( final TupleOfCar tupleOfCar,  final Row row ) {
         this.setTupleOfCar( tupleOfCar );
         this.setStatus( row.getBool( "status" ) );
         this.setGosNumber( tupleOfCar.getGosNumber() );
@@ -77,7 +77,7 @@ public class TrackerInfo {
         this.setDateOfRegistration( row.getTimestamp( "dateofregistration" ) );
         this.setTotalActivityTime( Math.abs( (long) row.getDouble( "totalActivityTime" ) ) ); }
 
-    public TrackerInfo ( Patrul patrul, TupleOfCar tupleOfCar ) {
+    public TrackerInfo ( final Patrul patrul,  final TupleOfCar tupleOfCar ) {
         this.setStatus( true );
         this.setReqCar( null );
         this.setPatrul( patrul );
@@ -89,7 +89,7 @@ public class TrackerInfo {
         this.setTrackerId( tupleOfCar.getTrackerId() );
         this.setPatrulPassportSeries( patrul.getPassportNumber() ); }
 
-    public TrackerInfo ( Patrul patrul, ReqCar reqCar, Row row ) {
+    public TrackerInfo ( final Patrul patrul,  final ReqCar reqCar, final Row row ) {
         this.setPatrul( patrul );
         this.setReqCar( reqCar );
         this.setGosNumber( reqCar.getGosNumber() );
@@ -104,7 +104,7 @@ public class TrackerInfo {
         this.setDateOfRegistration( row.getTimestamp( "dateofregistration" ) );
         this.setTotalActivityTime( Math.abs( (long) row.getDouble( "totalActivityTime" ) ) ); }
 
-    public TrackerInfo ( Patrul patrul, TupleOfCar tupleOfCar, Row row ) {
+    public TrackerInfo ( final Patrul patrul,  final TupleOfCar tupleOfCar, final Row row ) {
         this.setPatrul( patrul );
         this.setTupleOfCar( tupleOfCar );
         this.setStatus( row.getBool( "status" ) );
@@ -117,7 +117,7 @@ public class TrackerInfo {
         this.setDateOfRegistration( row.getTimestamp( "dateofregistration" ) );
         this.setTotalActivityTime( Math.abs( (long) row.getDouble( "totalActivityTime" ) ) ); }
 
-    private Position save ( ReqCar reqCar, Position position ) {
+    private Position save ( final ReqCar reqCar, final Position position ) {
         position.setCarGosNumber( reqCar.getGosNumber() );
         position.setCarType( reqCar.getVehicleType() );
 
@@ -137,7 +137,7 @@ public class TrackerInfo {
                 .accept( this.getReqCar() );
         return position; }
 
-    private TrackerInfo save ( Patrul patrul, Position position ) {
+    private TrackerInfo save ( final Patrul patrul,  final Position position ) {
         // обновляем позицию патрульного, и трекера
         position.setLongitudeOfTask( patrul.getLongitudeOfTask() );
         position.setLatitudeOfTask( patrul.getLatitudeOfTask() );
@@ -159,7 +159,7 @@ public class TrackerInfo {
         this.setPatrulPassportSeries( this.getPatrul().getPassportNumber() );
         return this; }
 
-    private TrackerInfo save ( TupleOfCar tupleOfCar, Position position ) {
+    private TrackerInfo save ( final TupleOfCar tupleOfCar,  final Position position ) {
         // обновляем позицию патрульного, и трекера
         position.setCarGosNumber( tupleOfCar.getGosNumber() );
         position.setCarType( tupleOfCar.getCarModel() );
@@ -178,7 +178,7 @@ public class TrackerInfo {
                         this.getTupleOfCar() );
         return this; }
 
-    public Position updateTime ( Position position, TupleOfCar tupleOfCar ) {
+    public Position updateTime ( final Position position, final TupleOfCar tupleOfCar ) {
         this.setPatrul( null );
         this.setPatrulPassportSeries( null );
         this.setLastActiveDate( new Date() );
@@ -192,7 +192,7 @@ public class TrackerInfo {
                 .apply( this.save( tupleOfCar, position ) );
         return position; }
 
-    public Position updateTime ( Position position, ReqCar reqCar, Patrul patrul ) {
+    public Position updateTime ( final Position position, final ReqCar reqCar, final Patrul patrul ) {
         CassandraDataControl
                 .getInstance()
                 .addValue( this, position.getSpeed() );
@@ -209,7 +209,7 @@ public class TrackerInfo {
                 .apply( this.save( patrul, this.save( reqCar, position ) ) );
         return position; }
 
-    public Position updateTime ( Position position, TupleOfCar tupleOfCar, Patrul patrul ) {
+    public Position updateTime ( final Position position, final TupleOfCar tupleOfCar, final Patrul patrul ) {
         this.setLastActiveDate( new Date() );
         this.setTotalActivityTime( Math.abs(
                 this.getTotalActivityTime()

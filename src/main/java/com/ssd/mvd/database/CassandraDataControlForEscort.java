@@ -107,8 +107,7 @@ public class CassandraDataControlForEscort extends CassandraConverter {
         return trackerInfo; };
 
     private final Function< TupleOfCar, Mono< ApiResponseModel > > updateEscortCar = tupleOfCar ->
-            this.getGetCurrentTupleOfCar()
-                .apply( tupleOfCar.getUuid() )
+            this.getGetCurrentTupleOfCar().apply( tupleOfCar.getUuid() )
                 .flatMap( tupleOfCar1 -> {
                     if ( !tupleOfCar1.getTrackerId().equals( tupleOfCar.getTrackerId() )
                             && !super.getCheckTracker().test( tupleOfCar.getTrackerId() ) )
@@ -173,26 +172,26 @@ public class CassandraDataControlForEscort extends CassandraConverter {
 
     private final Function< String, Mono< ApiResponseModel > > deleteTupleOfCar = uuid ->
             this.getGetCurrentTupleOfCar().apply( UUID.fromString( uuid ) )
-            .flatMap( tupleOfCar1 -> !super.getCheckParam().test( tupleOfCar1.getUuidOfPatrul() )
-                    && !super.getCheckParam().test( tupleOfCar1.getUuidOfEscort() )
-                    ? super.getFunction().apply(
-                            Map.of( "message", uuid + " was removed successfully",
-                            "success", this.getSession().execute (
-                                    "BEGIN BATCH " +
-                                            "DELETE FROM "
-                                            + CassandraTables.ESCORT.name() + "."
-                                            + CassandraTables.TUPLE_OF_CAR.name()
-                                            + " where uuid = " + UUID.fromString( uuid ) + ";" +
-                                            " DELETE FROM "
-                                            + CassandraTables.ESCORT.name() + "."
-                                            + CassandraTables.TRACKERSID.name()
-                                            + " WHERE trackersId = '" + tupleOfCar1.getTrackerId() + "';"
-                                            + " APPLY BATCH;" )
-                                    .wasApplied() ) )
-                    : super.getFunction().apply(
-                            Map.of( "message", "You cannot delete this car, it is linked to Patrul or Escort",
-                            "code", 201,
-                            "success", false ) ) );
+                    .flatMap( tupleOfCar1 -> !super.getCheckParam().test( tupleOfCar1.getUuidOfPatrul() )
+                            && !super.getCheckParam().test( tupleOfCar1.getUuidOfEscort() )
+                            ? super.getFunction().apply(
+                                    Map.of( "message", uuid + " was removed successfully",
+                                    "success", this.getSession().execute (
+                                            "BEGIN BATCH " +
+                                                    "DELETE FROM "
+                                                    + CassandraTables.ESCORT.name() + "."
+                                                    + CassandraTables.TUPLE_OF_CAR.name()
+                                                    + " where uuid = " + UUID.fromString( uuid ) + ";" +
+                                                    " DELETE FROM "
+                                                    + CassandraTables.ESCORT.name() + "."
+                                                    + CassandraTables.TRACKERSID.name()
+                                                    + " WHERE trackersId = '" + tupleOfCar1.getTrackerId() + "';"
+                                                    + " APPLY BATCH;" )
+                                            .wasApplied() ) )
+                            : super.getFunction().apply(
+                                    Map.of( "message", "You cannot delete this car, it is linked to Patrul or Escort",
+                                    "code", 201,
+                                    "success", false ) ) );
 
     private final Function< TupleOfCar, Mono< ApiResponseModel > > saveNewTupleOfCar = tupleOfCar ->
             super.getCheckTracker().test( tupleOfCar.getTrackerId() )
@@ -268,23 +267,22 @@ public class CassandraDataControlForEscort extends CassandraConverter {
                     + CassandraTables.ESCORT.name() + "."
                     + CassandraTables.TRACKERSID.name()
                     + " where trackersId = '" + trackerId + "';" ).one() )
-            .flatMap( row -> this.getGetTupleOfCar()
-                    .apply( row.getString( "gosnumber" ), row.getString( "trackersId" ) )
+            .flatMap( row -> this.getGetTupleOfCar().apply( row.getString( "gosnumber" ), row.getString( "trackersId" ) )
                     .flatMap( tupleOfCar -> super.getCheckParam().test( tupleOfCar.getUuidOfPatrul() )
                             ? CassandraDataControl
                                     .getInstance()
                                     .getGetPatrul()
                                     .apply( Map.of( "uuid", tupleOfCar.getUuidOfPatrul().toString() ) )
-                                    .flatMap( patrul -> Mono.just( new TrackerInfo( patrul, tupleOfCar, row ) ) )
+                                    .map( patrul -> new TrackerInfo( patrul, tupleOfCar, row ) )
                             : Mono.just( new TrackerInfo( tupleOfCar, row ) ) ) );
 
     private final BiFunction< String, String, Mono< TupleOfCar > > getTupleOfCar = ( gosNumber, trackersId ) -> {
-        try { return Mono.just( this.getSession().execute( "SELECT * FROM "
+        try { return Mono.just( new TupleOfCar(
+                this.getSession().execute( "SELECT * FROM "
                         + CassandraTables.ESCORT.name() + "."
                         + CassandraTables.TUPLE_OF_CAR.name()
-                        + " where gosNumber = '" + gosNumber + "';" ).one() )
-                .map( TupleOfCar::new );
-        } catch ( Exception e ) {
+                        + " where gosNumber = '" + gosNumber + "';" ).one() ) ); }
+        catch ( Exception e ) {
             this.getSession().execute( "DELETE FROM "
                     + CassandraTables.ESCORT.name() + "."
                     + CassandraTables.TRACKERSID.name()
@@ -298,7 +296,7 @@ public class CassandraDataControlForEscort extends CassandraConverter {
                     .all()
                     .stream()
                     .parallel() )
-            .parallel()
+            .parallel( super.getTupleOfCarMap().size() )
             .runOn( Schedulers.parallel() )
             .flatMap( row -> this.getGetTupleOfCar()
                     .apply( row.getString( "gosnumber" ), row.getString( "trackersid" ) )
