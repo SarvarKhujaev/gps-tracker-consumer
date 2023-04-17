@@ -1,13 +1,22 @@
 package com.ssd.mvd.entity;
 
 import com.datastax.driver.core.Row;
+import com.ssd.mvd.inspectors.DataValidateInspector;
 
 @lombok.Data
 public class Icons {
     private String icon1;
     private String icon2;
 
-    public Icons ( Row row ) {
-        this.setIcon1( row != null ? row.getString( "icon" ) : null );
-        this.setIcon2( row != null ? row.getString( "icon2" ) : null ); }
+    public Icons ( final Row row ) {
+        this.setIcon1( DataValidateInspector
+                .getInstance()
+                .getCheckParam()
+                .test( row )
+                ? row.getString( "icon" ) : null );
+        this.setIcon2( DataValidateInspector
+                .getInstance()
+                .getCheckParam()
+                .test( row )
+                ? row.getString( "icon2" ) : null ); }
 }

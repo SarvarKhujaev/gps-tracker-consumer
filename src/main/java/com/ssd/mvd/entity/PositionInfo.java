@@ -10,7 +10,7 @@ public class PositionInfo {
     private String address;
     private Date positionWasSavedDate;
 
-    public PositionInfo ( Row row ) {
+    public PositionInfo ( final Row row ) {
         this.setLng( row.getDouble( "latitude" ) );
         this.setLat( row.getDouble( "longitude" ) );
         this.setAddress( row.getString( "address" ) );

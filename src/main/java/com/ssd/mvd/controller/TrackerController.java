@@ -1,5 +1,6 @@
 package com.ssd.mvd.controller;
 
+import com.ssd.mvd.inspectors.DataValidateInspector;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -15,20 +16,9 @@ import java.util.Date;
 import java.util.Map;
 
 @RestController
-public class TrackerController extends Inspector {
+public class TrackerController extends DataValidateInspector {
     @MessageMapping ( value = "PING" )
     public Mono< Boolean > ping () { return Mono.just( true ); }
-
-    @MessageMapping ( value = "GET_ADDRESS" )
-    public Mono< String > getAddress ( Point point ) {
-        return point != null
-                && point.getLatitude() != null
-                && point.getLongitude() != null
-                ? Mono.just( UnirestController
-                .getInstance()
-                .getGetAddressByLocation()
-                .apply( point.getLatitude(), point.getLongitude() ) )
-                : Mono.empty(); }
 
     @MessageMapping( value = "ONLINE" )
     public Flux< TrackerInfo > online () { return CassandraDataControl
@@ -57,20 +47,32 @@ public class TrackerController extends Inspector {
             .apply( true )
             .map( LastPosition::new ); }
 
-    @MessageMapping ( "GET_TRACKER_HISTORY" )
-    public Flux< PositionInfo > getTrackerHistory ( Request request ) { return CassandraDataControl
-            .getInstance()
-            .getGetHistoricalPosition()
-            .apply( request )
-            .sort( Comparator.comparing( PositionInfo::getPositionWasSavedDate ) ); }
-
     @MessageMapping ( value = "GET_ALL_UNREGISTERED_TRACKERS" )
     public Mono< Map< String, Date > > GET_ALL_UNREGISTERED_TRACKERS () { return Mono.just( super.getUnregisteredTrackers() ); }
 
+    @MessageMapping ( value = "GET_ADDRESS" )
+    public Mono< String > getAddress ( final Point point ) {
+        return super.getCheck().apply( point, 8 )
+                ? Mono.just( UnirestController
+                .getInstance()
+                .getGetAddressByLocation()
+                .apply( point.getLatitude(), point.getLongitude() ) )
+                : Mono.empty(); }
+
+    @MessageMapping ( "GET_TRACKER_HISTORY" )
+    public Flux< PositionInfo > getTrackerHistory ( final Request request ) {
+        return super.getCheck().apply( request, 7 )
+                ? CassandraDataControl
+                .getInstance()
+                .getGetHistoricalPosition()
+                .apply( request )
+                .sort( Comparator.comparing( PositionInfo::getPositionWasSavedDate ) )
+                : Flux.empty(); }
+
     @MessageMapping ( value = "CALCULATE_AVERAGE_FUEL_CONSUMPTION" )
-    public Mono< PatrulFuelStatistics > calculate_average_fuel_consumption ( Request request ) {
-        return CassandraDataControl
-            .getInstance()
-            .getCalculate_average_fuel_consumption()
-            .apply( request ); }
+    public Mono< PatrulFuelStatistics > calculate_average_fuel_consumption ( final Request request ) {
+            return CassandraDataControl
+                    .getInstance()
+                    .getCalculate_average_fuel_consumption()
+                    .apply( request ); }
 }

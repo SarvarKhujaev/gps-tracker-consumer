@@ -25,7 +25,7 @@ public class Patrul {
 
     private Status status; // busy, free by default, available or not available
 
-    public Patrul ( Row row ) {
+    public Patrul ( final Row row ) {
         this.setUuid( row.getUUID( "uuid" ) );
         this.setStatus( Status.valueOf( row.getString( "status" ) ) );
 

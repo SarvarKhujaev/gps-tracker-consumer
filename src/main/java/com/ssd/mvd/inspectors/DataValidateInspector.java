@@ -20,36 +20,32 @@ import static java.lang.Math.*;
 
 @lombok.Data
 public class DataValidateInspector extends Inspector {
+    private static final Double P = PI / 180;
+    private final Date date = new Date( 1605006666774L );
     private final static DataValidateInspector INSPECTOR = new DataValidateInspector();
     public static DataValidateInspector getInstance() { return INSPECTOR; }
 
-    private final Date date = new Date( 1605006666774L );
-
     private final Predicate< Object > checkParam = Objects::nonNull;
 
-    private final Function< Integer, Integer > checkDifference = integer -> integer > 0 && integer < 100 ? integer : 10;
-
-    private final Predicate< String > checkTupleTrackerId = s -> super.getTupleOfCarMap().containsKey( s );
-
-    private final Predicate< String > checkReqCarTrackerId = s -> super.getTrackerInfoMap().containsKey( s );
-
-    private final Predicate< Position > checkPosition = position ->
-            position.getLatitude() > 0
-            && position.getSpeed() > 0
-            && position.getLongitude() > 0
-            && position.getDeviceTime().after( this.getDate() );
-
-    private final Predicate< Row > checkRow = row -> row.getDouble( "longitude" ) > 0 && row.getDouble( "latitude" ) > 0;
-
-    private final Predicate< ReqCar > checkReqCar = reqCar ->
-            reqCar != null
-            && reqCar.getPatrulPassportSeries() != null
-            && reqCar.getPatrulPassportSeries().length() > 1
-            && reqCar.getPatrulPassportSeries().compareTo( "null" ) != 0;
-
-    private final Predicate< Row > checkTrackerTime = row -> Math.abs( row.getDouble( "totalActivityTime" ) ) > 0;
-
-    private final Predicate< Request > checkRequest = request -> request.getStartTime() == null && request.getEndTime() == null;
+    private final BiFunction< Object, Integer, Boolean > check = ( o, integer ) -> switch ( integer ) {
+        case 1 -> super.getTupleOfCarMap().containsKey( String.valueOf( o ) );
+        case 2 -> super.getTrackerInfoMap().containsKey( String.valueOf( o ) );
+        case 4 -> ( (Row) o ).getDouble( "longitude" ) > 0 && ( (Row) o ).getDouble( "latitude" ) > 0;
+        case 5 -> ( (Request) o ).getStartTime() == null && ( (Request) o ).getEndTime() == null;
+        case 6 -> ( (Position) o ).getLatitude() > 0
+                && ( (Position) o ).getSpeed() > 0
+                && ( (Position) o ).getLongitude() > 0
+                && ( (Position) o ).getDeviceTime().after( this.getDate() );
+        case 7 -> ( (Request) o ).getTrackerId() != null
+                && ( (Request) o ).getEndTime() != null
+                && ( (Request) o ).getStartTime() != null;
+        case 8 -> o != null
+                && ( (Point) o ).getLatitude() != null
+                && ( (Point) o ).getLongitude() != null;
+        default -> o != null
+                && ( (ReqCar) o ).getPatrulPassportSeries() != null
+                && ( (ReqCar) o ).getPatrulPassportSeries().length() > 1
+                && ( (ReqCar) o ).getPatrulPassportSeries().compareTo( "null" ) != 0; };
 
     private final BiFunction< List< Point >, Row, Boolean > calculateDistanceInSquare = ( pointList, row ) -> {
         Boolean result = false;
@@ -66,29 +62,12 @@ public class DataValidateInspector extends Inspector {
             j = i; }
         return result; };
 
-    private static final Double p = PI / 180;
+    private final Function< Integer, Integer > checkDifference = integer -> integer > 0 && integer < 100 ? integer : 10;
 
     private final BiFunction< Point, Row, Double > calculate = ( first, second ) ->
-            12742 * asin( sqrt( 0.5 - cos( ( second.getDouble( "latitude" ) - first.getLatitude() ) * p ) / 2
-                    + cos( first.getLatitude() * p ) * cos( second.getDouble( "latitude" ) * p )
-                    * ( 1 - cos( ( second.getDouble( "longitude" ) - first.getLongitude() ) * p ) ) / 2 ) ) * 1000;
-
-    private final Predicate< String > checkTracker = trackerId -> !this.getCheckParam().test(
-            CassandraDataControl
-                    .getInstance()
-                    .getSession()
-                    .execute ( "SELECT * FROM "
-                            + CassandraTables.ESCORT + "."
-                            + CassandraTables.TRACKERSID
-                            + " WHERE trackersId = '" + trackerId + "';" ).one() )
-            && !this.getCheckParam().test(
-                    CassandraDataControl
-                            .getInstance()
-                            .getSession()
-                            .execute( "SELECT * FROM "
-                            + CassandraTables.TRACKERS + "."
-                            + CassandraTables.TRACKERSID
-                            + " WHERE trackersId = '" + trackerId + "';" ).one() );
+            12742 * asin( sqrt( 0.5 - cos( ( second.getDouble( "latitude" ) - first.getLatitude() ) * P) / 2
+                    + cos( first.getLatitude() * P) * cos( second.getDouble( "latitude" ) * P)
+                    * ( 1 - cos( ( second.getDouble( "longitude" ) - first.getLongitude() ) * P) ) / 2 ) ) * 1000;
 
     private final Predicate< String > checkCarNumber = carNumber ->
             !this.getCheckParam().test(

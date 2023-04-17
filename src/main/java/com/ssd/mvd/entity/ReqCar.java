@@ -20,7 +20,7 @@ public class ReqCar {
     private Double longitude;
     private Double averageFuelSize; // средний расход топлива по документам
 
-    public ReqCar ( Row row ) {
+    public ReqCar ( final Row row ) {
         this.setUuid( row.getUUID( "uuid" ) );
 
         this.setGosNumber( row.getString( "gosNumber" ) );

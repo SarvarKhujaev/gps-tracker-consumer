@@ -130,8 +130,8 @@ public class TrackerInfo {
         this.setReqCar( reqCar );
         if ( DataValidateInspector
                 .getInstance()
-                .getCheckPosition()
-                .test( position ) ) CassandraDataControl
+                .getCheck()
+                .apply( position, 6 ) ) CassandraDataControl
                 .getInstance()
                 .getUpdateReqCarPosition()
                 .accept( this.getReqCar() );

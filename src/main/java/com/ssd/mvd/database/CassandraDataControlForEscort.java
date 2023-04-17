@@ -13,12 +13,11 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.function.*;
-import java.util.List;
 import java.util.UUID;
+import java.util.List;
 import java.util.Map;
-import lombok.Data;
 
-@Data
+@lombok.Data
 public class CassandraDataControlForEscort extends CassandraConverter {
     private final Session session = CassandraDataControl.getInstance().getSession();
     private final Cluster cluster = CassandraDataControl.getInstance().getCluster();
@@ -71,16 +70,16 @@ public class CassandraDataControlForEscort extends CassandraConverter {
         super.logging( "CassandraDataControlForEscort is ready" ); }
 
     private final Consumer< Position > savePosition = position -> {
-        if ( super.getCheckPosition().test( position ) ) this.getSession().execute( "INSERT INTO "
-                + CassandraTables.ESCORT.name() + "."
-                + CassandraTables.ESCORTLOCATION.name()
-                + "( imei, date, speed, altitude, longitude, address ) "
-                +  "VALUES ('" + position.getDeviceId()
-                + "', '" + position.getDeviceTime().toInstant()
-                + "', " + position.getSpeed()
-                + ", " + position.getLongitude()
-                + ", " + position.getLatitude()
-                + ", '" + "' );" ); };
+            if ( super.getCheck().apply( position, 6 ) ) this.getSession().execute( "INSERT INTO "
+                    + CassandraTables.ESCORT.name() + "."
+                    + CassandraTables.ESCORTLOCATION.name()
+                    + "( imei, date, speed, altitude, longitude, address ) "
+                    +  "VALUES ('" + position.getDeviceId()
+                    + "', '" + position.getDeviceTime().toInstant()
+                    + "', " + position.getSpeed()
+                    + ", " + position.getLongitude()
+                    + ", " + position.getLatitude()
+                    + ", '" + "' );" ); };
 
     private final Function< TrackerInfo, TrackerInfo > saveTackerInfo = trackerInfo -> {
         this.getSession().execute( ( "INSERT INTO "
@@ -110,7 +109,7 @@ public class CassandraDataControlForEscort extends CassandraConverter {
             this.getGetCurrentTupleOfCar().apply( tupleOfCar.getUuid() )
                 .flatMap( tupleOfCar1 -> {
                     if ( !tupleOfCar1.getTrackerId().equals( tupleOfCar.getTrackerId() )
-                            && !super.getCheckTracker().test( tupleOfCar.getTrackerId() ) )
+                            && !super.getCheck().apply( tupleOfCar.getTrackerId(), 1 ) )
                         return super.getFunction().apply( Map.of( "message", "Wrong TrackerId", "code", 201 ) );
 
                     if ( super.getCheckParam().test( tupleOfCar1.getUuidOfPatrul() )
@@ -194,7 +193,7 @@ public class CassandraDataControlForEscort extends CassandraConverter {
                                     "success", false ) ) );
 
     private final Function< TupleOfCar, Mono< ApiResponseModel > > saveNewTupleOfCar = tupleOfCar ->
-            super.getCheckTracker().test( tupleOfCar.getTrackerId() )
+            super.getCheck().apply( tupleOfCar.getTrackerId(), 1 )
             && super.getCheckCarNumber().test( tupleOfCar.getGosNumber() )
                     ? this.getSession().execute( "INSERT INTO "
                             + CassandraTables.ESCORT.name() + "."
