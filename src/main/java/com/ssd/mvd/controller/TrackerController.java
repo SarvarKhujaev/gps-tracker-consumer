@@ -1,11 +1,10 @@
 package com.ssd.mvd.controller;
 
-import com.ssd.mvd.inspectors.DataValidateInspector;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ssd.mvd.inspectors.DataValidateInspector;
 import com.ssd.mvd.database.CassandraDataControl;
-import com.ssd.mvd.inspectors.Inspector;
 import com.ssd.mvd.entity.*;
 
 import reactor.core.publisher.Flux;
@@ -40,13 +39,6 @@ public class TrackerController extends DataValidateInspector {
             .getGetAllTrackers()
             .apply( true ); }
 
-    @MessageMapping ( value = "GET_ALL_TRACKERS_ID" )
-    public Flux< LastPosition > getAllTrackersId () { return CassandraDataControl
-            .getInstance()
-            .getGetAllTrackers()
-            .apply( true )
-            .map( LastPosition::new ); }
-
     @MessageMapping ( value = "GET_ALL_UNREGISTERED_TRACKERS" )
     public Mono< Map< String, Date > > GET_ALL_UNREGISTERED_TRACKERS () { return Mono.just( super.getUnregisteredTrackers() ); }
 
@@ -68,6 +60,16 @@ public class TrackerController extends DataValidateInspector {
                 .apply( request )
                 .sort( Comparator.comparing( PositionInfo::getPositionWasSavedDate ) )
                 : Flux.empty(); }
+
+    @MessageMapping ( value = "GET_ALL_TRACKERS_ID" )
+    public Flux< LastPosition > getAllTrackersId ( final Map< String, Long > params ) { return CassandraDataControl
+            .getInstance()
+            .getGetAllTrackers()
+            .apply( true )
+            .filter( trackerInfo -> super.getCheckParam().test( params ) && params.size() > 0
+                    ? super.getCheckParams().apply( trackerInfo.getPatrul(), params )
+                    : true )
+            .map( LastPosition::new ); }
 
     @MessageMapping ( value = "CALCULATE_AVERAGE_FUEL_CONSUMPTION" )
     public Mono< PatrulFuelStatistics > calculate_average_fuel_consumption ( final Request request ) {

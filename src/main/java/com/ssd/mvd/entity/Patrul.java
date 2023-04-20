@@ -23,11 +23,19 @@ public class Patrul {
     private String policeType; // choosing from dictionary
     private String passportNumber;
 
+    private Long regionId;
+    private Long mahallaId;
+    private Long districtId; // choosing from dictionary
+
     private Status status; // busy, free by default, available or not available
 
     public Patrul ( final Row row ) {
         this.setUuid( row.getUUID( "uuid" ) );
         this.setStatus( Status.valueOf( row.getString( "status" ) ) );
+
+        this.setRegionId( row.getLong( "regionId" ) );
+        this.setMahallaId( row.getLong( "mahallaId" ) );
+        this.setDistrictId( row.getLong( "districtId" ) );
 
         this.setLatitudeOfTask( row.getDouble( "latitudeOfTask" ) );
         this.setLongitudeOfTask( row.getDouble( "longitudeOfTask" ) );

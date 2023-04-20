@@ -1,5 +1,6 @@
 package com.ssd.mvd.entity;
 
+import com.ssd.mvd.inspectors.DataValidateInspector;
 import com.ssd.mvd.database.CassandraDataControl;
 import com.ssd.mvd.constants.Status;
 import java.util.UUID;
@@ -17,21 +18,22 @@ public class LastPosition {
     private Double lastLongitude;
 
     // Patrul data
-    private UUID patrulUUID;
-    private String taskId;
     private Status status;
+    private UUID patrulUUID;
+
+    private String taskId;
     private String patrulName;
     private String policeType;
     private String patrulpassportSeries;
 
-    public LastPosition ( TrackerInfo trackerInfo ) {
+    public LastPosition ( final TrackerInfo trackerInfo ) {
         this.setCarType( trackerInfo.getReqCar().getVehicleType() );
         this.setTrackerId( trackerInfo.getReqCar().getTrackerId() );
         this.setLastLatitude( trackerInfo.getReqCar().getLatitude() );
         this.setCarGosNumber( trackerInfo.getReqCar().getGosNumber() );
         this.setLastLongitude( trackerInfo.getReqCar().getLongitude() );
 
-        Icons icons = CassandraDataControl
+        final Icons icons = CassandraDataControl
                 .getInstance()
                 .getGetPoliceType()
                 .apply( trackerInfo.getPatrul().getPoliceType() );
@@ -44,14 +46,17 @@ public class LastPosition {
         this.setPoliceType( trackerInfo.getPatrul().getPoliceType() );
         this.setPatrulpassportSeries( trackerInfo.getPatrul().getPassportNumber() ); }
 
-    public LastPosition ( TrackerInfo trackerInfo, Patrul patrul ) {
+    public LastPosition ( final TrackerInfo trackerInfo, final Patrul patrul ) {
         this.setCarType( trackerInfo.getTupleOfCar().getCarModel() );
         this.setTrackerId( trackerInfo.getTupleOfCar().getTrackerId() );
         this.setLastLatitude( trackerInfo.getTupleOfCar().getLatitude() );
         this.setCarGosNumber( trackerInfo.getTupleOfCar().getGosNumber() );
         this.setLastLongitude( trackerInfo.getTupleOfCar().getLongitude() );
 
-        if ( patrul != null ) {
+        if ( DataValidateInspector
+                .getInstance()
+                .getCheckParam()
+                .test( patrul ) ) {
             this.setTaskId( patrul.getTaskId() );
             this.setStatus( patrul.getStatus() );
             this.setPatrulUUID( patrul.getUuid() );

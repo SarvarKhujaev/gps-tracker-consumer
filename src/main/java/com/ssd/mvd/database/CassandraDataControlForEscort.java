@@ -234,18 +234,18 @@ public class CassandraDataControlForEscort extends CassandraConverter {
                                         Map.of( "message", "Escort was saved successfully",
                                                 "success", super.getCheckParam().test(
                                                         super.getTupleOfCarMap().putIfAbsent(
-                                                        KafkaDataControl
+                                                                KafkaDataControl
                                                                 .getInstance()
                                                                 .getWriteToKafkaTupleOfCar()
                                                                 .apply( tupleOfCar )
                                                                 .getTrackerId(),
-                                                        this.getSaveTackerInfo()
-                                                                .apply( new TrackerInfo( patrul, tupleOfCar ) ) ) ) ) ); } )
+                                                        this.getSaveTackerInfo().apply( new TrackerInfo( patrul, tupleOfCar ) ) ) ) ) ); } )
                             : super.getFunction().apply(
                                     Map.of( "message", "Escort was saved successfully",
                                             "success", super.getCheckParam().test(
-                            super.getTupleOfCarMap().putIfAbsent(
-                                    tupleOfCar.getTrackerId(), this.getSaveTackerInfo().apply( new TrackerInfo( tupleOfCar ) ) ) ) ) )
+                                                    super.getTupleOfCarMap().putIfAbsent(
+                                                            tupleOfCar.getTrackerId(),
+                                                            this.getSaveTackerInfo().apply( new TrackerInfo( tupleOfCar ) ) ) ) ) )
                     : super.getFunction().apply( Map.of( "message", "This car is already exists", "code", 201 ) )
             : super.getFunction().apply(
                     Map.of( "message", "This trackers or gosnumber is already registered to another car, so choose another one", "code", 201 ) );
@@ -294,7 +294,7 @@ public class CassandraDataControlForEscort extends CassandraConverter {
             .parallel( super.getCheckDifference().apply( super.getTupleOfCarMap().size() ) )
             .runOn( Schedulers.parallel() )
             .flatMap( row -> this.getGetTupleOfCar().apply( row.getString( "gosnumber" ), row.getString( "trackersid" ) )
-                    .flatMap( tupleOfCar -> tupleOfCar.getUuidOfPatrul() != null
+                    .flatMap( tupleOfCar -> super.getCheckParam().test( tupleOfCar.getUuidOfPatrul() )
                             ? CassandraDataControl
                                     .getInstance()
                                     .getGetPatrul()
