@@ -5,13 +5,13 @@ import com.ssd.mvd.constants.CassandraTables;
 import com.datastax.driver.core.Row;
 import com.ssd.mvd.entity.*;
 
-import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.function.Function;
 import java.util.Objects;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import static java.lang.Math.cos;
 import static java.lang.Math.*;
@@ -86,8 +86,11 @@ public class DataValidateInspector extends Inspector {
                             + CassandraTables.CARS.name()
                             + " WHERE gosnumber = '" + carNumber + "';" ).one() );
 
-    private final BiFunction<Patrul, Map< String, Long >, Boolean > checkParams = ( patrul, params ) ->
-            ( params.containsKey( "tuman" ) && Objects.equals( patrul.getRegionId(), params.get( "tuman" ) ) )
-            ^ ( params.containsKey( "viloyat" ) && Objects.equals( patrul.getDistrictId(), params.get( "viloyat" ) ) )
-            ^ ( params.containsKey( "mahalla" ) && Objects.equals( patrul.getMahallaId(), params.get( "mahalla" ) ) );
+    private final BiFunction<Patrul, Map< String, Long >, Boolean > checkParams = ( patrul, params ) -> switch ( params.size() ) {
+        case 1 -> params.containsKey( "viloyat" ) && Objects.equals( patrul.getRegionId(), params.get( "viloyat" ) );
+        case 2 -> ( params.containsKey( "tuman" ) && Objects.equals( patrul.getRegionId(), params.get( "tuman" ) ) )
+                && ( params.containsKey( "viloyat" ) && Objects.equals( patrul.getDistrictId(), params.get( "viloyat" ) ) );
+        default -> ( params.containsKey( "tuman" ) && Objects.equals( patrul.getRegionId(), params.get( "tuman" ) ) )
+                && ( params.containsKey( "viloyat" ) && Objects.equals( patrul.getDistrictId(), params.get( "viloyat" ) ) )
+                && ( params.containsKey( "mahalla" ) && Objects.equals( patrul.getMahallaId(), params.get( "mahalla" ) ) ); };
 }
