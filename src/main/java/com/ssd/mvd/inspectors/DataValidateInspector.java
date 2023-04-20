@@ -86,11 +86,11 @@ public class DataValidateInspector extends Inspector {
                             + CassandraTables.CARS.name()
                             + " WHERE gosnumber = '" + carNumber + "';" ).one() );
 
-    private final BiFunction<Patrul, Map< String, Long >, Boolean > checkParams = ( patrul, params ) -> switch ( params.size() ) {
-        case 1 -> params.containsKey( "viloyat" ) && Objects.equals( patrul.getRegionId(), params.get( "viloyat" ) );
-        case 2 -> ( params.containsKey( "tuman" ) && Objects.equals( patrul.getRegionId(), params.get( "tuman" ) ) )
-                && ( params.containsKey( "viloyat" ) && Objects.equals( patrul.getDistrictId(), params.get( "viloyat" ) ) );
-        default -> ( params.containsKey( "tuman" ) && Objects.equals( patrul.getRegionId(), params.get( "tuman" ) ) )
-                && ( params.containsKey( "viloyat" ) && Objects.equals( patrul.getDistrictId(), params.get( "viloyat" ) ) )
-                && ( params.containsKey( "mahalla" ) && Objects.equals( patrul.getMahallaId(), params.get( "mahalla" ) ) ); };
+    private final BiFunction< Patrul, Map< String, Long >, Boolean > checkParams = ( patrul, params ) -> switch ( params.size() ) {
+            case 1 -> params.containsKey( "viloyat" ) && Objects.equals( patrul.getRegionId(), params.get( "viloyat" ) );
+            case 2 -> ( params.containsKey( "viloyat" ) && Objects.equals( patrul.getRegionId(), params.get( "viloyat" ) ) )
+                    && ( params.containsKey( "tuman" ) && Objects.equals( patrul.getDistrictId(), params.get( "tuman" ) ) );
+            default -> ( params.containsKey( "tuman" ) && Objects.equals( patrul.getDistrictId(), params.get( "tuman" ) ) )
+                    && ( params.containsKey( "viloyat" ) && Objects.equals( patrul.getRegionId(), params.get( "viloyat" ) ) )
+                    && ( params.containsKey( "mahalla" ) && Objects.equals( patrul.getMahallaId(), params.get( "mahalla" ) ) ); };
 }
