@@ -23,27 +23,15 @@ public class Position {
     private Double latitudeOfTask;
     private Double longitudeOfTask;
 
+    private Long regionId;
+    private Long mahallaId;
+    private Long districtId; // choosing from dictionary
+
+    // Tracker data
     private String deviceId;
-
-    public String getDeviceId() {
-        return deviceId;
-    }
-
     private Date deviceTime;
 
-    private double latitude;
-
-    public double getLatitude() {
-        return latitude;
-    }
-
-    private double longitude;
-
-    public double getLongitude() {
-        return longitude;
-    }
-
-    private double speed; // value in knots
-
-    public double getSpeed() { return speed; }
+    private Double speed; // value in knots
+    private Double latitude;
+    private Double longitude;
 }

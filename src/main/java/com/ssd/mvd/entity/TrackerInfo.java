@@ -49,7 +49,7 @@ public class TrackerInfo {
         this.setTupleOfCar( null );
 
         this.setPatrul( patrul );
-        Icons icons = CassandraDataControl
+        final Icons icons = CassandraDataControl
                 .getInstance()
                 .getGetPoliceType()
                 .apply( patrul.getPoliceType() );
@@ -146,12 +146,17 @@ public class TrackerInfo {
         position.setPatrulName( patrul.getName() );
         position.setStatus( patrul.getStatus() );
         position.setTaskId( patrul.getTaskId() );
-        Icons icons = CassandraDataControl
+
+        final Icons icons = CassandraDataControl
                 .getInstance()
                 .getGetPoliceType()
                 .apply( patrul.getPoliceType() );
         position.setIcon( icons.getIcon1() );
         position.setIcon2( icons.getIcon2() );
+
+        position.setRegionId( patrul.getRegionId() );
+        position.setMahallaId( patrul.getMahallaId() );
+        position.setDistrictId( patrul.getDistrictId() );
 
         this.setPatrul( patrul );
         this.setIcon( icons.getIcon1() );
