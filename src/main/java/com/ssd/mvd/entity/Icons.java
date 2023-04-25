@@ -14,6 +14,7 @@ public class Icons {
                 .getCheckParam()
                 .test( row )
                 ? row.getString( "icon" ) : null );
+
         this.setIcon2( DataValidateInspector
                 .getInstance()
                 .getCheckParam()

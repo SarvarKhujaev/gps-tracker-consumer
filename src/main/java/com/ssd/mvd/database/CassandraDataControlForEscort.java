@@ -218,7 +218,7 @@ public class CassandraDataControlForEscort extends CassandraConverter {
                             ? CassandraDataControl // in case of if this car is linked to patrul
                             .getInstance()
                             .getGetPatrul()
-                            .apply( Map.of( "uuid", tupleOfCar.getUuidOfPatrul().toString() ) )
+                            .apply( tupleOfCar.getUuidOfPatrul().toString(), 1 )
                             .flatMap( patrul -> {
                                 patrul.setCarType( tupleOfCar.getCarModel() );
                                 patrul.setCarNumber( tupleOfCar.getGosNumber() );
@@ -267,7 +267,7 @@ public class CassandraDataControlForEscort extends CassandraConverter {
                             ? CassandraDataControl
                                     .getInstance()
                                     .getGetPatrul()
-                                    .apply( Map.of( "uuid", tupleOfCar.getUuidOfPatrul().toString() ) )
+                                    .apply( tupleOfCar.getUuidOfPatrul().toString(), 1 )
                                     .map( patrul -> new TrackerInfo( patrul, tupleOfCar, row ) )
                             : Mono.just( new TrackerInfo( tupleOfCar, row ) ) ) );
 
@@ -298,7 +298,7 @@ public class CassandraDataControlForEscort extends CassandraConverter {
                             ? CassandraDataControl
                                     .getInstance()
                                     .getGetPatrul()
-                                    .apply( Map.of( "uuid", tupleOfCar.getUuidOfPatrul().toString() ) )
+                                    .apply( tupleOfCar.getUuidOfPatrul().toString(), 1 )
                                     .map( patrul -> new TrackerInfo( patrul, tupleOfCar, row ) )
                             : Mono.just( new TrackerInfo( tupleOfCar, row ) ) ) )
             .sequential()

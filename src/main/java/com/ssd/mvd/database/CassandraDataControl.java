@@ -1,12 +1,12 @@
 package com.ssd.mvd.database;
 
-import java.util.Map;
 import java.util.Date;
 import java.util.Calendar;
 import java.time.Duration;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.BiFunction;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -42,7 +42,7 @@ public class CassandraDataControl extends LogInspector {
                 .subscribe( trackerInfo -> this.getTupleOfCarMap().putIfAbsent( trackerInfo.getTrackerId(), trackerInfo ) ); }
 
     private CassandraDataControl () {
-        SocketOptions options = new SocketOptions();
+        final SocketOptions options = new SocketOptions();
         options.setConnectTimeoutMillis( 30000 );
         options.setReadTimeoutMillis( 300000 );
         options.setTcpNoDelay( true );
@@ -133,6 +133,16 @@ public class CassandraDataControl extends LogInspector {
                     + ", latitude = " + reqCar.getLatitude()
                     + " WHERE uuid = " + reqCar.getUuid() + ";" );
 
+    public void addValue ( TrackerInfo trackerInfo, Double speed ) {
+        if ( speed > 0 ) this.getSession().executeAsync( "INSERT INTO "
+                + CassandraTables.TRACKERS.name() + "."
+                + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()
+                + " ( imei, date, speed, distance ) VALUES('"
+                + trackerInfo.getTrackerId() + "', '"
+                + new Date().toInstant() + "', "
+                + speed + ", "
+                + ( speed * 10 / 36 ) * 15 + ");" ); }
+
     private final Function< Position, String > addPosition = position -> {
             if ( !super.getCheck().apply( position.getDeviceId(), 1 )
                     && !super.getCheck().apply( position.getDeviceId(), 2 ) )
@@ -148,7 +158,7 @@ public class CassandraDataControl extends LogInspector {
                                         .getSavePosition()
                                         .accept( position );
                                 if ( super.getCheckParam().test( tupleOfCar.getUuidOfPatrul() ) ) this.getGetPatrul()
-                                        .apply( Map.of( "uuid", tupleOfCar.getUuidOfPatrul().toString() ) )
+                                        .apply( tupleOfCar.getUuidOfPatrul().toString(), 1 )
                                         .subscribe( patrul -> KafkaDataControl
                                                 .getInstance()
                                                 .getWriteToKafkaEscort()
@@ -163,7 +173,7 @@ public class CassandraDataControl extends LogInspector {
                                                 .updateTime( position, tupleOfCar ) ); } );
 
             else Mono.just( position )
-                    .flatMap( position1 -> this.getGetCarByNumber().apply( Map.of( "trackerId", position.getDeviceId() ) ) )
+                    .flatMap( position1 -> this.getGetCarByNumber().apply( "trackerId", position.getDeviceId() ) )
                     .filter( reqCar -> super.getCheck().apply( reqCar, 0 ) )
                     .subscribe( reqCar -> {
                         // убираем уже зарегистрированный трекер
@@ -181,14 +191,14 @@ public class CassandraDataControl extends LogInspector {
                                         + ", " + position.getLongitude()
                                         + ", " + position.getLatitude() + ", '' );" );
 
-                            this.getGetPatrul().apply( Map.of( "passportNumber", reqCar.getPatrulPassportSeries() ) )
+                            this.getGetPatrul().apply( reqCar.getPatrulPassportSeries(), 0 )
                                     .subscribe( patrul -> KafkaDataControl
                                             .getInstance()
                                             .getWriteToKafkaPosition()
                                             .accept( super.getTrackerInfoMap().get( position.getDeviceId() )
                                                     .updateTime( position, reqCar, patrul ) ) ); }
                         // срабатывает когда приходит сигнал от нового трекера на новой машины
-                        else this.getGetPatrul().apply( Map.of( "passportNumber", reqCar.getPatrulPassportSeries() ) )
+                        else this.getGetPatrul().apply( reqCar.getPatrulPassportSeries(), 0 )
                                 .subscribe( patrul -> super.getTrackerInfoMap().put(
                                         reqCar.getTrackerId(), this.getAddTackerInfo().apply(
                                                 new TrackerInfo(
@@ -227,23 +237,11 @@ public class CassandraDataControl extends LogInspector {
                     + trackerInfo.getDateOfRegistration().toInstant() + "');" );
             return trackerInfo; };
 
-    public void addValue ( TrackerInfo trackerInfo, Double speed ) {
-            if ( speed > 0 ) this.getSession().executeAsync( "INSERT INTO "
-                    + CassandraTables.TRACKERS.name() + "."
-                    + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()
-                    + " ( imei, date, speed, distance ) VALUES('"
-                    + trackerInfo.getTrackerId() + "', '"
-                    + new Date().toInstant() + "', "
-                    + speed + ", "
-                    + ( speed * 10 / 36 ) * 15 + ");" ); }
-
-    private final Function< Map< String, String >, Mono< ReqCar > > getCarByNumber = map -> {
+    private final BiFunction< String, String, Mono< ReqCar > > getCarByNumber = ( param, key ) -> {
             final Row row = this.getSession().execute( "SELECT * FROM " +
                     CassandraTables.TABLETS.name() + "." +
                     CassandraTables.CARS.name() +
-                    ( map.containsKey( "trackerId" )
-                            ? " WHERE trackerId = '" + map.get( "trackerId" )
-                            : " WHERE gosnumber = '" + map.get( "gosnumber" ) ) + "';" ).one();
+                    " WHERE " + param + " = '" + key + "';" ).one();
             return Mono.justOrEmpty( super.getCheckParam().test( row ) ? new ReqCar( row ) : null ); };
 
     private final Function< Request, Flux< PositionInfo > > getHistoricalPosition = request -> Flux.fromStream(
@@ -263,13 +261,12 @@ public class CassandraDataControl extends LogInspector {
             .sequential()
             .publishOn( Schedulers.single() );
 
-    private final Function< Map< String, String >, Mono< Patrul > > getPatrul = map -> Mono.just(
+    private final BiFunction< String, Integer, Mono< Patrul > > getPatrul = ( param, integer ) -> Mono.just(
             new Patrul( this.getSession().execute( "SELECT * FROM "
-                    + CassandraTables.TABLETS.name() + "."
-                    + CassandraTables.PATRULS.name()
-                    + ( map.containsKey( "passportNumber" )
-                    ? " WHERE passportNumber = '" + map.get( "passportNumber" ) + "'"
-                    : " WHERE uuid = " + map.get( "uuid" ) ) + ";" ).one() ) );
+                    + CassandraTables.TABLETS + "."
+                    + CassandraTables.PATRULS
+                    + " WHERE"
+                    + ( integer == 0 ? " passportNumber = '" + param + "'" : " uuid = " + param ) + ";" ).one() ) );
 
     public final Function< String, Icons > getPoliceType = policeType -> new Icons(
             this.getSession().execute( "SELECT icon, icon2 FROM "
@@ -287,8 +284,8 @@ public class CassandraDataControl extends LogInspector {
             .parallel( super.getCheckDifference().apply( super.getTrackerInfoMap().size() ) )
             .runOn( Schedulers.parallel() )
             .filter( row -> !aBoolean || super.getCheck().apply( row, 4 ) )
-            .flatMap( row -> this.getGetCarByNumber().apply( Map.of( "gosnumber", row.getString( "gosnumber" ) ) )
-                    .flatMap( reqCar -> this.getGetPatrul().apply( Map.of( "passportNumber", reqCar.getPatrulPassportSeries() ) )
+            .flatMap( row -> this.getGetCarByNumber().apply( "gosnumber", row.getString( "gosnumber" ) )
+                    .flatMap( reqCar -> this.getGetPatrul().apply( reqCar.getPatrulPassportSeries(), 0 )
                             .map( patrul -> new TrackerInfo( patrul, reqCar, row ) ) ) )
             .sequential()
             .publishOn( Schedulers.single() );
@@ -298,9 +295,9 @@ public class CassandraDataControl extends LogInspector {
 
     private final Function< Request, Mono< PatrulFuelStatistics > > calculate_average_fuel_consumption = request -> {
             final PatrulFuelStatistics patrulFuelStatistics = new PatrulFuelStatistics();
-            return this.getGetPatrul().apply( Map.of( "uuid", request.getTrackerId() ) )
+            return this.getGetPatrul().apply( request.getTrackerId(), 1 )
                     .flatMap( patrul -> !patrul.getCarNumber().equals( "null" )
-                            ? this.getGetCarByNumber().apply( Map.of( "gosnumber", patrul.getCarNumber() ) )
+                            ? this.getGetCarByNumber().apply( "gosnumber", patrul.getCarNumber() )
                             .map( reqCar -> {
                                 this.setStart( Calendar.getInstance() );
                                 this.getStart().setTime( this.getSession().execute(
