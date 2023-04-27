@@ -51,6 +51,13 @@ public class TrackerController extends DataValidateInspector {
                 .apply( point.getLatitude(), point.getLongitude() ) )
                 : Mono.empty(); }
 
+    @MessageMapping ( value = "GET_LAST_ACTIVE_DATE" )
+    public Mono< Date > getLastActiveDate ( final String uuid ) {
+        return CassandraDataControl
+                .getInstance()
+                .getGetLastActiveDate()
+                .apply( uuid ); }
+
     @MessageMapping ( "GET_TRACKER_HISTORY" )
     public Flux< PositionInfo > getTrackerHistory ( final Request request ) {
         return super.getCheck().apply( request, 7 )

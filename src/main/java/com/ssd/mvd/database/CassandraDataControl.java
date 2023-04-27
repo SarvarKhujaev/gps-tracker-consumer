@@ -290,6 +290,18 @@ public class CassandraDataControl extends LogInspector {
             .sequential()
             .publishOn( Schedulers.single() );
 
+    private final Function< String, Mono< Date > > getLastActiveDate = s -> this.getGetPatrul().apply( s, 1 )
+            .flatMap( patrul -> patrul.getCarNumber().compareTo( "null" ) != 0
+                    ? this.getGetCarByNumber().apply( "gosnumber", patrul.getCarNumber() )
+                            .map( reqCar -> this.getSession().execute(
+                                    "SELECT lastactivedate FROM "
+                                    + CassandraTables.TRACKERS + "."
+                                    + CassandraTables.TRACKERSID
+                                    + " WHERE trackersid = '" + reqCar.getTrackerId() + "';" )
+                                    .one()
+                                    .getTimestamp( "lastactivedate" ) )
+                    : Mono.empty() );
+
     private Calendar end;
     private Calendar start;
 
