@@ -291,7 +291,9 @@ public class CassandraDataControl extends LogInspector {
             .publishOn( Schedulers.single() );
 
     private final Function< String, Mono< Date > > getLastActiveDate = s -> this.getGetPatrul().apply( s, 1 )
-            .flatMap( patrul -> patrul.getCarNumber().compareTo( "null" ) != 0
+            .flatMap( patrul -> super.getCheckParam().test( patrul )
+                    && super.getCheckParam().test( patrul.getUuid() )
+                    && patrul.getCarNumber().compareTo( "null" ) != 0
                     ? this.getGetCarByNumber().apply( "gosnumber", patrul.getCarNumber() )
                             .map( reqCar -> this.getSession().execute(
                                     "SELECT lastactivedate FROM "

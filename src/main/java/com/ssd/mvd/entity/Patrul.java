@@ -2,13 +2,12 @@ package com.ssd.mvd.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.datastax.driver.core.Row;
+
+import com.ssd.mvd.inspectors.DataValidateInspector;
 import com.ssd.mvd.constants.Status;
 import java.util.UUID;
 
 @lombok.Data
-@lombok.NoArgsConstructor
-@lombok.AllArgsConstructor
-@JsonIgnoreProperties( ignoreUnknown = true )
 public class Patrul {
     private Double latitudeOfTask;
     private Double longitudeOfTask;
@@ -30,20 +29,24 @@ public class Patrul {
     private Status status; // busy, free by default, available or not available
 
     public Patrul ( final Row row ) {
-        this.setUuid( row.getUUID( "uuid" ) );
-        this.setStatus( Status.valueOf( row.getString( "status" ) ) );
+        if ( DataValidateInspector
+                .getInstance()
+                .getCheckParam()
+                .test( row ) ) {
+            this.setUuid( row.getUUID( "uuid" ) );
+            this.setStatus( Status.valueOf( row.getString( "status" ) ) );
 
-        this.setRegionId( row.getLong( "regionId" ) );
-        this.setMahallaId( row.getLong( "mahallaId" ) );
-        this.setDistrictId( row.getLong( "districtId" ) );
+            this.setRegionId( row.getLong( "regionId" ) );
+            this.setMahallaId( row.getLong( "mahallaId" ) );
+            this.setDistrictId( row.getLong( "districtId" ) );
 
-        this.setLatitudeOfTask( row.getDouble( "latitudeOfTask" ) );
-        this.setLongitudeOfTask( row.getDouble( "longitudeOfTask" ) );
+            this.setLatitudeOfTask( row.getDouble( "latitudeOfTask" ) );
+            this.setLongitudeOfTask( row.getDouble( "longitudeOfTask" ) );
 
-        this.setName( row.getString( "name" ) );
-        this.setTaskId( row.getString( "taskId" ) );
-        this.setCarType( row.getString( "carType" ) );
-        this.setCarNumber( row.getString( "carNumber" ) );
-        this.setPoliceType( row.getString( "policeType" ) );
-        this.setPassportNumber( row.getString( "passportNumber" ) ); }
+            this.setName( row.getString( "name" ) );
+            this.setTaskId( row.getString( "taskId" ) );
+            this.setCarType( row.getString( "carType" ) );
+            this.setCarNumber( row.getString( "carNumber" ) );
+            this.setPoliceType( row.getString( "policeType" ) );
+            this.setPassportNumber( row.getString( "passportNumber" ) ); } }
 }
