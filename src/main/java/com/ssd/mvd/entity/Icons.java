@@ -13,11 +13,13 @@ public class Icons {
                 .getInstance()
                 .getCheckParam()
                 .test( row )
-                ? row.getString( "icon" ) : null );
+                ? row.getString( "icon" )
+                : null );
 
         this.setIcon2( DataValidateInspector
                 .getInstance()
                 .getCheckParam()
                 .test( row )
-                ? row.getString( "icon2" ) : null ); }
+                ? row.getString( "icon2" )
+                : null ); }
 }

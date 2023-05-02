@@ -133,7 +133,7 @@ public class CassandraDataControl extends LogInspector {
                     + ", latitude = " + reqCar.getLatitude()
                     + " WHERE uuid = " + reqCar.getUuid() + ";" );
 
-    public void addValue ( TrackerInfo trackerInfo, Double speed ) {
+    public void addValue ( final TrackerInfo trackerInfo, final Double speed ) {
         if ( speed > 0 ) this.getSession().executeAsync( "INSERT INTO "
                 + CassandraTables.TRACKERS.name() + "."
                 + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()

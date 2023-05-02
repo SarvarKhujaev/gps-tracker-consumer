@@ -1,10 +1,9 @@
 package com.ssd.mvd.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.datastax.driver.core.Row;
-
 import com.ssd.mvd.inspectors.DataValidateInspector;
 import com.ssd.mvd.constants.Status;
+
+import com.datastax.driver.core.Row;
 import java.util.UUID;
 
 @lombok.Data
