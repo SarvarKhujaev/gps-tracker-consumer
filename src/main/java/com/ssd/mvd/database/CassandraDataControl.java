@@ -255,7 +255,9 @@ public class CassandraDataControl extends LogInspector {
                     .stream()
                     .parallel() )
             .parallel( super.getCheckDifference().apply(
-                    (int) Math.abs( Duration.between( request.getStartTime().toInstant(), request.getEndTime().toInstant() ).toDays() ) ) )
+                    (int) Math.abs( Duration.between(
+                            request.getStartTime().toInstant(),
+                            request.getEndTime().toInstant() ).toDays() ) ) )
             .runOn( Schedulers.parallel() )
             .map( PositionInfo::new )
             .sequential()

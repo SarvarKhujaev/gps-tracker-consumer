@@ -68,23 +68,20 @@ public class DataValidateInspector extends Inspector {
                     + cos( first.getLatitude() * P) * cos( second.getDouble( "latitude" ) * P)
                     * ( 1 - cos( ( second.getDouble( "longitude" ) - first.getLongitude() ) * P) ) / 2 ) ) * 1000;
 
-    private final Predicate< String > checkCarNumber = carNumber ->
-            !this.getCheckParam().test(
-                    CassandraDataControl
-                    .getInstance()
-                    .getSession()
-                    .execute( "SELECT * FROM "
-                            + CassandraTables.ESCORT.name() + "."
-                            + CassandraTables.TUPLE_OF_CAR.name() +
-                            " WHERE gosnumber = '" + carNumber + "';" ).one() )
-            && !this.getCheckParam().test(
-                    CassandraDataControl
-                    .getInstance()
-                    .getSession()
-                    .execute( "SELECT * FROM "
-                            + CassandraTables.TABLETS.name() + "."
-                            + CassandraTables.CARS.name()
-                            + " WHERE gosnumber = '" + carNumber + "';" ).one() );
+    private final Predicate< String > checkCarNumber = carNumber -> CassandraDataControl
+            .getInstance()
+            .getSession()
+            .execute( "SELECT * FROM "
+                    + CassandraTables.ESCORT + "."
+                    + CassandraTables.TUPLE_OF_CAR +
+                    " where gosnumber = '" + carNumber + "';" ).one() == null
+            && CassandraDataControl
+            .getInstance()
+            .getSession()
+            .execute( "SELECT * FROM "
+                    + CassandraTables.TABLETS + "."
+                    + CassandraTables.CARS +
+                    " where gosnumber = '" + carNumber + "';" ).one() == null;
 
     private final BiFunction< Patrul, Map< String, Long >, Boolean > checkParams = ( patrul, params ) -> switch ( params.size() ) {
             case 1 -> params.containsKey( "viloyat" ) && Objects.equals( patrul.getRegionId(), params.get( "viloyat" ) );
