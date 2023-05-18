@@ -9,17 +9,10 @@ public class Icons {
     private String icon2;
 
     public Icons ( final Row row ) {
-        this.setIcon1( DataValidateInspector
+        if ( DataValidateInspector
                 .getInstance()
-                .getCheckParam()
-                .test( row )
-                ? row.getString( "icon" )
-                : null );
-
-        this.setIcon2( DataValidateInspector
-                .getInstance()
-                .getCheckParam()
-                .test( row )
-                ? row.getString( "icon2" )
-                : null ); }
+                .checkParam
+                .test( row ) ) {
+            this.setIcon1( row.getString( "icon" ) );
+            this.setIcon2( row.getString( "icon2" ) ); } }
 }

@@ -44,7 +44,7 @@ public class TrackerController extends DataValidateInspector {
 
     @MessageMapping ( value = "GET_ADDRESS" )
     public Mono< String > getAddress ( final Point point ) {
-        return super.getCheck().apply( point, 8 )
+        return super.check.test( point, 8 )
                 ? Mono.just( UnirestController
                 .getInstance()
                 .getGetAddressByLocation()
@@ -60,7 +60,7 @@ public class TrackerController extends DataValidateInspector {
 
     @MessageMapping ( "GET_TRACKER_HISTORY" )
     public Flux< PositionInfo > getTrackerHistory ( final Request request ) {
-        return super.getCheck().apply( request, 7 )
+        return super.check.test( request, 7 )
                 ? CassandraDataControl
                 .getInstance()
                 .getGetHistoricalPosition()
@@ -73,8 +73,8 @@ public class TrackerController extends DataValidateInspector {
             .getInstance()
             .getGetAllTrackers()
             .apply( true )
-            .filter( trackerInfo -> super.getCheckParam().test( params ) && params.size() > 0
-                    ? super.getCheckParams().apply( trackerInfo.getPatrul(), params )
+            .filter( trackerInfo -> super.checkParam.test( params ) && params.size() > 0
+                    ? super.checkParams.test( trackerInfo.getPatrul(), params )
                     : true )
             .map( LastPosition::new ); }
 

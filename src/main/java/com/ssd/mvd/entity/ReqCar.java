@@ -1,13 +1,11 @@
 package com.ssd.mvd.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.datastax.driver.core.Row;
 import java.util.UUID;
 
 @lombok.Data
 @lombok.NoArgsConstructor
 @lombok.AllArgsConstructor
-@JsonIgnoreProperties( ignoreUnknown = true )
 public class ReqCar {
     private UUID uuid;
 

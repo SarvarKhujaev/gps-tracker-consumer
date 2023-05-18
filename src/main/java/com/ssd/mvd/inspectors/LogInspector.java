@@ -8,14 +8,14 @@ import reactor.core.publisher.Mono;
 public class LogInspector extends DataValidateInspector {
     private final Logger LOGGER = LogManager.getLogger();
 
-    public Logger getLOGGER() { return LOGGER; }
+    private Logger getLOGGER() { return LOGGER; }
 
-    public Mono< ApiResponseModel > logging ( Throwable error ) {
+    protected Mono< ApiResponseModel > logging ( final Throwable error ) {
         this.getLOGGER().error("Error: {}", error.getMessage() );
         return super.getErrorResponse().get(); }
 
-    public void logging ( Throwable error, Object o ) {
+    protected void logging ( final Throwable error, final Object o ) {
         this.getLOGGER().error("Error: {} and reason: {}: ", error.getMessage(), o ); }
 
-    public void logging ( String message ) { this.getLOGGER().info( message ); }
+    protected void logging ( final String message ) { this.getLOGGER().info( message ); }
 }

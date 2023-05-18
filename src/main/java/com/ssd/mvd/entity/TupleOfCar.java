@@ -1,5 +1,6 @@
 package com.ssd.mvd.entity;
 
+import com.ssd.mvd.inspectors.DataValidateInspector;
 import com.datastax.driver.core.Row;
 import java.util.UUID;
 
@@ -24,17 +25,21 @@ public class TupleOfCar {
     public UUID getUuid () { return this.uuid != null ? uuid : ( this.uuid = UUID.randomUUID() ); }
 
     public TupleOfCar ( final Row row ) {
-        this.setUuid( row.getUUID( "uuid" ) );
-        this.setUuidOfEscort( row.getUUID( "uuidOfEscort" ) );
-        this.setUuidOfPatrul( row.getUUID( "uuidOfPatrul" ) );
+        if ( DataValidateInspector
+                .getInstance()
+                .checkParam
+                .test( row ) ) {
+            this.setUuid( row.getUUID( "uuid" ) );
+            this.setUuidOfEscort( row.getUUID( "uuidOfEscort" ) );
+            this.setUuidOfPatrul( row.getUUID( "uuidOfPatrul" ) );
 
-        this.setCarModel( row.getString( "carModel" ) );
-        this.setGosNumber( row.getString( "gosNumber" ) );
-        this.setTrackerId( row.getString( "trackerId" ) );
-        this.setNsfOfPatrul( row.getString( "nsfOfPatrul" ) );
-        this.setSimCardNumber( row.getString( "simCardNumber" ) );
+            this.setCarModel( row.getString( "carModel" ) );
+            this.setGosNumber( row.getString( "gosNumber" ) );
+            this.setTrackerId( row.getString( "trackerId" ) );
+            this.setNsfOfPatrul( row.getString( "nsfOfPatrul" ) );
+            this.setSimCardNumber( row.getString( "simCardNumber" ) );
 
-        this.setLatitude( row.getDouble( "latitude" ) );
-        this.setLongitude( row.getDouble( "longitude" ) );
-        this.setAverageFuelConsumption( row.getDouble( "averageFuelConsumption" ) ); }
+            this.setLatitude( row.getDouble( "latitude" ) );
+            this.setLongitude( row.getDouble( "longitude" ) );
+            this.setAverageFuelConsumption( row.getDouble( "averageFuelConsumption" ) ); } }
 }

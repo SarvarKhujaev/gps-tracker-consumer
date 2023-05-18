@@ -30,7 +30,7 @@ public class Patrul {
     public Patrul ( final Row row ) {
         if ( DataValidateInspector
                 .getInstance()
-                .getCheckParam()
+                .checkParam
                 .test( row ) ) {
             this.setUuid( row.getUUID( "uuid" ) );
             this.setStatus( Status.valueOf( row.getString( "status" ) ) );

@@ -4,9 +4,12 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ssd.mvd.database.CassandraDataControlForEscort;
+import com.ssd.mvd.database.CassandraDataControl;
+import com.ssd.mvd.constants.CassandraTables;
 import com.ssd.mvd.inspectors.LogInspector;
 import com.ssd.mvd.entity.*;
 
+import reactor.core.scheduler.Schedulers;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -18,10 +21,13 @@ import java.util.Map;
 @RestController
 public class CarForEscortController extends LogInspector {
     @MessageMapping ( value = "getAllCarsForEscort" )
-    public Flux< TupleOfCar > getAllCarsForEscort() { return CassandraDataControlForEscort
+    public Flux< TupleOfCar > getAllCarsForEscort() { return CassandraDataControl
             .getInstance()
-            .getGetAllTupleOfCar()
-            .get()
+            .getGetAllEntities()
+            .apply( CassandraTables.ESCORT, CassandraTables.TUPLE_OF_CAR )
+            .map( TupleOfCar::new )
+            .sequential()
+            .publishOn( Schedulers.single() )
             .onErrorContinue( super::logging ); }
 
     @MessageMapping ( value = "getAllTrackersForEscortCar" )
@@ -49,7 +55,7 @@ public class CarForEscortController extends LogInspector {
 
     @MessageMapping ( value = "findTheClosestCarsInRadius" )
     public Flux< TupleOfCar > findTheClosestCarsInRadius ( final Point point ) {
-            return super.getCheck().apply( point, 8 )
+            return super.check.test( point, 8 )
                     ? CassandraDataControlForEscort
                     .getInstance()
                     .getFindTheClosestCarsInRadius()
@@ -78,10 +84,10 @@ public class CarForEscortController extends LogInspector {
             .getInstance()
             .getGetAllTrackers()
             .get()
-            .filter( trackerInfo -> super.getCheckParam().test( params )
+            .filter( trackerInfo -> super.checkParam.test( params )
                     && params.size() > 0
-                    && super.getCheckParam().test( trackerInfo.getPatrul() )
-                    ? super.getCheckParams().apply( trackerInfo.getPatrul(), params )
+                    && super.checkParam.test( trackerInfo.getPatrul() )
+                    ? super.checkParams.test( trackerInfo.getPatrul(), params )
                     : true )
             .map( trackerInfo -> new LastPosition( trackerInfo, trackerInfo.getPatrul() ) )
             .onErrorContinue( super::logging ); }
@@ -96,7 +102,7 @@ public class CarForEscortController extends LogInspector {
 
     @MessageMapping ( value = "findTheClosestCarsinPolygon" )
     public Flux< TupleOfCar > findTheClosestCarsinPolygon ( final List< Point > pointList ) {
-            return super.getCheckParam().test( pointList )
+            return super.checkParam.test( pointList )
                     && pointList.size() > 0
                     ? CassandraDataControlForEscort
                     .getInstance()

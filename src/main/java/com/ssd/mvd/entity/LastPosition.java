@@ -55,7 +55,7 @@ public class LastPosition {
 
         if ( DataValidateInspector
                 .getInstance()
-                .getCheckParam()
+                .checkParam
                 .test( patrul ) ) {
             this.setTaskId( patrul.getTaskId() );
             this.setStatus( patrul.getStatus() );

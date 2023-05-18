@@ -6,11 +6,13 @@ import java.time.Duration;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+import reactor.core.publisher.ParallelFlux;
 
 import com.ssd.mvd.entity.*;
 import com.ssd.mvd.GpsTrackerApplication;
@@ -85,13 +87,13 @@ public class CassandraDataControl extends LogInspector {
                     .setMaxRequestsPerConnection( HostDistance.LOCAL, 1024 )
                     .setPoolTimeoutMillis( 60000 ) ).build() ).connect() )
             .execute( "CREATE KEYSPACE IF NOT EXISTS " +
-                    CassandraTables.TRACKERS.name() +
+                    CassandraTables.TRACKERS +
                     " WITH REPLICATION = { 'class' : 'NetworkTopologyStrategy'," +
                     "'datacenter1':3 } AND DURABLE_WRITES = false;" );
 
         this.getSession().execute("CREATE TABLE IF NOT EXISTS "
-                + CassandraTables.TRACKERS.name() + "."
-                + CassandraTables.TRACKERSID.name()
+                + CassandraTables.TRACKERS + "."
+                + CassandraTables.TRACKERSID
                 + "( trackersId text PRIMARY KEY," +
                 "patrulPassportSeries text, " +
                 "gosnumber text, " +
@@ -104,8 +106,8 @@ public class CassandraDataControl extends LogInspector {
                 "dateOfRegistration timestamp );" );
 
         this.getSession().execute ( "CREATE TABLE IF NOT EXISTS "
-                + CassandraTables.TRACKERS.name() + "."
-                + CassandraTables.TRACKERS_LOCATION_TABLE.name()
+                + CassandraTables.TRACKERS + "."
+                + CassandraTables.TRACKERS_LOCATION_TABLE
                         + "( imei text, " +
                         "date timestamp, " +
                         "speed double, " +
@@ -115,8 +117,8 @@ public class CassandraDataControl extends LogInspector {
                 "PRIMARY KEY ( (imei), date ) );" );
 
         this.getSession().execute ( "CREATE TABLE IF NOT EXISTS "
-                + CassandraTables.TRACKERS.name() + "."
-                + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()
+                + CassandraTables.TRACKERS + "."
+                + CassandraTables.TRACKER_FUEL_CONSUMPTION
                 + "( imei text, " +
                 "date timestamp, " +
                 "speed double, " +
@@ -133,22 +135,12 @@ public class CassandraDataControl extends LogInspector {
                     + ", latitude = " + reqCar.getLatitude()
                     + " WHERE uuid = " + reqCar.getUuid() + ";" );
 
-    public void addValue ( final TrackerInfo trackerInfo, final Double speed ) {
-        if ( speed > 0 ) this.getSession().executeAsync( "INSERT INTO "
-                + CassandraTables.TRACKERS.name() + "."
-                + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()
-                + " ( imei, date, speed, distance ) VALUES('"
-                + trackerInfo.getTrackerId() + "', '"
-                + new Date().toInstant() + "', "
-                + speed + ", "
-                + ( speed * 10 / 36 ) * 15 + ");" ); }
-
     private final Function< Position, String > addPosition = position -> {
-            if ( !super.getCheck().apply( position.getDeviceId(), 1 )
-                    && !super.getCheck().apply( position.getDeviceId(), 2 ) )
+            if ( !super.check.test( position.getDeviceId(), 1 )
+                    && !super.check.test( position.getDeviceId(), 2 ) )
                 super.getUnregisteredTrackers().put( position.getDeviceId(), new Date() );
 
-            if ( super.getCheck().apply( position.getDeviceId(), 1 ) ) CassandraDataControlForEscort
+            if ( super.check.test( position.getDeviceId(), 1 ) ) CassandraDataControlForEscort
                     .getInstance()
                     .getGetTupleOfCarByTracker()
                     .apply( position.getDeviceId() )
@@ -157,7 +149,7 @@ public class CassandraDataControl extends LogInspector {
                                         .getInstance()
                                         .getSavePosition()
                                         .accept( position );
-                                if ( super.getCheckParam().test( tupleOfCar.getUuidOfPatrul() ) ) this.getGetPatrul()
+                                if ( super.checkParam.test( tupleOfCar.getUuidOfPatrul() ) ) this.getGetPatrul()
                                         .apply( tupleOfCar.getUuidOfPatrul().toString(), 1 )
                                         .subscribe( patrul -> KafkaDataControl
                                                 .getInstance()
@@ -172,15 +164,14 @@ public class CassandraDataControl extends LogInspector {
                                                 .get( position.getDeviceId() )
                                                 .updateTime( position, tupleOfCar ) ); } );
 
-            else Mono.just( position )
-                    .flatMap( position1 -> this.getGetCarByNumber().apply( "trackerId", position.getDeviceId() ) )
-                    .filter( reqCar -> super.getCheck().apply( reqCar, 0 ) )
+            else this.getGetCarByNumber().apply( "trackerId", position.getDeviceId() )
+                    .filter( reqCar -> super.check.test( reqCar, 0 ) )
                     .subscribe( reqCar -> {
                         // убираем уже зарегистрированный трекер
                         super.getUnregisteredTrackers().remove( position.getDeviceId() );
-                        if ( super.getCheck().apply( position.getDeviceId(), 2 ) ) {
+                        if ( super.check.test( position.getDeviceId(), 2 ) ) {
                             // сохраняем в базу только если машина двигается
-                            if ( super.getCheck().apply( position, 6 ) )
+                            if ( super.check.test( position, 6 ) )
                                 this.getSession().executeAsync( "INSERT INTO "
                                         + CassandraTables.TRACKERS.name() + "."
                                         + CassandraTables.TRACKERS_LOCATION_TABLE.name()
@@ -211,8 +202,8 @@ public class CassandraDataControl extends LogInspector {
 
     private final Function< TrackerInfo, TrackerInfo > addTackerInfo = trackerInfo -> {
             this.getSession().execute( "INSERT INTO "
-                    + CassandraTables.TRACKERS.name() + "."
-                    + CassandraTables.TRACKERSID.name()
+                    + CassandraTables.TRACKERS + "."
+                    + CassandraTables.TRACKERSID
                     + "(trackersId, " +
                     "patrulPassportSeries, " +
                     "gosnumber, " +
@@ -237,55 +228,56 @@ public class CassandraDataControl extends LogInspector {
                     + trackerInfo.getDateOfRegistration().toInstant() + "');" );
             return trackerInfo; };
 
+    private final BiConsumer< TrackerInfo, Double > addValue = ( trackerInfo, speed ) -> {
+            if ( speed > 0 ) this.getSession().executeAsync( "INSERT INTO "
+                    + CassandraTables.TRACKERS + "."
+                    + CassandraTables.TRACKER_FUEL_CONSUMPTION
+                    + " ( imei, date, speed, distance ) VALUES('"
+                    + trackerInfo.getTrackerId() + "', '"
+                    + new Date().toInstant() + "', "
+                    + speed + ", "
+                    + ( speed * 10 / 36 ) * 15 + ");" ); };
+
     private final BiFunction< String, String, Mono< ReqCar > > getCarByNumber = ( param, key ) -> {
             final Row row = this.getSession().execute( "SELECT * FROM " +
-                    CassandraTables.TABLETS.name() + "." +
-                    CassandraTables.CARS.name() +
+                    CassandraTables.TABLETS + "." +
+                    CassandraTables.CARS +
                     " WHERE " + param + " = '" + key + "';" ).one();
-            return Mono.justOrEmpty( super.getCheckParam().test( row ) ? new ReqCar( row ) : null ); };
+            return Mono.justOrEmpty( super.checkParam.test( row ) ? new ReqCar( row ) : null ); };
 
     private final Function< Request, Flux< PositionInfo > > getHistoricalPosition = request -> Flux.fromStream(
             this.getSession().execute( "SELECT * FROM "
-                        + CassandraTables.TRACKERS.name() + "."
-                        + CassandraTables.TRACKERS_LOCATION_TABLE.name()
+                        + CassandraTables.TRACKERS + "."
+                        + CassandraTables.TRACKERS_LOCATION_TABLE
                         + " WHERE imei = '" + request.getTrackerId()
                         + "' AND date >= '" + request.getStartTime().toInstant()
                         + "' AND date <= '" + request.getEndTime().toInstant() + "' ORDER BY date ASC;" )
                     .all()
                     .stream()
                     .parallel() )
-            .parallel( super.getCheckDifference().apply(
-                    (int) Math.abs( Duration.between(
-                            request.getStartTime().toInstant(),
-                            request.getEndTime().toInstant() ).toDays() ) ) )
+            .parallel( super.checkDifference.apply(
+                    (int) Math.abs( Duration.between( request.getStartTime().toInstant(), request.getEndTime().toInstant() ).toDays() ) ) )
             .runOn( Schedulers.parallel() )
             .map( PositionInfo::new )
             .sequential()
             .publishOn( Schedulers.single() );
 
-    private final BiFunction< String, Integer, Mono< Patrul > > getPatrul = ( param, integer ) -> Mono.just(
+    private final BiFunction< String, Integer, Mono< Patrul > > getPatrul = ( param, integer ) -> super.convert(
             new Patrul( this.getSession().execute( "SELECT * FROM "
                     + CassandraTables.TABLETS + "."
                     + CassandraTables.PATRULS
-                    + " WHERE"
+                    + " WHERE "
                     + ( integer == 0 ? " passportNumber = '" + param + "'" : " uuid = " + param ) + ";" ).one() ) );
 
     public final Function< String, Icons > getPoliceType = policeType -> new Icons(
             this.getSession().execute( "SELECT icon, icon2 FROM "
-                    + CassandraTables.TABLETS.name() + "."
-                    + CassandraTables.POLICE_TYPE.name()
+                    + CassandraTables.TABLETS + "."
+                    + CassandraTables.POLICE_TYPE
                     + " WHERE policeType = '" + policeType + "';" ).one() );
 
-    private final Function< Boolean, Flux< TrackerInfo > > getAllTrackers = aBoolean -> Flux.fromStream(
-            this.getSession().execute( "SELECT * FROM "
-                    + CassandraTables.TRACKERS.name() + "."
-                    + CassandraTables.TRACKERSID.name() + ";" )
-                    .all()
-                    .stream()
-                    .parallel() )
-            .parallel( super.getCheckDifference().apply( super.getTrackerInfoMap().size() ) )
-            .runOn( Schedulers.parallel() )
-            .filter( row -> !aBoolean || super.getCheck().apply( row, 4 ) )
+    private final Function< Boolean, Flux< TrackerInfo > > getAllTrackers = aBoolean -> this.getGetAllEntities()
+            .apply( CassandraTables.TRACKERS, CassandraTables.TRACKERSID )
+            .filter( row -> !aBoolean || super.check.test( row, 4 ) )
             .flatMap( row -> this.getGetCarByNumber().apply( "gosnumber", row.getString( "gosnumber" ) )
                     .flatMap( reqCar -> this.getGetPatrul().apply( reqCar.getPatrulPassportSeries(), 0 )
                             .map( patrul -> new TrackerInfo( patrul, reqCar, row ) ) ) )
@@ -293,8 +285,8 @@ public class CassandraDataControl extends LogInspector {
             .publishOn( Schedulers.single() );
 
     private final Function< String, Mono< Date > > getLastActiveDate = s -> this.getGetPatrul().apply( s, 1 )
-            .flatMap( patrul -> super.getCheckParam().test( patrul )
-                    && super.getCheckParam().test( patrul.getUuid() )
+            .flatMap( patrul -> super.checkParam.test( patrul )
+                    && super.checkParam.test( patrul.getUuid() )
                     && patrul.getCarNumber().compareTo( "null" ) != 0
                     ? this.getGetCarByNumber().apply( "gosnumber", patrul.getCarNumber() )
                             .map( reqCar -> this.getSession().execute(
@@ -318,10 +310,10 @@ public class CassandraDataControl extends LogInspector {
                                 this.setStart( Calendar.getInstance() );
                                 this.getStart().setTime( this.getSession().execute(
                                         "SELECT min(date) AS min_date FROM "
-                                                + CassandraTables.TRACKERS.name() + "."
-                                                + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()
+                                                + CassandraTables.TRACKERS + "."
+                                                + CassandraTables.TRACKER_FUEL_CONSUMPTION
                                                 + " WHERE imei = '" + reqCar.getTrackerId() + "'"
-                                                + ( super.getCheck().apply( request, 5 ) ? ""
+                                                + ( super.check.test( request, 5 ) ? ""
                                                 : " AND date >= '" + request.getStartTime().toInstant()
                                                 + "' AND date <= '" + request.getEndTime().toInstant() + "'" ) + ";" )
                                         .one()
@@ -330,10 +322,10 @@ public class CassandraDataControl extends LogInspector {
                                 this.setEnd( Calendar.getInstance() );
                                 this.getEnd().setTime( this.getSession().execute(
                                         "SELECT max(date) AS max_date FROM "
-                                                + CassandraTables.TRACKERS.name() + "."
-                                                + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()
+                                                + CassandraTables.TRACKERS + "."
+                                                + CassandraTables.TRACKER_FUEL_CONSUMPTION
                                                 + " WHERE imei = '" + reqCar.getTrackerId() + "'"
-                                                + ( super.getCheck().apply( request, 5 ) ? ""
+                                                + ( super.check.test( request, 5 ) ? ""
                                                 : " AND date >= '" + request.getStartTime().toInstant()
                                                 + "' AND date <= '" + request.getEndTime().toInstant() + "'" ) + ";" )
                                         .one()
@@ -346,8 +338,8 @@ public class CassandraDataControl extends LogInspector {
                                     final ConsumptionData consumptionData = new ConsumptionData();
                                     consumptionData.setDistance( this.getSession()
                                             .execute( "SELECT sum(distance) AS distance_summary FROM "
-                                                    + CassandraTables.TRACKERS.name() + "."
-                                                    + CassandraTables.TRACKER_FUEL_CONSUMPTION.name()
+                                                    + CassandraTables.TRACKERS + "."
+                                                    + CassandraTables.TRACKER_FUEL_CONSUMPTION
                                                     + " WHERE imei = '" + reqCar.getTrackerId() + "'"
                                                     + " AND date >= '" + date.toInstant()
                                                     + "' AND date <= '" + this.getStart().toInstant() + "';" )
@@ -368,5 +360,13 @@ public class CassandraDataControl extends LogInspector {
                                 patrulFuelStatistics.setUuid( patrul.getUuid() );
                                 return patrulFuelStatistics; } )
                             .onErrorReturn( new PatrulFuelStatistics() )
-                            : Mono.just( patrulFuelStatistics ) ); };
+                            : super.convert( patrulFuelStatistics ) ); };
+
+    private final BiFunction< CassandraTables, CassandraTables, ParallelFlux< Row >> getAllEntities =
+            ( keyspace, table ) -> Flux.fromStream(
+                            this.getSession().execute( "SELECT * FROM " + keyspace + "." + table + ";" )
+                                    .all()
+                                    .stream() )
+                    .parallel( super.checkDifference.apply( table.name().length() + keyspace.name().length() ) )
+                    .runOn( Schedulers.parallel() );
 }

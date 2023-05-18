@@ -131,8 +131,8 @@ public class TrackerInfo {
 
         if ( DataValidateInspector
                 .getInstance()
-                .getCheck()
-                .apply( position, 6 ) ) CassandraDataControl
+                .check
+                .test( position, 6 ) ) CassandraDataControl
                 .getInstance()
                 .getUpdateReqCarPosition()
                 .accept( this.getReqCar() );
@@ -208,7 +208,8 @@ public class TrackerInfo {
     public Position updateTime ( final Position position, final ReqCar reqCar, final Patrul patrul ) {
         CassandraDataControl
                 .getInstance()
-                .addValue( this, position.getSpeed() );
+                .getAddValue()
+                .accept( this, position.getSpeed() );
 
         this.setLastActiveDate( new Date() );
         this.setTotalActivityTime(

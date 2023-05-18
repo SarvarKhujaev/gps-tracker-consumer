@@ -18,6 +18,8 @@ public class Inspector {
     private final Map< String, TrackerInfo > tupleOfCarMap = new HashMap<>();
     private final Map< String, TrackerInfo > trackerInfoMap = new HashMap<>();
 
+    protected <T> Mono< T > convert ( final T o ) { return Mono.just( o ); }
+
     private final Function< Map< String, ? >, Mono< ApiResponseModel > > function =
             map -> Mono.just( ApiResponseModel
                     .builder() // in case of wrong login
