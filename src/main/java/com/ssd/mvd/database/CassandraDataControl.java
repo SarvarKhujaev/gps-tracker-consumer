@@ -362,11 +362,11 @@ public class CassandraDataControl extends LogInspector {
                             .onErrorReturn( new PatrulFuelStatistics() )
                             : super.convert( patrulFuelStatistics ) ); };
 
-    private final BiFunction< CassandraTables, CassandraTables, ParallelFlux< Row >> getAllEntities =
+    private final BiFunction< CassandraTables, CassandraTables, ParallelFlux< Row > > getAllEntities =
             ( keyspace, table ) -> Flux.fromStream(
-                            this.getSession().execute( "SELECT * FROM " + keyspace + "." + table + ";" )
-                                    .all()
-                                    .stream() )
+                    this.getSession().execute( "SELECT * FROM " + keyspace + "." + table + ";" )
+                            .all()
+                            .stream() )
                     .parallel( super.checkDifference.apply( table.name().length() + keyspace.name().length() ) )
                     .runOn( Schedulers.parallel() );
 }
