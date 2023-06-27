@@ -1,13 +1,13 @@
 package com.ssd.mvd.entity;
 
-import com.ssd.mvd.inspectors.DataValidateInspector;
 import com.datastax.driver.core.Row;
+import java.util.Optional;
 import java.util.UUID;
 
 @lombok.Data
 @lombok.NoArgsConstructor
 @lombok.AllArgsConstructor
-public class TupleOfCar {
+public final class TupleOfCar {
     private UUID uuid;
     private UUID uuidOfEscort; // UUID of the Escort which this car is linked to
     private UUID uuidOfPatrul; // UUID of the Escort which this car is linked to
@@ -24,11 +24,7 @@ public class TupleOfCar {
 
     public UUID getUuid () { return this.uuid != null ? uuid : ( this.uuid = UUID.randomUUID() ); }
 
-    public TupleOfCar ( final Row row ) {
-        if ( DataValidateInspector
-                .getInstance()
-                .checkParam
-                .test( row ) ) {
+    public TupleOfCar ( final Row row ) { Optional.ofNullable( row ).ifPresent( row1 -> {
             this.setUuid( row.getUUID( "uuid" ) );
             this.setUuidOfEscort( row.getUUID( "uuidOfEscort" ) );
             this.setUuidOfPatrul( row.getUUID( "uuidOfPatrul" ) );
@@ -41,5 +37,5 @@ public class TupleOfCar {
 
             this.setLatitude( row.getDouble( "latitude" ) );
             this.setLongitude( row.getDouble( "longitude" ) );
-            this.setAverageFuelConsumption( row.getDouble( "averageFuelConsumption" ) ); } }
+            this.setAverageFuelConsumption( row.getDouble( "averageFuelConsumption" ) ); } ); }
 }

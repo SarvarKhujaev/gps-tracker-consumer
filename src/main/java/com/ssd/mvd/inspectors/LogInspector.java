@@ -8,7 +8,7 @@ import reactor.core.publisher.Mono;
 public class LogInspector extends DataValidateInspector {
     private final Logger LOGGER = LogManager.getLogger();
 
-    private Logger getLOGGER() { return LOGGER; }
+    private Logger getLOGGER() { return this.LOGGER; }
 
     protected Mono< ApiResponseModel > logging ( final Throwable error ) {
         this.getLOGGER().error("Error: {}", error.getMessage() );

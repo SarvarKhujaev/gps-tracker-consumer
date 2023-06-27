@@ -17,9 +17,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.Map;
 
-
 @RestController
-public class CarForEscortController extends LogInspector {
+public final class CarForEscortController extends LogInspector {
     @MessageMapping ( value = "getAllCarsForEscort" )
     public Flux< TupleOfCar > getAllCarsForEscort() { return CassandraDataControl
             .getInstance()
@@ -84,11 +83,10 @@ public class CarForEscortController extends LogInspector {
             .getInstance()
             .getGetAllTrackers()
             .get()
-            .filter( trackerInfo -> super.checkParam.test( params )
-                    && params.size() > 0
-                    && super.checkParam.test( trackerInfo.getPatrul() )
-                    ? super.checkParams.test( trackerInfo.getPatrul(), params )
-                    : true )
+            .filter( trackerInfo -> !super.checkParam.test( params )
+                    || params.size() <= 0
+                    || !super.checkParam.test( trackerInfo.getPatrul() )
+                    || super.checkParams.test( trackerInfo.getPatrul(), params ) )
             .map( trackerInfo -> new LastPosition( trackerInfo, trackerInfo.getPatrul() ) )
             .onErrorContinue( super::logging ); }
 

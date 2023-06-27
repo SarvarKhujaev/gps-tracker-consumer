@@ -5,7 +5,7 @@ import java.util.Date;
 import java.util.UUID;
 
 @lombok.Data
-public class Position {
+public final class Position {
     // only for Car
     private String icon; // иконка патрульного выбирается исходя из типа патрульного
     private String icon2; // иконка патрульного выбирается исходя из типа патрульного

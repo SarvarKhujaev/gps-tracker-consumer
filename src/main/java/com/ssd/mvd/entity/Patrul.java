@@ -1,13 +1,13 @@
 package com.ssd.mvd.entity;
 
-import com.ssd.mvd.inspectors.DataValidateInspector;
 import com.ssd.mvd.constants.Status;
-
 import com.datastax.driver.core.Row;
+
+import java.util.Optional;
 import java.util.UUID;
 
 @lombok.Data
-public class Patrul {
+public final class Patrul {
     private Double latitudeOfTask;
     private Double longitudeOfTask;
 
@@ -27,11 +27,7 @@ public class Patrul {
 
     private Status status; // busy, free by default, available or not available
 
-    public Patrul ( final Row row ) {
-        if ( DataValidateInspector
-                .getInstance()
-                .checkParam
-                .test( row ) ) {
+    public Patrul ( final Row row ) { Optional.of( row ).ifPresent( row1 -> {
             this.setUuid( row.getUUID( "uuid" ) );
             this.setStatus( Status.valueOf( row.getString( "status" ) ) );
 
@@ -47,5 +43,5 @@ public class Patrul {
             this.setCarType( row.getString( "carType" ) );
             this.setCarNumber( row.getString( "carNumber" ) );
             this.setPoliceType( row.getString( "policeType" ) );
-            this.setPassportNumber( row.getString( "passportNumber" ) ); } }
+            this.setPassportNumber( row.getString( "passportNumber" ) ); } ); }
 }

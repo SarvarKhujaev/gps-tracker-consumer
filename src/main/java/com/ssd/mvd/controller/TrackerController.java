@@ -15,7 +15,7 @@ import java.util.Date;
 import java.util.Map;
 
 @RestController
-public class TrackerController extends DataValidateInspector {
+public final class TrackerController extends DataValidateInspector {
     @MessageMapping ( value = "PING" )
     public Mono< Boolean > ping () { return Mono.just( true ); }
 

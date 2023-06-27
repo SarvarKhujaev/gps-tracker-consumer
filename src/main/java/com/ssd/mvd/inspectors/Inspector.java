@@ -7,6 +7,7 @@ import com.ssd.mvd.entity.Status;
 import reactor.core.publisher.Mono;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.Optional;
 import java.util.HashMap;
 import java.util.Date;
 import java.util.Map;
@@ -18,21 +19,20 @@ public class Inspector {
     private final Map< String, TrackerInfo > tupleOfCarMap = new HashMap<>();
     private final Map< String, TrackerInfo > trackerInfoMap = new HashMap<>();
 
-    protected <T> Mono< T > convert ( final T o ) { return Mono.just( o ); }
+    protected <T> Mono< T > convert ( final T o ) { return Optional.ofNullable( o ).isPresent() ? Mono.just( o ) : Mono.empty(); }
 
     private final Function< Map< String, ? >, Mono< ApiResponseModel > > function =
-            map -> Mono.just( ApiResponseModel
+            map -> this.convert( ApiResponseModel
                     .builder() // in case of wrong login
                     .status( Status
                             .builder()
                             .message( map.get( "message" ).toString() )
-                            .code( map.containsKey( "code" ) ?
-                                    Integer.parseInt( map.get( "code" ).toString() ) : 200 )
+                            .code( map.containsKey( "code" ) ? Integer.parseInt( map.get( "code" ).toString() ) : 200 )
                             .build() )
                     .success( !map.containsKey( "success" ) )
                     .build() );
 
-    private final Supplier< Mono< ApiResponseModel > > errorResponse = () -> Mono.just(
+    private final Supplier< Mono< ApiResponseModel > > errorResponse = () -> this.convert(
             ApiResponseModel
                     .builder()
                     .success( false )

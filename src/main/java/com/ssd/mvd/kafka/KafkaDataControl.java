@@ -28,7 +28,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.clients.producer.ProducerConfig;
 
 @lombok.Data
-public class KafkaDataControl extends LogInspector {
+public final class KafkaDataControl extends LogInspector {
     private final Gson gson = new Gson();
     private Properties properties = new Properties();
     private static KafkaDataControl instance = new KafkaDataControl();
