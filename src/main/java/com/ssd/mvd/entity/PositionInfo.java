@@ -1,7 +1,8 @@
 package com.ssd.mvd.entity;
 
-import com.datastax.driver.core.Row;
 import java.util.Date;
+import com.datastax.driver.core.Row;
+import com.ssd.mvd.controller.UnirestController;
 
 @lombok.Data // хранит исторические данные о передвижениях машины
 public final class PositionInfo {
@@ -16,6 +17,9 @@ public final class PositionInfo {
         this.setSpeed( row.getDouble( "speed" ) );
         this.setLng( row.getDouble( "latitude" ) );
         this.setLat( row.getDouble( "longitude" ) );
-        this.setAddress( row.getString( "address" ) );
+        this.setAddress( UnirestController
+                .getInstance()
+                .getGetAddressByLocation()
+                .apply( this.getLat(), this.getLng() ) );
         this.setPositionWasSavedDate( row.getTimestamp( "date" ) ); }
 }
