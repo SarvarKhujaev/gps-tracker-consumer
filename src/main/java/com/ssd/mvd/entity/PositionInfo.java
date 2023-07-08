@@ -13,11 +13,11 @@ public final class PositionInfo {
     private String address;
     private Date positionWasSavedDate;
 
-    public PositionInfo ( final Row row ) {
+    public PositionInfo ( final Row row, final Boolean flag ) {
         this.setSpeed( row.getDouble( "speed" ) );
         this.setLng( row.getDouble( "latitude" ) );
         this.setLat( row.getDouble( "longitude" ) );
-        this.setAddress( UnirestController
+        if ( flag ) this.setAddress( UnirestController
                 .getInstance()
                 .getGetAddressByLocation()
                 .apply( this.getLat(), this.getLng() ) );

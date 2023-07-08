@@ -252,7 +252,7 @@ public final class CassandraDataControl extends LogInspector {
                     .map( ReqCar::new );
 
     // возврвщает исторические записи о передвижении машины за определенный период
-    private final Function< Request, Flux< PositionInfo > > getHistoricalPosition = request -> Flux.fromStream(
+    private final BiFunction< Request, Boolean, Flux< PositionInfo > > getHistoricalPosition = ( request, flag ) -> Flux.fromStream(
             this.getSession().execute( "SELECT * FROM "
                         + CassandraTables.TRACKERS + "."
                         + CassandraTables.TRACKERS_LOCATION_TABLE
@@ -265,7 +265,7 @@ public final class CassandraDataControl extends LogInspector {
             .parallel( super.checkDifference.apply(
                     (int) Math.abs( Duration.between( request.getStartTime().toInstant(), request.getEndTime().toInstant() ).toDays() ) ) )
             .runOn( Schedulers.parallel() )
-            .map( PositionInfo::new )
+            .map( row -> new PositionInfo( row, flag ) )
             .sequential()
             .publishOn( Schedulers.single() );
 
