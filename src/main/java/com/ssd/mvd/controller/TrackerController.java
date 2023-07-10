@@ -74,7 +74,7 @@ public final class TrackerController extends DataValidateInspector {
                 ? CassandraDataControl
                 .getInstance()
                 .getGetHistoricalPosition()
-                .apply( request, true )
+                .apply( request, false )
                 .sort( Comparator.comparing( PositionInfo::getPositionWasSavedDate ) )
                 : Flux.empty(); }
 
