@@ -147,6 +147,8 @@ public final class CassandraDataControl extends LogInspector {
                             .getInstance()
                             .getGetTupleOfCarByTracker()
                             .apply( position.getDeviceId() )
+                            .filter( tupleOfCar -> super.checkParam.test( tupleOfCar.getUuid() )
+                                    && super.checkParam.test( tupleOfCar.getGosNumber() ) )
                             .subscribe( tupleOfCar -> { // in case of car exists and in list
                                 CassandraDataControlForEscort
                                         .getInstance()

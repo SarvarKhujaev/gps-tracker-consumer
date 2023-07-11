@@ -179,7 +179,6 @@ public class TrackerInfo {
         this.setLatitude( position.getLatitude() );
         this.setTupleOfCar( tupleOfCar );
 
-        System.out.println( tupleOfCar.getUuid() );
         CassandraDataControlForEscort
                 .getInstance()
                 .updateEscortCar(
