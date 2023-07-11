@@ -165,7 +165,7 @@ public final class CassandraDataControlForEscort extends CassandraConverter {
                     + ", latitude = " + latitude
                     + " WHERE uuid = " + tupleOfCar.getUuid()
                     + " AND trackerid = '"
-                    + tupleOfCar.getTrackerId() + "';" ); }
+                    + tupleOfCar.getTrackerId() + "' IF EXISTS;" ); }
 
     private final Function< UUID, Mono< TupleOfCar > > getCurrentTupleOfCar = uuid ->
             super.convert( new TupleOfCar( this.getSession().execute( "SELECT * FROM "
@@ -180,16 +180,16 @@ public final class CassandraDataControlForEscort extends CassandraConverter {
                             ? super.getFunction().apply(
                                     Map.of( "message", uuid + " was removed successfully",
                                             "success", this.getSession().execute (
-                                            "BEGIN BATCH " +
-                                                    "DELETE FROM "
-                                                    + CassandraTables.ESCORT + "."
-                                                    + CassandraTables.TUPLE_OF_CAR
-                                                    + " WHERE uuid = " + UUID.fromString( uuid ) + ";" +
-                                                    " DELETE FROM "
-                                                    + CassandraTables.ESCORT + "."
-                                                    + CassandraTables.TRACKERSID
-                                                    + " WHERE trackersId = '" + tupleOfCar1.getTrackerId() + "';"
-                                                    + " APPLY BATCH;" )
+                                                            "BEGIN BATCH " +
+                                                                    "DELETE FROM "
+                                                                    + CassandraTables.ESCORT + "."
+                                                                    + CassandraTables.TUPLE_OF_CAR
+                                                                    + " WHERE uuid = " + UUID.fromString( uuid ) + ";" +
+                                                                    " DELETE FROM "
+                                                                    + CassandraTables.ESCORT + "."
+                                                                    + CassandraTables.TRACKERSID
+                                                                    + " WHERE trackersId = '" + tupleOfCar1.getTrackerId() + "';"
+                                                                    + " APPLY BATCH;" )
                                             .wasApplied() ) )
                             : super.getFunction().apply(
                                     Map.of( "message", "You cannot delete this car, it is linked to Patrul or Escort",

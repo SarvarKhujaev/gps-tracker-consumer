@@ -182,9 +182,9 @@ public class TrackerInfo {
         CassandraDataControlForEscort
                 .getInstance()
                 .updateEscortCar(
-                        this.getTupleOfCar().getLongitude(),
-                        this.getTupleOfCar().getLatitude(),
-                        this.getTupleOfCar() );
+                        tupleOfCar.getLongitude(),
+                        tupleOfCar.getLatitude(),
+                        tupleOfCar );
         return this; }
 
     public Position updateTime ( final Position position, final TupleOfCar tupleOfCar ) {
