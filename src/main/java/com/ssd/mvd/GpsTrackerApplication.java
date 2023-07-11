@@ -13,6 +13,7 @@ public class GpsTrackerApplication {
 
     public static void main( String[] args ) {
         context = SpringApplication.run( GpsTrackerApplication.class, args );
-        CassandraDataControl.getInstance().register();
-        KafkaDataControl.getInstance().start(); }
+//        CassandraDataControl.getInstance().register();
+//        KafkaDataControl.getInstance().start();
+    }
 }
