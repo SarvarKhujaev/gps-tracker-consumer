@@ -180,17 +180,12 @@ public final class CassandraDataControlForEscort extends CassandraConverter {
                             ? super.getFunction().apply(
                                     Map.of( "message", uuid + " was removed successfully",
                                             "success", this.getSession().execute (
-                                                            "BEGIN BATCH " +
-                                                                    "DELETE FROM "
-                                                                    + CassandraTables.ESCORT + "."
-                                                                    + CassandraTables.TUPLE_OF_CAR
-                                                                    + " WHERE uuid = " + UUID.fromString( uuid ) + ";" +
-                                                                    " DELETE FROM "
-                                                                    + CassandraTables.ESCORT + "."
-                                                                    + CassandraTables.TRACKERSID
-                                                                    + " WHERE trackersId = '" + tupleOfCar1.getTrackerId() + "';"
-                                                                    + " APPLY BATCH;" )
-                                            .wasApplied() ) )
+                                                    "DELETE FROM "
+                                                            + CassandraTables.ESCORT + "."
+                                                            + CassandraTables.TUPLE_OF_CAR
+                                                            + " WHERE uuid = " + UUID.fromString( uuid ) + ";" )
+                                                    .wasApplied()
+                                                    && this.unlinkTupleOfCarFromPatrul.apply( tupleOfCar1.getTrackerId() ) ) )
                             : super.getFunction().apply(
                                     Map.of( "message", "You cannot delete this car, it is linked to Patrul or Escort",
                                             "code", 201,
