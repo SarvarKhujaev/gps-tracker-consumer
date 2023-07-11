@@ -10,7 +10,7 @@ import java.util.UUID;
 public final class TupleOfCar {
     private UUID uuid;
     private UUID uuidOfEscort; // UUID of the Escort which this car is linked to
-    private UUID uuidOfPatrul; // UUID of the Escort which this car is linked to
+    private UUID uuidOfPatrul;
 
     private String carModel;
     private String gosNumber;
