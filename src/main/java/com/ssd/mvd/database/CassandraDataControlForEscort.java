@@ -320,4 +320,11 @@ public final class CassandraDataControlForEscort extends CassandraConverter {
             .map( TupleOfCar::new )
             .sequential()
             .publishOn( Schedulers.single() );
+
+    private final Function< String, Boolean > unlinkTupleOfCarFromPatrul = s ->
+            this.getSession().execute( "DELETE FROM "
+                    + CassandraTables.ESCORT + "."
+                    + CassandraTables.TRACKERSID
+                    + " WHERE trackersid = '" + s + "'"
+                    + " IF EXISTS;" ).wasApplied();
 }

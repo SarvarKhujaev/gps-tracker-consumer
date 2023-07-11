@@ -92,6 +92,7 @@ public final class CarForEscortController extends LogInspector {
 
     @MessageMapping( value = "addNewCarForEscort" )
     public Mono< ApiResponseModel > addNewCarForEscort ( final TupleOfCar tupleOfCar ) {
+        tupleOfCar.setUuid( UUID.randomUUID() );
         return CassandraDataControlForEscort
             .getInstance()
             .getSaveNewTupleOfCar()
