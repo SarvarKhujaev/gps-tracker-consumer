@@ -22,6 +22,8 @@ public final class TupleOfCar {
     private Double longitude;
     private Double averageFuelConsumption;
 
+//    public UUID getUuid () { return this.uuid != null ? uuid : ( this.uuid = UUID.randomUUID() ); }
+
     public TupleOfCar ( final Row row ) { Optional.ofNullable( row ).ifPresent( row1 -> {
             this.setUuid( row.getUUID( "uuid" ) );
             this.setUuidOfEscort( row.getUUID( "uuidOfEscort" ) );
