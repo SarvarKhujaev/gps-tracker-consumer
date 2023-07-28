@@ -4,15 +4,12 @@ import com.ssd.mvd.database.CassandraDataControlForEscort;
 import com.ssd.mvd.inspectors.DataValidateInspector;
 import com.ssd.mvd.database.CassandraDataControl;
 import com.datastax.driver.core.Row;
-
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Date;
 
 @lombok.Data
 @lombok.NoArgsConstructor
 @lombok.AllArgsConstructor
-public class TrackerInfo {
+public final class TrackerInfo {
     private ReqCar reqCar;
     private Patrul patrul;
     private TupleOfCar tupleOfCar;
@@ -50,8 +47,12 @@ public class TrackerInfo {
 
         final Icons icons = CassandraDataControl
                 .getInstance()
-                .getGetPoliceType()
-                .apply( patrul.getPoliceType() );
+                .icons
+                .getOrDefault( patrul.getPoliceType(),
+                        CassandraDataControl
+                                .getInstance()
+                                .getPoliceType
+                                .apply( patrul.getPoliceType() ) );
 
         this.setIcon( icons.getIcon1() );
         this.setIcon2( icons.getIcon2() );
@@ -151,8 +152,13 @@ public class TrackerInfo {
 
         final Icons icons = CassandraDataControl
                 .getInstance()
-                .getGetPoliceType()
-                .apply( patrul.getPoliceType() );
+                .icons
+                .getOrDefault( patrul.getPoliceType(),
+                        CassandraDataControl
+                                .getInstance()
+                                .getPoliceType
+                                .apply( patrul.getPoliceType() ) );
+
         position.setIcon( icons.getIcon1() );
         position.setIcon2( icons.getIcon2() );
 
@@ -191,12 +197,10 @@ public class TrackerInfo {
         this.setPatrul( null );
         this.setPatrulPassportSeries( null );
         this.setLastActiveDate( new Date() );
-        this.setTotalActivityTime(
-                Math.abs( this.getTotalActivityTime()
-                        + Duration.between(
-                                Instant.now(),
-                                this.getLastActiveDate().toInstant() )
-                        .getSeconds() ) );
+        this.setTotalActivityTime( CassandraDataControl
+                .getInstance()
+                .getTimeDifference
+                .apply( this.getTotalActivityTime(), this.getLastActiveDate().toInstant() ) );
 
         CassandraDataControlForEscort
                 .getInstance()
@@ -212,12 +216,10 @@ public class TrackerInfo {
                 .accept( this, position.getSpeed() );
 
         this.setLastActiveDate( new Date() );
-        this.setTotalActivityTime(
-                Math.abs( this.getTotalActivityTime()
-                        + Duration.between(
-                                Instant.now(),
-                                this.getLastActiveDate().toInstant() )
-                        .getSeconds() ) );
+        this.setTotalActivityTime( CassandraDataControl
+                .getInstance()
+                .getTimeDifference
+                .apply( this.getTotalActivityTime(), this.getLastActiveDate().toInstant() ) );
 
         CassandraDataControl
                 .getInstance()
@@ -228,12 +230,10 @@ public class TrackerInfo {
 
     public Position updateTime ( final Position position, final TupleOfCar tupleOfCar, final Patrul patrul ) {
         this.setLastActiveDate( new Date() );
-        this.setTotalActivityTime(
-                Math.abs( this.getTotalActivityTime()
-                        + Duration.between(
-                                Instant.now(),
-                                this.getLastActiveDate().toInstant() )
-                        .getSeconds() ) );
+        this.setTotalActivityTime( CassandraDataControl
+                .getInstance()
+                .getTimeDifference
+                .apply( this.getTotalActivityTime(), this.getLastActiveDate().toInstant() ) );
 
         this.save( tupleOfCar, position );
 

@@ -113,7 +113,7 @@ public final class CassandraDataControlForEscort extends CassandraConverter {
                     if ( optional.filter( tupleOfCar2 -> !tupleOfCar1.getTrackerId().equals( tupleOfCar.getTrackerId() )
                             && !super.check.test( tupleOfCar.getTrackerId(), 1 ) )
                             .isPresent() )
-                        return super.getFunction().apply( Map.of( "message", "Wrong TrackerId", "code", 201 ) );
+                        return super.function.apply( Map.of( "message", "Wrong TrackerId", "code", 201 ) );
 
                     if ( optional.filter( tupleOfCar2 -> super.checkParam.test( tupleOfCar1.getUuidOfPatrul() )
                             && super.checkParam.test( tupleOfCar.getUuidOfPatrul() )
@@ -150,9 +150,9 @@ public final class CassandraDataControlForEscort extends CassandraConverter {
                             + tupleOfCar.getLongitude() + ", " +
                             tupleOfCar.getAverageFuelConsumption() + " );" )
                             .wasApplied()
-                            ? super.getFunction().apply(
+                            ? super.function.apply(
                                     Map.of( "message", "Car" + tupleOfCar.getGosNumber() + " was updated successfully" ) )
-                            : super.getFunction().apply(
+                            : super.function.apply(
                                     Map.of( "message", "This car does not exists",
                                             "code", 201,
                                             "success", false ) ); } );
@@ -177,7 +177,7 @@ public final class CassandraDataControlForEscort extends CassandraConverter {
             this.getGetCurrentTupleOfCar().apply( UUID.fromString( uuid ) )
                     .flatMap( tupleOfCar1 -> !super.checkParam.test( tupleOfCar1.getUuidOfPatrul() )
                             && !super.checkParam.test( tupleOfCar1.getUuidOfEscort() )
-                            ? super.getFunction().apply(
+                            ? super.function.apply(
                                     Map.of( "message", uuid + " was removed successfully",
                                             "success", this.getSession().execute (
                                                     "DELETE FROM "
@@ -186,7 +186,7 @@ public final class CassandraDataControlForEscort extends CassandraConverter {
                                                             + " WHERE uuid = " + UUID.fromString( uuid ) + ";" )
                                                     .wasApplied()
                                                     && this.unlinkTupleOfCarFromPatrul.apply( tupleOfCar1.getTrackerId() ) ) )
-                            : super.getFunction().apply(
+                            : super.function.apply(
                                     Map.of( "message", "You cannot delete this car, it is linked to Patrul or Escort",
                                             "code", 201,
                                             "success", false ) ) );
@@ -229,24 +229,24 @@ public final class CassandraDataControlForEscort extends CassandraConverter {
                                         + ", carType = '" + patrul.getCarType() + "'"
                                         + ", carNumber = '" + patrul.getCarNumber() + "'"
                                         + " WHERE uuid = " + patrul.getUuid() + ";" );
-                                return super.getFunction().apply(
+                                return super.function.apply(
                                         Map.of( "message", "Escort was saved successfully",
                                                 "success", super.checkParam.test(
-                                                        super.getTupleOfCarMap().putIfAbsent(
+                                                        super.tupleOfCarMap.putIfAbsent(
                                                                 KafkaDataControl
                                                                 .getInstance()
                                                                 .getWriteToKafkaTupleOfCar()
                                                                 .apply( tupleOfCar )
                                                                 .getTrackerId(),
                                                         this.getSaveTackerInfo().apply( new TrackerInfo( patrul, tupleOfCar ) ) ) ) ) ); } )
-                            : super.getFunction().apply(
+                            : super.function.apply(
                                     Map.of( "message", "Escort was saved successfully",
                                             "success", super.checkParam.test(
-                                                    super.getTupleOfCarMap().putIfAbsent(
+                                                    super.tupleOfCarMap.putIfAbsent(
                                                             tupleOfCar.getTrackerId(),
                                                             this.getSaveTackerInfo().apply( new TrackerInfo( tupleOfCar ) ) ) ) ) )
-                    : super.getFunction().apply( Map.of( "message", "This car is already exists", "code", 201 ) )
-            : super.getFunction().apply(
+                    : super.function.apply( Map.of( "message", "This car is already exists", "code", 201 ) )
+            : super.function.apply(
                     Map.of( "message", "This trackers or gosnumber is already registered to another car, so choose another one", "code", 201 ) );
 
     private final Function< String, Mono< TupleOfCar > > getTupleOfCarByTracker = trackersId -> super.convert(

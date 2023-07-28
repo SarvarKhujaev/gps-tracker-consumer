@@ -3,7 +3,7 @@ package com.ssd.mvd.entity;
 import java.util.*;
 
 @lombok.Data
-public class PatrulFuelStatistics {
+public final class PatrulFuelStatistics {
     private UUID uuid; // patrul id
     private Double averageDistance = 0.0;
     private Double averageFuelConsumption = 0.0;

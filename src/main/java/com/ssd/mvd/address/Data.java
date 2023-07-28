@@ -1,9 +1,6 @@
 package com.ssd.mvd.address;
 
-import lombok.extern.jackson.Jacksonized;
-
 @lombok.Data
-@Jacksonized
 @lombok.NoArgsConstructor
 @lombok.AllArgsConstructor
 public final class Data {

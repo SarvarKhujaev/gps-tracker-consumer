@@ -14,7 +14,6 @@ import java.util.function.BiFunction;
 import java.util.Arrays;
 import java.util.List;
 
-@lombok.Data
 public final class UnirestController extends LogInspector {
     private final String ADDRESS_LOCATION_API = GpsTrackerApplication
             .context
@@ -41,11 +40,11 @@ public final class UnirestController extends LogInspector {
                 try { return this.objectMapper.readValue( s, aClass ); }
                 catch ( JsonProcessingException e ) { throw new RuntimeException(e); } } } ); }
 
-    private <T> List<T> stringToArrayList ( final String object, final Class< T[] > clazz ) { return Arrays.asList( this.getGson().fromJson( object, clazz ) ); }
+    private <T> List<T> stringToArrayList ( final String object, final Class< T[] > clazz ) { return Arrays.asList( this.gson.fromJson( object, clazz ) ); }
 
-    private final BiFunction< Double, Double, String > getAddressByLocation = ( latitude, longitude ) -> {
+    public final BiFunction< Double, Double, String > getAddressByLocation = ( latitude, longitude ) -> {
             try { return this.stringToArrayList(
-                    Unirest.get( this.getADDRESS_LOCATION_API()
+                    Unirest.get( this.ADDRESS_LOCATION_API
                                     + latitude + "," + longitude
                                     + "&limit=5&format=json&addressdetails=1" )
                                     .asJson()

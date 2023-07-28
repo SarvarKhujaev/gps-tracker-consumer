@@ -1,11 +1,9 @@
 package com.ssd.mvd.address;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import lombok.extern.jackson.Jacksonized;
 import java.util.List;
 
 @lombok.Data
-@Jacksonized
 @lombok.NoArgsConstructor
 @lombok.AllArgsConstructor
 public final class Address {

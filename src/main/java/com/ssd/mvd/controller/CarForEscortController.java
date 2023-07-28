@@ -84,7 +84,7 @@ public final class CarForEscortController extends LogInspector {
             .getGetAllTrackers()
             .get()
             .filter( trackerInfo -> !super.checkParam.test( params )
-                    || params.size() <= 0
+                    || params.isEmpty()
                     || !super.checkParam.test( trackerInfo.getPatrul() )
                     || super.checkParams.test( trackerInfo.getPatrul(), params ) )
             .map( trackerInfo -> new LastPosition( trackerInfo, trackerInfo.getPatrul() ) )
@@ -101,8 +101,7 @@ public final class CarForEscortController extends LogInspector {
 
     @MessageMapping ( value = "findTheClosestCarsinPolygon" )
     public Flux< TupleOfCar > findTheClosestCarsinPolygon ( final List< Point > pointList ) {
-            return super.checkParam.test( pointList )
-                    && pointList.size() > 0
+            return super.checkParam.test( pointList ) && !pointList.isEmpty()
                     ? CassandraDataControlForEscort
                     .getInstance()
                     .getFindTheClosestCarsinPolygon()

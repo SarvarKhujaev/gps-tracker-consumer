@@ -28,8 +28,8 @@ public class DataValidateInspector extends Inspector {
     public final Predicate< Object > checkParam = Objects::nonNull;
 
     public final BiPredicate< Object, Integer > check = ( o, integer ) -> switch ( integer ) {
-            case 1 -> super.getTupleOfCarMap().containsKey( String.valueOf( o ) );
-            case 2 -> super.getTrackerInfoMap().containsKey( String.valueOf( o ) );
+            case 1 -> super.tupleOfCarMap.containsKey( String.valueOf( o ) );
+            case 2 -> super.trackerInfoMap.containsKey( String.valueOf( o ) );
             case 4 -> ( (Row) o ).getDouble( "longitude" ) > 0 && ( (Row) o ).getDouble( "latitude" ) > 0;
             case 5 -> ( (Request) o ).getStartTime() == null && ( (Request) o ).getEndTime() == null;
             case 6 -> ( (Position) o ).getLatitude() > 0

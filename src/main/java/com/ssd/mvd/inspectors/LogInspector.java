@@ -12,7 +12,7 @@ public class LogInspector extends DataValidateInspector {
 
     protected Mono< ApiResponseModel > logging ( final Throwable error ) {
         this.getLOGGER().error("Error: {}", error.getMessage() );
-        return super.getErrorResponse().get(); }
+        return super.errorResponse.get(); }
 
     protected void logging ( final Throwable error, final Object o ) {
         this.getLOGGER().error("Error: {} and reason: {}: ", error.getMessage(), o ); }

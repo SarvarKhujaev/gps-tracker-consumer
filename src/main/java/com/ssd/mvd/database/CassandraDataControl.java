@@ -35,14 +35,19 @@ public final class CassandraDataControl extends LogInspector {
     public static CassandraDataControl getInstance () { return instance != null ? instance : ( instance = new CassandraDataControl() ); }
 
     public void register () {
+        this.getAllEntities.apply( CassandraTables.TABLETS, CassandraTables.POLICE_TYPE )
+                .sequential()
+                .publishOn( Schedulers.single() )
+                .subscribe( row -> super.icons.put( row.getString( "policeType" ), new Icons( row ) ) );
+
         this.getGetAllTrackers().apply( false )
-                .subscribe( trackerInfo -> super.getTrackerInfoMap().putIfAbsent( trackerInfo.getTrackerId(), trackerInfo ) );
+                .subscribe( trackerInfo -> super.trackerInfoMap.putIfAbsent( trackerInfo.getTrackerId(), trackerInfo ) );
 
         CassandraDataControlForEscort
                 .getInstance()
                 .getGetAllTrackers()
                 .get()
-                .subscribe( trackerInfo -> this.getTupleOfCarMap().putIfAbsent( trackerInfo.getTrackerId(), trackerInfo ) ); }
+                .subscribe( trackerInfo -> super.tupleOfCarMap.putIfAbsent( trackerInfo.getTrackerId(), trackerInfo ) ); }
 
     private CassandraDataControl () {
         final SocketOptions options = new SocketOptions();
@@ -140,7 +145,7 @@ public final class CassandraDataControl extends LogInspector {
             final Optional< Position > optional = Optional.of( position );
             optional.filter( position1 -> !super.check.test( position.getDeviceId(), 1 )
                             && !super.check.test( position.getDeviceId(), 2 ) )
-                    .ifPresent( position1 -> super.getUnregisteredTrackers().put( position.getDeviceId(), new Date() ) );
+                    .ifPresent( position1 -> super.unregisteredTrackers.put( position.getDeviceId(), super.getDate.get() ) );
 
             optional.filter( position1 -> super.check.test( position.getDeviceId(), 1 ) )
                     .map( position1 -> CassandraDataControlForEscort
@@ -159,20 +164,20 @@ public final class CassandraDataControl extends LogInspector {
                                         .subscribe( patrul -> KafkaDataControl
                                                 .getInstance()
                                                 .getWriteToKafkaEscort()
-                                                .accept( super.getTupleOfCarMap()
+                                                .accept( super.tupleOfCarMap
                                                         .get( position.getDeviceId() )
                                                         .updateTime( position, tupleOfCar, patrul ) ) );
                                 else KafkaDataControl
                                         .getInstance()
                                         .getWriteToKafkaEscort()
-                                        .accept( super.getTupleOfCarMap()
+                                        .accept( super.tupleOfCarMap
                                                 .get( position.getDeviceId() )
                                                 .updateTime( position, tupleOfCar ) ); } ) )
                     .orElseGet( () -> this.getGetCarByNumber().apply( "trackerId", position.getDeviceId() )
                             .filter( reqCar -> super.check.test( reqCar, 0 ) )
                             .subscribe( reqCar -> {
                                 // убираем уже зарегистрированный трекер
-                                super.getUnregisteredTrackers().remove( optional.get().getDeviceId() );
+                                super.unregisteredTrackers.remove( optional.get().getDeviceId() );
                                 if ( super.check.test( optional.get().getDeviceId(), 2 ) ) {
                                     // сохраняем в базу только если машина двигается
                                     if ( super.check.test( optional.get(), 6 ) )
@@ -190,11 +195,11 @@ public final class CassandraDataControl extends LogInspector {
                                             .subscribe( patrul -> KafkaDataControl
                                                     .getInstance()
                                                     .getWriteToKafkaPosition()
-                                                    .accept( super.getTrackerInfoMap().get( optional.get().getDeviceId() )
+                                                    .accept( super.trackerInfoMap.get( optional.get().getDeviceId() )
                                                             .updateTime( optional.get(), reqCar, patrul ) ) ); }
                                 // срабатывает когда приходит сигнал от нового трекера на новой машины
                                 else this.getGetPatrul().apply( reqCar.getPatrulPassportSeries(), 0 )
-                                        .subscribe( patrul -> super.getTrackerInfoMap().put(
+                                        .subscribe( patrul -> super.trackerInfoMap.put(
                                                 reqCar.getTrackerId(), this.getAddTackerInfo().apply(
                                                         new TrackerInfo(
                                                                 patrul,
@@ -241,7 +246,7 @@ public final class CassandraDataControl extends LogInspector {
                             + CassandraTables.TRACKER_FUEL_CONSUMPTION
                             + " ( imei, date, speed, distance ) VALUES('"
                             + trackerInfo.getTrackerId() + "', '"
-                            + new Date().toInstant() + "', "
+                            + super.getDate.get().toInstant() + "', "
                             + speed + ", "
                             + ( speed * 10 / 36 ) * 15 + ");" ) );
 
@@ -335,8 +340,7 @@ public final class CassandraDataControl extends LogInspector {
                                                                 + CassandraTables.TRACKERS + "."
                                                                 + CassandraTables.TRACKER_FUEL_CONSUMPTION
                                                                 + " WHERE imei = '" + reqCar.getTrackerId() + "'"
-                                                                + ( super.check.test( request, 5 )
-                                                                ? ""
+                                                                + ( super.check.test( request, 5 ) ? ""
                                                                 : " AND date >= '" + request.getStartTime().toInstant()
                                                                 + "' AND date <= '" + request.getEndTime().toInstant() + "'" ) + ";" )
                                                 .one()

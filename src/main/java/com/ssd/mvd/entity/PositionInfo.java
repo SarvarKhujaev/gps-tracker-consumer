@@ -19,7 +19,7 @@ public final class PositionInfo {
         this.setLat( row.getDouble( "longitude" ) );
         if ( flag ) this.setAddress( UnirestController
                 .getInstance()
-                .getGetAddressByLocation()
+                .getAddressByLocation
                 .apply( this.getLat(), this.getLng() ) );
         this.setPositionWasSavedDate( row.getTimestamp( "date" ) ); }
 }

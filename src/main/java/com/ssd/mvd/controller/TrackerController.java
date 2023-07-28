@@ -17,7 +17,7 @@ import java.util.Map;
 @RestController
 public final class TrackerController extends DataValidateInspector {
     @MessageMapping ( value = "PING" )
-    public Mono< Boolean > ping () { return Mono.just( true ); }
+    public Mono< Boolean > ping () { return super.convert( true ); }
 
     @MessageMapping( value = "ONLINE" )
     public Flux< TrackerInfo > online () { return CassandraDataControl
@@ -40,14 +40,14 @@ public final class TrackerController extends DataValidateInspector {
             .apply( true ); }
 
     @MessageMapping ( value = "GET_ALL_UNREGISTERED_TRACKERS" )
-    public Mono< Map< String, Date > > GET_ALL_UNREGISTERED_TRACKERS () { return Mono.just( super.getUnregisteredTrackers() ); }
+    public Mono< Map< String, Date > > GET_ALL_UNREGISTERED_TRACKERS () { return super.convert( super.unregisteredTrackers ); }
 
     @MessageMapping ( value = "GET_ADDRESS" )
     public Mono< String > getAddress ( final Point point ) {
         return super.check.test( point, 8 )
-                ? Mono.just( UnirestController
+                ? super.convert( UnirestController
                 .getInstance()
-                .getGetAddressByLocation()
+                .getAddressByLocation
                 .apply( point.getLatitude(), point.getLongitude() ) )
                 : Mono.empty(); }
 
@@ -83,9 +83,9 @@ public final class TrackerController extends DataValidateInspector {
             .getInstance()
             .getGetAllTrackers()
             .apply( true )
-            .filter( trackerInfo -> super.checkParam.test( params ) && params.size() > 0
-                    ? super.checkParams.test( trackerInfo.getPatrul(), params )
-                    : true )
+            .filter( trackerInfo -> !super.checkParam.test( params )
+                    || params.isEmpty()
+                    || super.checkParams.test( trackerInfo.getPatrul(), params ) )
             .map( LastPosition::new ); }
 
     @MessageMapping ( value = "CALCULATE_AVERAGE_FUEL_CONSUMPTION" )

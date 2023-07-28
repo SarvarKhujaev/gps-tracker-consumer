@@ -3,8 +3,13 @@ package com.ssd.mvd.inspectors;
 import com.ssd.mvd.entity.ApiResponseModel;
 import com.ssd.mvd.entity.TrackerInfo;
 import com.ssd.mvd.entity.Status;
+import com.ssd.mvd.entity.Icons;
 
 import reactor.core.publisher.Mono;
+import java.time.Duration;
+import java.time.Instant;
+
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.Optional;
@@ -12,16 +17,22 @@ import java.util.HashMap;
 import java.util.Date;
 import java.util.Map;
 
-@lombok.Data
 public class Inspector {
+    // содержит все типы полицейских
+    public final Map< String, Icons > icons = new HashMap<>();
     // хранит все не зарегистрированные трекеры
-    private final Map< String, Date > unregisteredTrackers = new HashMap<>();
-    private final Map< String, TrackerInfo > tupleOfCarMap = new HashMap<>();
-    private final Map< String, TrackerInfo > trackerInfoMap = new HashMap<>();
+    protected final Map< String, Date > unregisteredTrackers = new HashMap<>();
+    protected final Map< String, TrackerInfo > tupleOfCarMap = new HashMap<>();
+    protected final Map< String, TrackerInfo > trackerInfoMap = new HashMap<>();
 
     protected <T> Mono< T > convert ( final T o ) { return Optional.ofNullable( o ).isPresent() ? Mono.just( o ) : Mono.empty(); }
 
-    private final Function< Map< String, ? >, Mono< ApiResponseModel > > function =
+    public final Supplier< Date > getDate = Date::new;
+
+    public final BiFunction< Long, Instant, Long > getTimeDifference = ( aLong, instant ) ->
+            Math.abs( aLong + Duration.between( Instant.now(), instant ).getSeconds() );
+
+    protected final Function< Map< String, ? >, Mono< ApiResponseModel > > function =
             map -> this.convert( ApiResponseModel
                     .builder() // in case of wrong login
                     .status( Status
@@ -32,7 +43,7 @@ public class Inspector {
                     .success( !map.containsKey( "success" ) )
                     .build() );
 
-    private final Supplier< Mono< ApiResponseModel > > errorResponse = () -> this.convert(
+    protected final Supplier< Mono< ApiResponseModel > > errorResponse = () -> this.convert(
             ApiResponseModel
                     .builder()
                     .success( false )

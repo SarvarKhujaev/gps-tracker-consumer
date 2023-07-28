@@ -6,7 +6,7 @@ import com.ssd.mvd.constants.Status;
 import java.util.UUID;
 
 @lombok.Data
-public class LastPosition {
+public final class LastPosition {
     // Car data
     private String icon; // иконка патрульного выбирается исходя из типа патрульного
     private String icon2; // иконка патрульного выбирается исходя из типа патрульного
@@ -35,8 +35,13 @@ public class LastPosition {
 
         final Icons icons = CassandraDataControl
                 .getInstance()
-                .getGetPoliceType()
-                .apply( trackerInfo.getPatrul().getPoliceType() );
+                .icons
+                .getOrDefault( trackerInfo.getPatrul().getPoliceType(),
+                        CassandraDataControl
+                                .getInstance()
+                                .getPoliceType
+                                .apply( trackerInfo.getPatrul().getPoliceType() ) );
+
         this.setIcon( icons.getIcon1() );
         this.setIcon2( icons.getIcon2() );
         this.setTaskId( trackerInfo.getPatrul().getTaskId() );
