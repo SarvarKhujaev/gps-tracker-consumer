@@ -23,7 +23,6 @@ import com.ssd.mvd.constants.CassandraTables;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.policies.TokenAwarePolicy;
-import com.datastax.driver.core.policies.DefaultRetryPolicy;
 import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
 
 @lombok.Data
@@ -68,7 +67,7 @@ public final class CassandraDataControl extends LogInspector {
                 .withQueryOptions( new QueryOptions()
                         .setConsistencyLevel( ConsistencyLevel.QUORUM )
                         .setDefaultIdempotence( true ) )
-                .withRetryPolicy( DefaultRetryPolicy.INSTANCE )
+                .withRetryPolicy( new CustomRetryPolicy( 3, 3, 3 ) )
                 .withProtocolVersion( ProtocolVersion.V4 )
                 .withSocketOptions( options )
                 .withLoadBalancingPolicy( new TokenAwarePolicy( DCAwareRoundRobinPolicy.builder().build() ) )
@@ -384,4 +383,11 @@ public final class CassandraDataControl extends LogInspector {
                             .stream() )
                     .parallel( super.checkDifference.apply( table.name().length() + keyspace.name().length() ) )
                     .runOn( Schedulers.parallel() );
+
+    public void delete () {
+        instance = null;
+        this.getSession().close();
+        this.getCluster().close();
+        KafkaDataControl.getInstance().clear();
+        super.logging( "Cassandra is closed!!!" ); }
 }

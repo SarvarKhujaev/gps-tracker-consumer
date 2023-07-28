@@ -146,4 +146,10 @@ public final class KafkaDataControl extends LogInspector {
                     .doOnSuccess( success -> super.logging( "Kafka got ReqCar: " + reqCar.getTrackerId() ) )
                     .subscribe();
             return reqCar; };
+
+    public void clear () {
+        instance = null;
+        this.getKafkaSender().close();
+        this.getKafkaStreams().close();
+        super.logging( "Kafka is closed successfully" ); }
 }

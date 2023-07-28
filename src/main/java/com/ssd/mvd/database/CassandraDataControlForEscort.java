@@ -165,7 +165,7 @@ public final class CassandraDataControlForEscort extends CassandraConverter {
                     + ", latitude = " + latitude
                     + " WHERE uuid = " + tupleOfCar.getUuid()
                     + " AND trackerid = '"
-                    + tupleOfCar.getTrackerId() + "' IF EXISTS;" ); }
+                    + tupleOfCar.getTrackerId() + "';" ); }
 
     private final Function< UUID, Mono< TupleOfCar > > getCurrentTupleOfCar = uuid ->
             super.convert( new TupleOfCar( this.getSession().execute( "SELECT * FROM "
