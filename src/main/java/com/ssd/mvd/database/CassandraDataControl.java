@@ -247,7 +247,7 @@ public final class CassandraDataControl extends LogInspector {
                             + trackerInfo.getTrackerId() + "', '"
                             + super.getDate.get().toInstant() + "', "
                             + speed + ", "
-                            + ( speed * 10 / 36 ) * 15 + ");" ) );
+                            + ( ( speed * 10 / 36 ) * 15 ) + ");" ) );
 
     // возвпащает данные о машине по намеру или IMEI
     private final BiFunction< String, String, Mono< ReqCar > > getCarByNumber = ( param, key ) ->
@@ -263,8 +263,8 @@ public final class CassandraDataControl extends LogInspector {
                         + CassandraTables.TRACKERS + "."
                         + CassandraTables.TRACKERS_LOCATION_TABLE
                         + " WHERE imei = '" + request.getTrackerId()
-                        + "' AND date >= '" + request.getStartTime().toInstant()
-                        + "' AND date <= '" + request.getEndTime().toInstant() + "' ORDER BY date ASC;" )
+                        + "' AND date >= '" + ( new Date( request.getStartTime().getTime() - 5L * 60 * 60 * 1000 ) ).toInstant()
+                        + "' AND date <= '" + ( new Date( request.getEndTime().getTime() - 5L * 60 * 60 * 1000 ) ).toInstant() + "' ORDER BY date ASC;" )
                     .all()
                     .stream()
                     .parallel() )
@@ -326,8 +326,7 @@ public final class CassandraDataControl extends LogInspector {
                                                                 + CassandraTables.TRACKERS + "."
                                                                 + CassandraTables.TRACKER_FUEL_CONSUMPTION
                                                                 + " WHERE imei = '" + reqCar.getTrackerId() + "'"
-                                                                + ( super.check.test( request, 5 )
-                                                                ? ""
+                                                                + ( super.check.test( request, 5 ) ? ""
                                                                 : " AND date >= '" + request.getStartTime().toInstant()
                                                                 + "' AND date <= '" + request.getEndTime().toInstant() + "'" ) + ";" )
                                                 .one()
