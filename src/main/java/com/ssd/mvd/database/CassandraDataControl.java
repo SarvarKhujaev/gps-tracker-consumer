@@ -357,7 +357,8 @@ public final class CassandraDataControl extends LogInspector {
                                                             + " AND date >= '" + date.toInstant()
                                                             + "' AND date <= '" + this.getStart().toInstant() + "';" )
                                                     .one().getDouble( "distance_summary" ) / 1000 );
-                                            consumptionData.setFuelLevel( consumptionData.getDistance() /
+                                            // переведем метры в километры
+                                            consumptionData.setFuelLevel( ( consumptionData.getDistance() / 1000 ) /
                                                     ( reqCar.getAverageFuelSize() > 0 ? reqCar.getAverageFuelSize() : 10 ) );
                                             patrulFuelStatistics.getMap().put( date, consumptionData );
                                             patrulFuelStatistics.setAverageFuelConsumption(
