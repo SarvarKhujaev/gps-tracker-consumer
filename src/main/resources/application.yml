@@ -7,8 +7,8 @@ spring:
         cassandra:
             port: ${CASSANDRA_PORT:9942}
             keyspace-name: ${KEYSPACE_NAME:GpsTracker}
-            contact-points: ${CASSANDRA_HOST:10.254.5.1, 10.254.5.2, 10.254.5.3}
-            local-datacenter: ${CASSANDRA_DC:datacenter1}
+            contact-points: ${CASSANDRA_HOST}
+            local-datacenter: ${CASSANDRA_DC}
             schema-action: CREATE_IF_NOT_EXISTS
 
             request:
@@ -45,4 +45,4 @@ variables:
     CASSANDRA_CORE_CONN_LOCAL: ${CASSANDRA_CORE_CONN_LOCAL:4}
     CASSANDRA_CORE_CONN_REMOTE: ${CASSANDRA_CORE_CONN_REMOTE:2}
 
-    ADDRESS_LOCATION_API : http://ms-dev.ssd.uz/nominatim/search?q=
+    ADDRESS_LOCATION_API : ${ADDRESS_LOCATION_API}
