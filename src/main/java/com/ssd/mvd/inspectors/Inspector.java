@@ -6,51 +6,55 @@ import com.ssd.mvd.entity.Status;
 import com.ssd.mvd.entity.Icons;
 
 import reactor.core.publisher.Mono;
-import java.time.Duration;
-import java.time.Instant;
-
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.Optional;
-import java.util.HashMap;
 import java.util.Date;
 import java.util.Map;
 
-public class Inspector {
+public class Inspector extends CollectionsInspector {
+    protected Inspector () {
+        this.icons = super.newMap();
+        this.tupleOfCarMap = super.newMap();
+        this.trackerInfoMap = super.newMap();
+        this.unregisteredTrackers = super.newMap();
+    }
+
     // содержит все типы полицейских
-    public final Map< String, Icons > icons = new HashMap<>();
+    protected final Map< String, Icons > icons;
     // хранит все не зарегистрированные трекеры
-    protected final Map< String, Date > unregisteredTrackers = new HashMap<>();
-    protected final Map< String, TrackerInfo > tupleOfCarMap = new HashMap<>();
-    protected final Map< String, TrackerInfo > trackerInfoMap = new HashMap<>();
+    protected final Map< String, Date > unregisteredTrackers;
+    protected final Map< String, TrackerInfo > tupleOfCarMap;
+    protected final Map< String, TrackerInfo > trackerInfoMap;
 
-    protected <T> Mono< T > convert ( final T o ) { return Optional.ofNullable( o ).isPresent() ? Mono.just( o ) : Mono.empty(); }
+    protected <T> Mono< T > convert ( final T o ) {
+        return Optional.ofNullable( o ).isPresent() ? Mono.just( o ) : Mono.empty();
+    }
 
-    public final Supplier< Date > getDate = Date::new;
+    protected Mono< ApiResponseModel > getResponse (
+            final Map< String, ? > map
+    ) {
+        return this.convert( ApiResponseModel
+                .builder() // in case of wrong login
+                .status( Status
+                        .builder()
+                        .message( map.get( "message" ).toString() )
+                        .code( map.containsKey( "code" )
+                                ? Integer.parseInt( map.get( "code" ).toString() )
+                                : 200 )
+                        .build() )
+                .success( !map.containsKey( "success" ) )
+                .build() );
+    }
 
-    public final BiFunction< Long, Instant, Long > getTimeDifference = ( aLong, instant ) ->
-            Math.abs( aLong + Duration.between( Instant.now(), instant ).getSeconds() );
-
-    protected final Function< Map< String, ? >, Mono< ApiResponseModel > > function =
-            map -> this.convert( ApiResponseModel
-                    .builder() // in case of wrong login
-                    .status( Status
-                            .builder()
-                            .message( map.get( "message" ).toString() )
-                            .code( map.containsKey( "code" ) ? Integer.parseInt( map.get( "code" ).toString() ) : 200 )
-                            .build() )
-                    .success( !map.containsKey( "success" ) )
-                    .build() );
-
-    protected final Supplier< Mono< ApiResponseModel > > errorResponse = () -> this.convert(
-            ApiResponseModel
-                    .builder()
-                    .success( false )
-                    .status( Status
-                            .builder()
-                            .message( "Server Error" )
-                            .code( 201 )
-                            .build() )
-                    .build() );
+    protected Mono< ApiResponseModel > getErrorResponse () {
+        return this.convert(
+                ApiResponseModel
+                        .builder()
+                        .success( false )
+                        .status( Status
+                                .builder()
+                                .message( "Server Error" )
+                                .code( 201 )
+                                .build() )
+                        .build() );
+    }
 }

@@ -4,7 +4,6 @@ import java.util.*;
 import com.google.gson.Gson;
 
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import reactor.kafka.sender.KafkaSender;
@@ -14,10 +13,11 @@ import com.ssd.mvd.entity.ReqCar;
 import com.ssd.mvd.entity.Position;
 import com.ssd.mvd.entity.TupleOfCar;
 import com.ssd.mvd.GpsTrackerApplication;
-import com.ssd.mvd.database.CassandraDataControl;
-
 import com.ssd.mvd.inspectors.LogInspector;
 import com.ssd.mvd.publisher.CustomPublisher;
+import com.ssd.mvd.subscribers.CustomSubscriber;
+import com.ssd.mvd.database.CassandraDataControl;
+
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -83,9 +83,13 @@ public final class KafkaDataControl extends LogInspector {
             SenderOptions.< String, String >create( this.getGetKafkaSenderOptions().get() )
                     .maxInFlight( 1024 ) );
 
-    private KafkaDataControl () { super.logging( "KafkaDataControl was created" ); }
+    private KafkaDataControl () {
+        super.logging( "KafkaDataControl was created" );
+    }
 
-    public static KafkaDataControl getInstance () { return instance != null ? instance : ( instance = new KafkaDataControl() ); }
+    public static KafkaDataControl getInstance () {
+        return instance != null ? instance : ( instance = new KafkaDataControl() );
+    }
 
     private final Supplier< Properties > setStreamProperties = () -> {
             this.getProperties().clear();
@@ -93,63 +97,75 @@ public final class KafkaDataControl extends LogInspector {
             this.getProperties().put( StreamsConfig.APPLICATION_ID_CONFIG, this.getGROUP_ID_FOR_KAFKA() );
             this.getProperties().put( StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName() );
             this.getProperties().put( StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName() );
-            return this.getProperties(); };
+            return this.getProperties();
+    };
 
     public void start () {
-            final KStream< String, String > kStream = this.getBuilder().stream( this.getRAW_GPS_LOCATION_TOPIC(),
+            final KStream< String, String > kStream = this.getBuilder().stream(
+                    this.getRAW_GPS_LOCATION_TOPIC(),
                     Consumed.with( Serdes.String(), Serdes.String() ) );
 
             kStream.mapValues( values -> CassandraDataControl
                     .getInstance()
-                    .getAddPosition()
+                    .getSaveCarLocation()
                     .apply( this.getGson().fromJson( values, Position.class ) ) );
 
             this.setKafkaStreams( new KafkaStreams( this.getBuilder().build(), this.getSetStreamProperties().get() ) );
-            this.getKafkaStreams().start(); }
+            this.getKafkaStreams().start();
+    }
 
     // записывает позицию от машины Эскорта
     private final Consumer< Position > writeToKafkaEscort = position -> this.getKafkaSender()
             .createOutbound()
-            .send( new CustomPublisher( this.getTUPLE_OF_CAR_LOCATION_TOPIC(), this.getGson().toJson( position ) ) )
+            .send( CustomPublisher.generate( this.getTUPLE_OF_CAR_LOCATION_TOPIC(), this.getGson().toJson( position ) ) )
             .then()
             .doOnError( super::logging )
-            .doOnSuccess( success -> super.logging( "Kafka got Escort car location: " + position.getDeviceId() + " at: " + position.getDeviceTime() ) )
-            .subscribe();
+            .doOnSuccess( success -> super.logging( "Kafka got Escort car location: "
+                    + position.getDeviceId()
+                    + " at: " + position.getDeviceTime() ) )
+            .subscribe( new CustomSubscriber<>(
+                    value -> super.logging( this.getTUPLE_OF_CAR_LOCATION_TOPIC() )
+            ));
 
     // записывает позицию от машины патрульного
     private final Consumer< Position > writeToKafkaPosition = position -> this.getKafkaSender()
             .createOutbound()
-            .send( new CustomPublisher( this.getWEBSOCKET_SERVICE_TOPIC_FOR_ONLINE(), this.getGson().toJson( position ) ) )
+            .send( CustomPublisher.generate( this.getWEBSOCKET_SERVICE_TOPIC_FOR_ONLINE(), this.getGson().toJson( position ) ) )
             .then()
             .doOnError( super::logging )
             .doOnSuccess( success -> super.logging( "Kafka got patrul car: " + position.getDeviceId() + " at: " + position.getDeviceTime() ) )
-            .subscribe();
+            .subscribe( new CustomSubscriber<>(
+                    value -> super.logging( this.getWEBSOCKET_SERVICE_TOPIC_FOR_ONLINE() )
+            ) );
 
     // записывает новую машину Эскорта если она была добавлена в базу
-    private final Function< TupleOfCar, TupleOfCar > writeToKafkaTupleOfCar = tupleOfCar -> {
+    private final Consumer< TupleOfCar > writeToKafkaTupleOfCar = tupleOfCar ->
             this.getKafkaSender()
                     .createOutbound()
-                    .send( new CustomPublisher( this.getNEW_TUPLE_OF_CAR_TOPIC(), this.getGson().toJson( tupleOfCar ) ) )
+                    .send( CustomPublisher.generate( this.getNEW_TUPLE_OF_CAR_TOPIC(), this.getGson().toJson( tupleOfCar ) ) )
                     .then()
                     .doOnError( super::logging )
                     .doOnSuccess( success -> super.logging( "Kafka got TupleOfCar: " + tupleOfCar.getTrackerId() ) )
-                    .subscribe();
-            return tupleOfCar; };
+                    .subscribe( new CustomSubscriber<>(
+                            value -> super.logging( this.getNEW_TUPLE_OF_CAR_TOPIC() )
+                    ) );
 
     // записывает новую машину патрульного если она была добавлена в базу
-    private final Function< ReqCar, ReqCar > writeToKafka = reqCar -> {
+    private final Consumer< ReqCar > writeToKafka = reqCar ->
             this.getKafkaSender()
                     .createOutbound()
-                    .send( new CustomPublisher( this.getNEW_CAR_TOPIC(), this.getGson().toJson( reqCar ) ) )
+                    .send( CustomPublisher.generate( this.getNEW_CAR_TOPIC(), this.getGson().toJson( reqCar ) ) )
                     .then()
                     .doOnError( super::logging )
                     .doOnSuccess( success -> super.logging( "Kafka got ReqCar: " + reqCar.getTrackerId() ) )
-                    .subscribe();
-            return reqCar; };
+                    .subscribe( new CustomSubscriber<>(
+                            value -> super.logging( this.getNEW_CAR_TOPIC() )
+                    ) );
 
     public void clear () {
         instance = null;
         this.getKafkaSender().close();
         this.getKafkaStreams().close();
-        super.logging( "Kafka is closed successfully" ); }
+        super.logging( "Kafka is closed successfully" );
+    }
 }

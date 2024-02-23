@@ -1,8 +1,19 @@
 package com.ssd.mvd.entity;
 
-@lombok.Data
 public final class Point {
-    private Double radius;
-    private Double latitude;
-    private Double longitude;
+    public double getRadius() {
+        return this.radius;
+    }
+
+    public double getLatitude() {
+        return this.latitude;
+    }
+
+    public double getLongitude() {
+        return this.longitude;
+    }
+
+    private double radius;
+    private double latitude;
+    private double longitude;
 }

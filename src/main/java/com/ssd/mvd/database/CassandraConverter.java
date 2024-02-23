@@ -1,5 +1,6 @@
 package com.ssd.mvd.database;
 
+import com.ssd.mvd.constants.CassandraDataTypes;
 import com.ssd.mvd.inspectors.LogInspector;
 import java.lang.reflect.Field;
 
@@ -8,31 +9,63 @@ import java.util.stream.Stream;
 import java.util.*;
 
 public class CassandraConverter extends LogInspector {
-    private final Function< Class, Stream< Field > > getFields = object -> Arrays.stream( object.getDeclaredFields() ).toList().stream();
+    protected CassandraConverter () {}
+
+    private final Function< Class, CassandraDataTypes > getCorrectDataType = type -> {
+        if ( type.equals( String.class ) || type.equals( Enum.class ) ) {
+            return CassandraDataTypes.TEXT;
+        }
+        else if ( type.equals( UUID.class ) ) {
+            return CassandraDataTypes.UUID;
+        }
+        else if ( type.equals( Long.class ) || type.equals( long.class ) ) {
+            return CassandraDataTypes.BIGINT;
+        }
+        else if ( type.equals( Integer.class ) || type.equals( int.class ) ) {
+            return CassandraDataTypes.INT;
+        }
+        else if ( type.equals( Double.class ) || type.equals( double.class ) ) {
+            return CassandraDataTypes.DOUBLE;
+        }
+        else if ( type.equals( Date.class ) ) {
+            return CassandraDataTypes.TIMESTAMP;
+        }
+        else if ( type.equals( byte.class ) ) {
+            return CassandraDataTypes.TINYINT;
+        }
+        else {
+            return CassandraDataTypes.BOOLEAN;
+        }
+    };
 
     protected final Function< Class, String > convertClassToCassandra = object -> {
-            final StringBuilder result = new StringBuilder( "( " );
-            this.getFields.apply( object )
-                    .filter( field -> field.getType().equals( String.class )
-                            ^ field.getType().equals( Integer.class )
-                            ^ field.getType().equals( Double.class )
-                            ^ field.getType().equals( UUID.class )
-                            ^ field.getType().equals( Long.class )
-                            ^ field.getType().equals( Date.class )
-                            ^ field.getType().equals( Boolean.class ) )
-                    .forEach( field -> {
-                        result.append( field.getName() );
-                        if ( field.getType().equals( String.class ) ) result.append( " text, " );
-                        else if ( field.getType().equals( UUID.class ) ) result.append( " uuid, " );
-                        else if ( field.getType().equals( Long.class ) ) result.append( " bigint, " );
-                        else if ( field.getType().equals( Integer.class ) ) result.append( " int, " );
-                        else if ( field.getType().equals( Double.class ) ) result.append( " double, " );
-                        else if ( field.getType().equals( Date.class ) ) result.append( " timestamp, " );
-                        else if ( field.getType().equals( Boolean.class ) ) result.append( " boolean, " ); } );
-            return result.substring( 0, result.toString().length() - 2 ); };
+        final StringBuilder result = super.newStringBuilder( "( " );
+        this.getFields.apply( object )
+                .filter( field -> field.getType().equals( String.class )
+                        ^ field.getType().equals( Integer.class )
+                        ^ field.getType().equals( Double.class )
+                        ^ field.getType().equals( byte.class )
+                        ^ field.getType().equals( UUID.class )
+                        ^ field.getType().equals( Long.class )
+                        ^ field.getType().equals( Date.class )
+                        ^ field.getType().equals( Boolean.class ) )
+                .forEach( field -> result
+                        .append( field.getName() )
+                        .append( " " )
+                        .append( this.getCorrectDataType.apply( field.getType() ) )
+                        .append( ", " ) );
 
-    protected final Function< Class, String > getALlNames = object -> {
-            final StringBuilder result = new StringBuilder( "( " );
-            this.getFields.apply( object ).forEach( field -> result.append( field.getName() ).append( ", " ) );
-            return result.substring( 0, result.length() - 2 ) + " )"; };
+        return result.substring( 0, result.toString().length() - 2 );
+    };
+
+    protected final Function< Class, String > getALlParamsNamesForClass = object -> {
+        final StringBuilder result = super.newStringBuilder( "" );
+        this.getFields.apply( object ).forEach( field -> result.append( field.getName() ).append( ", " ) );
+        return super.joinTextWithCorrectCollectionEnding(
+                result.substring( 0, result.length() - 2 ),
+                CassandraDataTypes.BOOLEAN
+        );
+    };
+
+    private final Function< Class, Stream< Field > > getFields = object -> Arrays.stream( object.getDeclaredFields() ).toList().stream();
 }
