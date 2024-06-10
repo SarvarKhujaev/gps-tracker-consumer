@@ -12,16 +12,27 @@ public class LogInspector extends DataValidateInspector {
 
     private Logger getLOGGER() { return this.LOGGER; }
 
-    protected Mono< ApiResponseModel > logging ( final Throwable error ) {
+    protected final synchronized Mono< ApiResponseModel > logging (
+            final Throwable error
+    ) {
         this.getLOGGER().error("Error: {}", error.getMessage() );
         return super.getErrorResponse();
     }
 
-    protected void logging ( final Throwable error, final Object o ) {
+    protected final synchronized void logging (
+            final Throwable error,
+            final Object o
+    ) {
         this.getLOGGER().error("Error: {} and reason: {}: ", error.getMessage(), o );
     }
 
-    protected void logging ( final String message ) {
+    protected final synchronized void logging (
+            final String message
+    ) {
         this.getLOGGER().info( message );
+    }
+
+    protected final synchronized void logging ( final Object o ) {
+        this.getLOGGER().info( o.getClass().getName() + " was closed successfully at: " + super.newDate() );
     }
 }

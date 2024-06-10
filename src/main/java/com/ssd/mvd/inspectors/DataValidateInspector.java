@@ -4,6 +4,7 @@ import com.ssd.mvd.database.CassandraDataControlForEscort;
 import com.ssd.mvd.database.CassandraDataControl;
 import com.ssd.mvd.entity.patrulDataSet.Patrul;
 import com.ssd.mvd.constants.CassandraTables;
+import com.ssd.mvd.GpsTrackerApplication;
 import com.ssd.mvd.entity.*;
 
 import com.datastax.driver.core.Row;
@@ -143,5 +144,28 @@ public class DataValidateInspector extends TimeInspector {
                     && ( params.containsKey( "mahalla" ) && Objects.equals(
                     patrul.getPatrulRegionData().getMahallaId(), params.get( "mahalla" ) ) );
         };
+    }
+
+    /*
+    получает в параметрах название параметра из файла application.yaml
+    проверят что context внутри main класса GpsTabletsServiceApplication  инициализирован
+    и среди параметров сервиса сузествует переданный параметр
+    */
+    protected final synchronized <T> T checkContextOrReturnDefaultValue (
+            final String paramName,
+            final T defaultValue
+    ) {
+        return this.objectIsNotNull( GpsTrackerApplication.context )
+                && this.objectIsNotNull(
+                GpsTrackerApplication
+                        .context
+                        .getEnvironment()
+                        .getProperty( paramName )
+        )
+                ? (T) GpsTrackerApplication
+                .context
+                .getEnvironment()
+                .getProperty( paramName )
+                : defaultValue;
     }
 }

@@ -5,6 +5,7 @@ import java.util.Calendar;
 import java.time.Duration;
 import java.text.MessageFormat;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -16,34 +17,34 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.publisher.ParallelFlux;
 
+import com.datastax.driver.core.*;
+
 import com.ssd.mvd.entity.*;
-import com.ssd.mvd.GpsTrackerApplication;
 import com.ssd.mvd.kafka.KafkaDataControl;
-import com.ssd.mvd.inspectors.LogInspector;
 import com.ssd.mvd.constants.CassandraTables;
 import com.ssd.mvd.constants.CassandraCommands;
 import com.ssd.mvd.entity.patrulDataSet.Patrul;
 import com.ssd.mvd.constants.CassandraFunctions;
 import com.ssd.mvd.subscribers.CustomSubscriber;
+import com.ssd.mvd.interfaces.ServiceCommonMethods;
+import com.ssd.mvd.interfaces.DatabaseCommonMethods;
 import com.ssd.mvd.entity.patrulDataSet.PatrulFuelStatistics;
-
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.policies.TokenAwarePolicy;
-import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
+import com.ssd.mvd.database.cassandraConfigs.CassandraParamsAndOptionsStore;
 
 @lombok.Data
-public final class CassandraDataControl extends LogInspector {
+public final class CassandraDataControl
+        extends CassandraParamsAndOptionsStore
+        implements DatabaseCommonMethods, ServiceCommonMethods {
     private final Cluster cluster;
     private final Session session;
 
     private static CassandraDataControl instance = new CassandraDataControl();
-    private CassandraTablesAndTypesRegister cassandraTablesAndTypesRegister;
 
     /*
     создаем, регистрируем и сохраняем все таблицы, типы и кодеки
     */
     public void setCassandraTablesAndTypesRegister () {
-        this.cassandraTablesAndTypesRegister = CassandraTablesAndTypesRegister.generate( this.getSession() );
+        CassandraTablesAndTypesRegister.generate( this.getSession() );
         this.register();
     }
 
@@ -68,67 +69,45 @@ public final class CassandraDataControl extends LogInspector {
     }
 
     private CassandraDataControl () {
-        final SocketOptions options = new SocketOptions();
-        options.setConnectTimeoutMillis( 30000 );
-        options.setReadTimeoutMillis( 300000 );
-        options.setTcpNoDelay( true );
-        options.setKeepAlive( true );
+        this.session = (
+                this.cluster = Cluster
+                        .builder()
+                        .withPort( super.getPort() )
+                        .addContactPoint( CassandraParamsAndOptionsStore.HOST )
+                        .withClusterName( CassandraParamsAndOptionsStore.CLUSTER_NAME )
+                        .withProtocolVersion( ProtocolVersion.V4 )
+                        .withRetryPolicy( super.getCustomRetryPolicy() )
+                        .withQueryOptions(
+                                new QueryOptions()
+                                        .setDefaultIdempotence( true )
+                                        .setConsistencyLevel( ConsistencyLevel.ONE )
+                        ).withSocketOptions( super.getSocketOptions() )
+                        .withPoolingOptions( super.getPoolingOptions() )
+                        .withCompression( ProtocolOptions.Compression.LZ4 )
+                        .build()
+        ).connect();
 
-        this.session = ( this.cluster = Cluster
-                .builder()
-                .withClusterName( GpsTrackerApplication
-                        .context
-                        .getEnvironment()
-                        .getProperty( "variables.KEYSPACE_NAME" ) )
-                .addContactPoint( "localhost" )
-                .withPort( Integer.parseInt( GpsTrackerApplication
-                        .context
-                        .getEnvironment()
-                        .getProperty( "variables.CASSANDRA_PORT" ) ) )
-                .withQueryOptions( new QueryOptions()
-                        .setConsistencyLevel( ConsistencyLevel.ONE )
-                        .setDefaultIdempotence( true ) )
-                .withRetryPolicy( new CustomRetryPolicy( 3, 3, 3 ) )
-                .withProtocolVersion( ProtocolVersion.V4 )
-                .withSocketOptions( options )
-                .withLoadBalancingPolicy( new TokenAwarePolicy( DCAwareRoundRobinPolicy.builder().build() ) )
-            .withPoolingOptions( new PoolingOptions()
-                    .setCoreConnectionsPerHost(
-                            HostDistance.REMOTE,
-                            Integer.parseInt( GpsTrackerApplication
-                            .context
-                            .getEnvironment()
-                            .getProperty( "variables.CASSANDRA_CORE_CONN_REMOTE" ) ) )
-                    .setCoreConnectionsPerHost(
-                            HostDistance.LOCAL,
-                            Integer.parseInt( GpsTrackerApplication
-                            .context
-                            .getEnvironment()
-                            .getProperty( "variables.CASSANDRA_CORE_CONN_LOCAL" ) ) )
-                    .setMaxConnectionsPerHost(
-                            HostDistance.REMOTE,
-                            Integer.parseInt( GpsTrackerApplication
-                            .context
-                            .getEnvironment()
-                            .getProperty( "variables.CASSANDRA_MAX_CONN_REMOTE" ) ) )
-                    .setMaxConnectionsPerHost(
-                            HostDistance.LOCAL,
-                            Integer.parseInt( GpsTrackerApplication
-                            .context
-                            .getEnvironment()
-                            .getProperty( "variables.CASSANDRA_MAX_CONN_LOCAL" ) ) )
-                    .setMaxRequestsPerConnection( HostDistance.REMOTE, 1024 )
-                    .setMaxRequestsPerConnection( HostDistance.LOCAL, 1024 )
-                    .setPoolTimeoutMillis( 60000 ) ).build() )
-                .connect();
+        super.logging( this.getClass() );
 
-        super.logging( "Cassandra is ready" );
+        /*
+        создаем, регистрируем и сохраняем все таблицы, типы и кодеки
+        */
+        CassandraTablesAndTypesRegister.generate(
+                this.getSession()
+        );
     }
 
+    /*
+    возвращает ROW из БД для любой таблицы внутри TABLETS
+    */
+    @Override
     public Row getRowFromTabletsKeyspace (
+            // название таблицы внутри Tablets
             final CassandraTables cassandraTableName,
+            // название колонки
             final String columnName,
-            final Object paramName
+            // параметр по которому введется поиск
+            final String paramName
     ) {
         return this.getSession().execute(
                 MessageFormat.format(
@@ -136,12 +115,39 @@ public final class CassandraDataControl extends LogInspector {
                         {0} {1}.{2} WHERE {3} = {4};
                         """,
                         CassandraCommands.SELECT_ALL,
-                        CassandraTables.ESCORT,
+
+                        CassandraTables.TRACKERS,
+
                         cassandraTableName,
                         columnName,
                         paramName
                 )
         ).one();
+    }
+
+    @Override
+    public <T> List< Row > getListOfEntities (
+            // название таблицы внутри Tablets
+            final CassandraTables cassandraTableName,
+            // название колонки
+            final String columnName,
+            // параметр по которому введется поиск
+            final List< T > ids
+    ) {
+        return this.getSession().execute(
+                MessageFormat.format(
+                        """
+                        {0} {1}.{2} WHERE {3} IN {4};
+                        """,
+                        CassandraCommands.SELECT_ALL,
+
+                        CassandraTables.TRACKERS,
+
+                        cassandraTableName,
+                        columnName,
+                        super.newStringBuilder( "(" ).append( super.convertListToCassandra.apply( ids ) ).append( ")" )
+                )
+        ).all();
     }
 
     private final Consumer< ReqCar > updateReqCarPosition = reqCar ->
@@ -153,8 +159,10 @@ public final class CassandraDataControl extends LogInspector {
                             WHERE uuid = {5};
                             """,
                             CassandraCommands.UPDATE,
+
                             CassandraTables.TABLETS,
                             CassandraTables.CARS,
+
                             reqCar.getLongitude(),
                             reqCar.getLatitude(),
                             reqCar.getUuid()
@@ -183,6 +191,7 @@ public final class CassandraDataControl extends LogInspector {
                                     VALUES ( {3}, {4}, {5}, {6}, {7}, '' );
                                     """,
                                     CassandraCommands.INSERT_INTO,
+
                                     CassandraTables.ESCORT,
                                     CassandraTables.ESCORT_LOCATION,
 
@@ -483,17 +492,21 @@ public final class CassandraDataControl extends LogInspector {
     находит данные патрульного по серии паспорта или по уникальному ID
     */
     private final BiFunction< String, Integer, Patrul > getPatrul = ( param, integer ) ->
-            new Patrul( this.getSession().execute(
-                    MessageFormat.format(
-                            """
-                            {0} {1}.{2} WHERE {3};
-                            """,
-                            CassandraCommands.SELECT_ALL,
-                            CassandraTables.TABLETS,
-                            CassandraTables.PATRULS,
-                            ( integer == 0 ? " passportNumber = '" + param + "'" : " uuid = " + param )
-                    ) )
-                    .one() );
+            new Patrul(
+                    this.getSession().execute(
+                        MessageFormat.format(
+                                """
+                                {0} {1}.{2} WHERE {3};
+                                """,
+                                CassandraCommands.SELECT_ALL,
+
+                                CassandraTables.TABLETS,
+                                CassandraTables.PATRULS,
+
+                                ( integer == 0 ? " passportNumber = '" + param + "'" : " uuid = " + param )
+                        )
+                    ).one()
+            );
 
     public final Function< String, Icons > getPoliceType = policeType -> new Icons(
             this.getSession().execute(
@@ -503,10 +516,12 @@ public final class CassandraDataControl extends LogInspector {
                             WHERE policeType = {3};
                             """,
                             CassandraCommands.SELECT_ALL,
+
                             CassandraTables.TABLETS,
                             CassandraTables.POLICE_TYPE,
 
-                            super.joinWithAstrix( policeType ) )
+                            super.joinWithAstrix( policeType )
+                    )
             ).one() );
 
     private final Function< Boolean, Flux< TrackerInfo > > getAllTrackers = aBoolean -> this.getGetAllEntities()
@@ -623,7 +638,8 @@ public final class CassandraDataControl extends LogInspector {
 
                         }
                         return patrulFuelStatistics;
-                    } ).onErrorReturn( new PatrulFuelStatistics() );
+                    } )
+                    .onErrorReturn( new PatrulFuelStatistics() );
 
     private final BiFunction< CassandraTables, CassandraTables, ParallelFlux< Row > > getAllEntities =
             ( keyspace, table ) -> Flux.fromStream(
@@ -632,11 +648,18 @@ public final class CassandraDataControl extends LogInspector {
                     .parallel( super.checkDifference( table.name().length() + keyspace.name().length() ) )
                     .runOn( Schedulers.parallel() );
 
-    public void delete () {
+    @Override
+    public void close( final Throwable throwable ) {
+        super.logging( this );
+        this.close();
+    }
+
+    @Override
+    public void close() {
         instance = null;
-        this.getSession().close();
+        super.logging( this );
         this.getCluster().close();
-        KafkaDataControl.getInstance().clear();
-        super.logging( "Cassandra is closed!!!" );
+        this.getSession().close();
+        KafkaDataControl.getInstance().close();
     }
 }

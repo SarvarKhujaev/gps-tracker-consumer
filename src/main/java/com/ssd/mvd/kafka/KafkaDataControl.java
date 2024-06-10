@@ -17,6 +17,7 @@ import com.ssd.mvd.inspectors.LogInspector;
 import com.ssd.mvd.publisher.CustomPublisher;
 import com.ssd.mvd.subscribers.CustomSubscriber;
 import com.ssd.mvd.database.CassandraDataControl;
+import com.ssd.mvd.interfaces.ServiceCommonMethods;
 
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
@@ -28,7 +29,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.clients.producer.ProducerConfig;
 
 @lombok.Data
-public final class KafkaDataControl extends LogInspector {
+public final class KafkaDataControl extends LogInspector implements ServiceCommonMethods {
     private final Gson gson = new Gson();
     private Properties properties = new Properties();
     private static KafkaDataControl instance = new KafkaDataControl();
@@ -162,10 +163,11 @@ public final class KafkaDataControl extends LogInspector {
                             value -> super.logging( this.getNEW_CAR_TOPIC() )
                     ) );
 
-    public void clear () {
+    @Override
+    public void close() {
         instance = null;
+        super.logging( this );
         this.getKafkaSender().close();
         this.getKafkaStreams().close();
-        super.logging( "Kafka is closed successfully" );
     }
 }

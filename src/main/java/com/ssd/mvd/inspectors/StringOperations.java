@@ -2,7 +2,9 @@ package com.ssd.mvd.inspectors;
 
 import com.ssd.mvd.constants.CassandraDataTypes;
 import com.ssd.mvd.constants.CassandraCommands;
+
 import java.util.Date;
+import java.util.UUID;
 
 public class StringOperations {
     protected StringBuilder newStringBuilder () {
@@ -11,10 +13,6 @@ public class StringOperations {
 
     protected StringBuilder newStringBuilder ( final String s ) {
         return new StringBuilder( s );
-    }
-
-    protected String removeAllDotes ( final String s ) {
-        return s.replaceAll( "'", "" );
     }
 
     /*
@@ -47,5 +45,9 @@ public class StringOperations {
             case LIST -> "[" + textToJoin + "]";
             default -> "(" + textToJoin + ")";
         };
+    }
+
+    protected final synchronized String generateID () {
+        return "ID = '%s'".formatted( UUID.randomUUID() );
     }
 }

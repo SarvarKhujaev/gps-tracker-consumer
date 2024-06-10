@@ -8,6 +8,8 @@ import java.util.Date;
 public class TimeInspector extends Inspector {
     protected TimeInspector () {}
 
+    public final static int DAY_IN_SECOND = 86400;
+
     protected final Date date = new Date( 1605006666774L );
 
     protected Date newDate () {
