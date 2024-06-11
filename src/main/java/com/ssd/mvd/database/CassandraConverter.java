@@ -96,4 +96,18 @@ public class CassandraConverter extends LogInspector {
                 CassandraDataTypes.LIST
         );
     };
+
+    /*
+    принимает экземпляра Class и возвращает список названий всех его параметров
+    */
+    protected final Function< Class<?>, String > getAllParamsNamesForClass = object -> {
+        final StringBuilder result = super.newStringBuilder( "" );
+
+        this.getFields.apply( object ).forEach( field -> result.append( field.getName() ).append( ", " ) );
+
+        return super.joinTextWithCorrectCollectionEnding(
+                result.substring( 0, result.length() - 2 ),
+                CassandraDataTypes.BOOLEAN
+        );
+    };
 }

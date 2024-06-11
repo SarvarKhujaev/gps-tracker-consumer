@@ -1,13 +1,12 @@
-//package com.ssd.mvd;
-//
-//import org.junit.jupiter.api.Test;
-//import org.springframework.boot.test.context.SpringBootTest;
-//
-//@SpringBootTest
-//class GpsTrackerApplicationTests {
-//
-//    @Test
-//    void contextLoads() {
-//    }
-//
-//}
+package com.ssd.mvd;
+
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+
+@RunWith( value = Suite.class )
+@Suite.SuiteClasses ( value = {
+        CassandraConnectionTest.class,
+        KafkaConnectionTest.class
+} )
+public final class GpsTrackerApplicationTests {
+}

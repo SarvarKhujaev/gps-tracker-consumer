@@ -8,9 +8,12 @@ import com.ssd.mvd.GpsTrackerApplication;
 import com.ssd.mvd.entity.*;
 
 import com.datastax.driver.core.Row;
+
 import static java.lang.Math.cos;
 import static java.lang.Math.*;
 
+import java.util.function.Consumer;
+import java.util.Optional;
 import java.util.Objects;
 import java.util.List;
 import java.util.Map;
@@ -18,11 +21,11 @@ import java.util.Map;
 public class DataValidateInspector extends TimeInspector {
     protected DataValidateInspector () {}
 
-    private static final Double P = PI / 180;
-    private final static DataValidateInspector INSPECTOR = new DataValidateInspector();
+    private static final double P = PI / 180;
+    private final static DataValidateInspector DATA_VALIDATE_INSPECTOR = new DataValidateInspector();
 
     public static DataValidateInspector getInstance () {
-        return INSPECTOR;
+        return DATA_VALIDATE_INSPECTOR;
     }
 
     protected <T> boolean objectIsNotNull ( final T value ) {
@@ -32,8 +35,8 @@ public class DataValidateInspector extends TimeInspector {
     protected boolean check (
             final String trackerId
     ) {
-        return super.tupleOfCarMap.containsKey( trackerId )
-                && super.trackerInfoMap.containsKey( trackerId );
+        return Inspector.tupleOfCarMap.containsKey( trackerId )
+                && Inspector.trackerInfoMap.containsKey( trackerId );
     }
 
     protected boolean check (
@@ -54,7 +57,7 @@ public class DataValidateInspector extends TimeInspector {
         return position.getLatitude() > 0
                 && position.getSpeed() > 0
                 && position.getLongitude() > 0
-                && position.getDeviceTime().after( super.date );
+                && position.getDeviceTime().after( date );
     }
 
     protected boolean check (
@@ -112,18 +115,18 @@ public class DataValidateInspector extends TimeInspector {
     ) {
         return CassandraDataControlForEscort
                 .getInstance()
-                .getRowFromEscortKeyspace(
+                .getRowFromTabletsKeyspace(
                         CassandraTables.TUPLE_OF_CAR,
                         "gosnumber",
                         carNumber
                 ) == null
                 && CassandraDataControl
-                .getInstance()
-                .getRowFromTabletsKeyspace(
-                        CassandraTables.CARS,
-                        "gosnumber",
-                        carNumber
-                ) == null;
+                    .getInstance()
+                    .getRowFromTabletsKeyspace(
+                            CassandraTables.CARS,
+                            "gosnumber",
+                            carNumber
+                    ) == null;
     }
 
     protected boolean checkParams (
@@ -147,6 +150,18 @@ public class DataValidateInspector extends TimeInspector {
     }
 
     /*
+    принимает запись из БД
+    проверяет что запись не пуста
+    и заполняет параметры объекта по заданной логике
+    */
+    protected final synchronized <T> void checkAndSetParams (
+            final T object,
+            final Consumer< T > customConsumer
+    ) {
+        Optional.ofNullable( object ).ifPresent( customConsumer );
+    }
+
+    /*
     получает в параметрах название параметра из файла application.yaml
     проверят что context внутри main класса GpsTabletsServiceApplication  инициализирован
     и среди параметров сервиса сузествует переданный параметр
@@ -157,15 +172,15 @@ public class DataValidateInspector extends TimeInspector {
     ) {
         return this.objectIsNotNull( GpsTrackerApplication.context )
                 && this.objectIsNotNull(
-                GpsTrackerApplication
+                        GpsTrackerApplication
+                                .context
+                                .getEnvironment()
+                                .getProperty( paramName )
+                )
+                ? (T) GpsTrackerApplication
                         .context
                         .getEnvironment()
                         .getProperty( paramName )
-        )
-                ? (T) GpsTrackerApplication
-                .context
-                .getEnvironment()
-                .getProperty( paramName )
                 : defaultValue;
     }
 }

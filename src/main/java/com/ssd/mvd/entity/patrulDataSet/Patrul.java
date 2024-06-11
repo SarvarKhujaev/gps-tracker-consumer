@@ -1,18 +1,70 @@
 package com.ssd.mvd.entity.patrulDataSet;
 
-import com.datastax.driver.core.Row;
+import com.ssd.mvd.interfaces.ObjectCommonMethods;
+import com.ssd.mvd.database.CassandraConverter;
+import com.ssd.mvd.constants.CassandraCommands;
+import com.ssd.mvd.constants.CassandraTables;
 import com.ssd.mvd.entity.TupleOfCar;
 
-import java.util.Optional;
+import com.datastax.driver.core.Row;
+import java.text.MessageFormat;
 import java.util.UUID;
 
-public final class Patrul {
-    public UUID getUuid() {
+public final class Patrul extends CassandraConverter implements ObjectCommonMethods< Patrul > {
+    public UUID getUuid () {
         return this.uuid;
     }
 
-    public void setUuid( final UUID uuid ) {
+    public void setUuid ( final UUID uuid ) {
         this.uuid = uuid;
+    }
+
+    public long getTotalActivityTime() {
+        return this.totalActivityTime;
+    }
+
+    public void setTotalActivityTime( final long totalActivityTime ) {
+        this.totalActivityTime = totalActivityTime;
+    }
+
+    public boolean getInPolygon() {
+        return this.inPolygon;
+    }
+
+    public void setInPolygon( final boolean inPolygon ) {
+        this.inPolygon = inPolygon;
+    }
+
+    public boolean getTuplePermission() {
+        return this.tuplePermission;
+    }
+
+    public void setTuplePermission( final boolean tuplePermission ) {
+        this.tuplePermission = tuplePermission;
+    }
+
+    public String getRank() {
+        return this.rank;
+    }
+
+    public void setRank( final String rank ) {
+        this.rank = rank;
+    }
+
+    public String getEmail() {
+        return this.email;
+    }
+
+    public void setEmail( final String email ) {
+        this.email = email;
+    }
+
+    public String getOrganName() {
+        return this.organName;
+    }
+
+    public void setOrganName( final String organName ) {
+        this.organName = organName;
     }
 
     public String getPoliceType() {
@@ -23,12 +75,28 @@ public final class Patrul {
         this.policeType = policeType;
     }
 
+    public String getDateOfBirth() {
+        return this.dateOfBirth;
+    }
+
+    public void setDateOfBirth( final String dateOfBirth ) {
+        this.dateOfBirth = dateOfBirth;
+    }
+
     public String getPassportNumber() {
         return this.passportNumber;
     }
 
     public void setPassportNumber( final String passportNumber ) {
         this.passportNumber = passportNumber;
+    }
+
+    public String getPatrulImageLink() {
+        return this.patrulImageLink;
+    }
+
+    public void setPatrulImageLink( final String patrulImageLink ) {
+        this.patrulImageLink = patrulImageLink;
     }
 
     public PatrulFIOData getPatrulFIOData() {
@@ -79,19 +147,21 @@ public final class Patrul {
         this.patrulUniqueValues = patrulUniqueValues;
     }
 
-    public void linkWithTupleOfCar ( final TupleOfCar tupleOfCar ) {
-        this.getPatrulUniqueValues().setUuidForEscortCar( tupleOfCar.getUuid() );
-        this.getPatrulCarInfo().setCarNumber( tupleOfCar );
-    }
-
-    private Double latitudeOfTask;
-    private Double longitudeOfTask;
-
+    // уникальное ID патрульного
     private UUID uuid;
-    private UUID uuidForEscortCar;
 
-    private String policeType;
+    private long totalActivityTime;
+
+    private boolean inPolygon;
+    private boolean tuplePermission; // показывает можно ли патрульному участвовать в кортеже
+
+    private String rank;
+    private String email;
+    private String organName;
+    private String policeType; // choosing from dictionary
+    private String dateOfBirth;
     private String passportNumber;
+    private String patrulImageLink;
 
     private PatrulFIOData patrulFIOData;
     private PatrulCarInfo patrulCarInfo;
@@ -100,18 +170,73 @@ public final class Patrul {
     private PatrulLocationData patrulLocationData;
     private PatrulUniqueValues patrulUniqueValues;
 
-    public Patrul ( final Row row ) {
-        Optional.of( row ).ifPresent( row1 -> {
-            this.setUuid( row.getUUID( "uuid" ) );
-            this.setPoliceType( row.getString( "policeType" ) );
-            this.setPassportNumber( row.getString( "passportNumber" ) );
+    /*
+        соединяем патрульного с Эскортом
+    */
+    public void linkWithTupleOfCar ( final TupleOfCar tupleOfCar ) {
+        this.getPatrulUniqueValues().setUuidForEscortCar( tupleOfCar.getUuid() );
+        this.getPatrulCarInfo().setCarNumber( tupleOfCar );
+    }
 
-            this.setPatrulFIOData( PatrulFIOData.generate( row ) );
-            this.setPatrulCarInfo( PatrulCarInfo.generate( row ) );
-            this.setPatrulTaskInfo( PatrulTaskInfo.generate( row ) );
-            this.setPatrulRegionData( PatrulRegionData.generate( row ) );
-            this.setPatrulLocationData( PatrulLocationData.generate( row ) );
-            this.setPatrulUniqueValues( PatrulUniqueValues.generate( row ) );
-        } );
+    public static Patrul empty () {
+        return new Patrul();
+    }
+
+    private Patrul () {}
+
+    public Patrul ( final Row row ) {
+        this.generate( row );
+    }
+
+    @Override
+    public Patrul generate( final Row row ) {
+        super.checkAndSetParams(
+                row,
+                row1 -> {
+                    this.setUuid( row.getUUID( "uuid" ) );
+                    this.setInPolygon( row.getBool( "inPolygon" ) );
+                    this.setTuplePermission( row.getBool( "tuplePermission" ) );
+                    this.setTotalActivityTime( row.getLong( "totalActivityTime" ) );
+
+                    this.setRank( row.getString( "rank" ) );
+                    this.setEmail( row.getString( "email" ) );
+                    this.setOrganName( row.getString( "organName" ) );
+                    this.setPoliceType( row.getString( "policeType" ) );
+                    this.setDateOfBirth( row.getString( "dateOfBirth" ) );
+                    this.setPassportNumber( row.getString( "passportNumber" ) );
+                    this.setPatrulImageLink( row.getString( "patrulImageLink" ) );
+
+                    this.setPatrulCarInfo( PatrulCarInfo.empty().generate( row.getUDTValue( "patrulCarInfo" ) ) );
+                    this.setPatrulFIOData( PatrulFIOData.empty().generate( row.getUDTValue( "patrulFIOData" ) ) );
+                    this.setPatrulTaskInfo( PatrulTaskInfo.empty().generate( row.getUDTValue( "patrulTaskInfo" ) ) );
+                    this.setPatrulRegionData( PatrulRegionData.empty().generate( row.getUDTValue( "patrulRegionData" ) ) );
+                    this.setPatrulLocationData( PatrulLocationData.empty().generate( row.getUDTValue( "patrulLocationData" ) ) );
+                    this.setPatrulUniqueValues( PatrulUniqueValues.empty().generate( row.getUDTValue( "patrulUniqueValues" ) ) );
+                }
+        );
+
+        return this;
+    }
+
+    @Override
+    public String getEntityUpdateCommand() {
+        return MessageFormat.format(
+                """
+                {0} {1}.{2}
+                SET uuidForEscortCar = {3},
+                carType = {4},
+                carNumber = {5},
+                WHERE uuid = {6};
+                """,
+                CassandraCommands.UPDATE,
+
+                CassandraTables.TABLETS,
+                CassandraTables.PATRULS,
+
+                this.getPatrulUniqueValues().getUuidForEscortCar(),
+                super.joinWithAstrix( this.getPatrulCarInfo().getCarType() ),
+                super.joinWithAstrix( this.getPatrulCarInfo().getCarNumber() ),
+                this.getUuid()
+        );
     }
 }

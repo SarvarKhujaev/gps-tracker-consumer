@@ -4,8 +4,8 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ssd.mvd.entity.patrulDataSet.PatrulFuelStatistics;
-import com.ssd.mvd.inspectors.DataValidateInspector;
 import com.ssd.mvd.database.CassandraDataControl;
+import com.ssd.mvd.inspectors.Inspector;
 import com.ssd.mvd.entity.*;
 
 import reactor.core.publisher.Flux;
@@ -16,7 +16,7 @@ import java.util.Date;
 import java.util.Map;
 
 @RestController
-public final class TrackerController extends DataValidateInspector {
+public final class TrackerController extends Inspector {
     @MessageMapping ( value = "PING" )
     public Mono< Boolean > ping () {
         return super.convert( true );
@@ -26,7 +26,7 @@ public final class TrackerController extends DataValidateInspector {
     public Flux< TrackerInfo > online () {
         return CassandraDataControl
             .getInstance()
-            .getGetAllTrackers()
+            .getAllTrackers
             .apply( true )
             .filter( TrackerInfo::getStatus );
     }
@@ -35,7 +35,7 @@ public final class TrackerController extends DataValidateInspector {
     public Flux< TrackerInfo > offline () {
         return CassandraDataControl
             .getInstance()
-            .getGetAllTrackers()
+            .getAllTrackers
             .apply( true )
             .filter( trackerInfo -> !trackerInfo.getStatus() );
     }
@@ -44,12 +44,13 @@ public final class TrackerController extends DataValidateInspector {
     public Flux< TrackerInfo > getAllTrackers () {
         return CassandraDataControl
             .getInstance()
-            .getGetAllTrackers()
+            .getAllTrackers
             .apply( true );
     }
 
     @MessageMapping ( value = "GET_ALL_UNREGISTERED_TRACKERS" )
-    public Mono< Map< String, Date > > GET_ALL_UNREGISTERED_TRACKERS () { return super.convert( super.unregisteredTrackers );
+    public Mono< Map< String, Date > > GET_ALL_UNREGISTERED_TRACKERS () {
+        return super.convert( Inspector.unregisteredTrackers );
     }
 
     @MessageMapping ( value = "GET_ADDRESS" )
@@ -66,7 +67,7 @@ public final class TrackerController extends DataValidateInspector {
     public Mono< Date > getLastActiveDate ( final String uuid ) {
         return CassandraDataControl
                 .getInstance()
-                .getGetLastActiveDate()
+                .getLastActiveDate
                 .apply( uuid );
     }
 
@@ -75,7 +76,7 @@ public final class TrackerController extends DataValidateInspector {
         return !super.check( request )
                 ? CassandraDataControl
                 .getInstance()
-                .getGetHistoricalPosition()
+                .getHistoricalPosition
                 .apply( request, false )
                 .sort( Comparator.comparing( PositionInfo::getPositionWasSavedDate ) )
                 : Flux.empty();
@@ -86,7 +87,7 @@ public final class TrackerController extends DataValidateInspector {
         return !super.check( request )
                 ? CassandraDataControl
                 .getInstance()
-                .getGetHistoricalPosition()
+                .getHistoricalPosition
                 .apply( request, false )
                 .sort( Comparator.comparing( PositionInfo::getPositionWasSavedDate ) )
                 : Flux.empty();
@@ -96,7 +97,7 @@ public final class TrackerController extends DataValidateInspector {
     public Flux< LastPosition > getAllTrackersId ( final Map< String, Long > params ) {
         return CassandraDataControl
             .getInstance()
-            .getGetAllTrackers()
+            .getAllTrackers
             .apply( true )
             .filter( trackerInfo -> !super.objectIsNotNull( params )
                     || params.isEmpty()
@@ -108,7 +109,7 @@ public final class TrackerController extends DataValidateInspector {
     public Mono<PatrulFuelStatistics> calculate_average_fuel_consumption (final Request request ) {
             return CassandraDataControl
                     .getInstance()
-                    .getCalculate_average_fuel_consumption()
+                    .calculateAverageFuelConsumption
                     .apply( request );
     }
 }

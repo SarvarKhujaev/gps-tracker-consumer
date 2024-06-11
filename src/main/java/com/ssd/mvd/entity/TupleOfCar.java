@@ -1,10 +1,17 @@
 package com.ssd.mvd.entity;
 
+import com.ssd.mvd.interfaces.EntityToCassandraConverter;
+import com.ssd.mvd.constants.CassandraFunctions;
+import com.ssd.mvd.database.CassandraConverter;
+import com.ssd.mvd.constants.CassandraCommands;
+import com.ssd.mvd.constants.CassandraTables;
+
 import com.datastax.driver.core.Row;
-import java.util.Optional;
+
+import java.text.MessageFormat;
 import java.util.UUID;
 
-public final class TupleOfCar {
+public final class TupleOfCar extends CassandraConverter implements EntityToCassandraConverter {
     public UUID getUuid() {
         return this.uuid;
     }
@@ -69,7 +76,7 @@ public final class TupleOfCar {
         this.simCardNumber = simCardNumber;
     }
 
-    public Double getLatitude() {
+    public double getLatitude() {
         return this.latitude;
     }
 
@@ -108,20 +115,111 @@ public final class TupleOfCar {
     private double averageFuelConsumption;
 
     public TupleOfCar ( final Row row ) {
-        Optional.ofNullable( row ).ifPresent( row1 -> {
-            this.setUuid( row.getUUID( "uuid" ) );
-            this.setUuidOfEscort( row.getUUID( "uuidOfEscort" ) );
-            this.setUuidOfPatrul( row.getUUID( "uuidOfPatrul" ) );
+        super.checkAndSetParams(
+                row,
+                row1 -> {
+                    this.setUuid( row.getUUID( "uuid" ) );
+                    this.setUuidOfEscort( row.getUUID( "uuidOfEscort" ) );
+                    this.setUuidOfPatrul( row.getUUID( "uuidOfPatrul" ) );
 
-            this.setCarModel( row.getString( "carModel" ) );
-            this.setGosNumber( row.getString( "gosNumber" ) );
-            this.setTrackerId( row.getString( "trackerId" ) );
-            this.setNsfOfPatrul( row.getString( "nsfOfPatrul" ) );
-            this.setSimCardNumber( row.getString( "simCardNumber" ) );
+                    this.setCarModel( row.getString( "carModel" ) );
+                    this.setGosNumber( row.getString( "gosNumber" ) );
+                    this.setTrackerId( row.getString( "trackerId" ) );
+                    this.setNsfOfPatrul( row.getString( "nsfOfPatrul" ) );
+                    this.setSimCardNumber( row.getString( "simCardNumber" ) );
 
-            this.setLatitude( row.getDouble( "latitude" ) );
-            this.setLongitude( row.getDouble( "longitude" ) );
-            this.setAverageFuelConsumption( row.getDouble( "averageFuelConsumption" ) );
-        } );
+                    this.setLatitude( row.getDouble( "latitude" ) );
+                    this.setLongitude( row.getDouble( "longitude" ) );
+                    this.setAverageFuelConsumption( row.getDouble( "averageFuelConsumption" ) );
+                }
+        );
+    }
+
+    @Override
+    public String getEntityUpdateCommand () {
+        return MessageFormat.format(
+                """
+                {0} {1}.{2}
+                SET longitude = {3}, latitude = {4}
+                WHERE uuid = {5} AND trackerid = {6};
+                """,
+                CassandraCommands.UPDATE,
+
+                CassandraTables.ESCORT,
+                CassandraTables.TUPLE_OF_CAR,
+
+                this.getLongitude(),
+                this.getLatitude(),
+                this.getUuid(),
+                super.joinWithAstrix( this.getTrackerId() )
+        );
+    }
+
+    @Override
+    public String getEntityInsertCommand () {
+        return MessageFormat.format(
+                """
+                {0} {1}.{2} {3}
+                VALUES ( {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}, {14} );
+                """,
+                CassandraCommands.INSERT_INTO,
+
+                CassandraTables.ESCORT,
+                CassandraTables.TUPLE_OF_CAR,
+
+                super.getALlParamsNamesForClass.apply( this.getClass() ),
+
+                CassandraFunctions.UUID,
+                this.getUuidOfEscort(),
+                this.getUuidOfPatrul(),
+
+                super.joinWithAstrix( this.getCarModel() ),
+                super.joinWithAstrix( this.getGosNumber() ),
+                super.joinWithAstrix( this.getTrackerId() ),
+                super.joinWithAstrix( this.getNsfOfPatrul() ),
+                super.joinWithAstrix( this.getSimCardNumber() ),
+
+                this.getLatitude(),
+                this.getLongitude(),
+                this.getAverageFuelConsumption()
+        );
+    }
+
+    @Override
+    public String getEntityDeleteCommand () {
+        return MessageFormat.format(
+                """
+                {0} {1} {2} {3}
+                """,
+                CassandraCommands.BEGIN_BATCH,
+
+                MessageFormat.format(
+                        """
+                        {0} {1}.{2} WHERE uuid = {3};
+                        """,
+                        CassandraCommands.DELETE,
+
+                        CassandraTables.ESCORT,
+                        CassandraTables.TUPLE_OF_CAR,
+
+                        this.getUuid()
+                ),
+
+                MessageFormat.format(
+                        """
+                        {0} {1}.{2} WHERE trackersId = {3} {4};
+                        """,
+                        CassandraCommands.DELETE,
+
+                        CassandraTables.ESCORT,
+                        CassandraTables.TRACKERSID,
+
+                        this.getTrackerId(),
+
+                        CassandraCommands.IF_EXISTS
+                ),
+
+                CassandraCommands.APPLY_BATCH
+        );
     }
 }

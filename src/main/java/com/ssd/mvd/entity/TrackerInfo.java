@@ -1,14 +1,20 @@
 package com.ssd.mvd.entity;
 
-import com.ssd.mvd.database.CassandraDataControlForEscort;
+import com.ssd.mvd.interfaces.EntityToCassandraConverter;
 import com.ssd.mvd.inspectors.DataValidateInspector;
 import com.ssd.mvd.database.CassandraDataControl;
+import com.ssd.mvd.constants.CassandraFunctions;
 import com.ssd.mvd.entity.patrulDataSet.Patrul;
+import com.ssd.mvd.constants.CassandraCommands;
+import com.ssd.mvd.constants.CassandraTables;
+import com.ssd.mvd.inspectors.Inspector;
 
 import com.datastax.driver.core.Row;
+
+import java.text.MessageFormat;
 import java.util.Date;
 
-public final class TrackerInfo extends DataValidateInspector {
+public final class TrackerInfo extends DataValidateInspector implements EntityToCassandraConverter {
     public ReqCar getReqCar() {
         return this.reqCar;
     }
@@ -73,35 +79,35 @@ public final class TrackerInfo extends DataValidateInspector {
         this.patrulPassportSeries = patrulPassportSeries;
     }
 
-    public Double getLatitude() {
+    public double getLatitude() {
         return this.latitude;
     }
 
-    public void setLatitude ( final Double latitude ) {
+    public void setLatitude ( final double latitude ) {
         this.latitude = latitude;
     }
 
-    public Double getLongitude() {
+    public double getLongitude() {
         return this.longitude;
     }
 
-    public void setLongitude ( final Double longitude ) {
+    public void setLongitude ( final double longitude ) {
         this.longitude = longitude;
     }
 
-    public Boolean getStatus() {
+    public boolean getStatus() {
         return this.status;
     }
 
-    public void setStatus ( final Boolean status ) {
+    public void setStatus ( final boolean status ) {
         this.status = status;
     }
 
-    public Long getTotalActivityTime() {
+    public long getTotalActivityTime() {
         return this.totalActivityTime;
     }
 
-    public void setTotalActivityTime ( final Long totalActivityTime ) {
+    public void setTotalActivityTime ( final long totalActivityTime ) {
         this.totalActivityTime = totalActivityTime;
     }
 
@@ -121,6 +127,14 @@ public final class TrackerInfo extends DataValidateInspector {
         this.dateOfRegistration = dateOfRegistration;
     }
 
+    public double getSpeed() {
+        return this.speed;
+    }
+
+    public void setSpeed( final double speed ) {
+        this.speed = speed;
+    }
+
     private ReqCar reqCar;
     private Patrul patrul;
     private TupleOfCar tupleOfCar;
@@ -131,11 +145,12 @@ public final class TrackerInfo extends DataValidateInspector {
     private String gosNumber;
     private String patrulPassportSeries;
 
-    private Double latitude;
-    private Double longitude;
+    private double speed;
+    private double latitude;
+    private double longitude;
 
-    private Boolean status;
-    private Long totalActivityTime;
+    private boolean status;
+    private long totalActivityTime;
 
     private Date lastActiveDate;
     private Date dateOfRegistration;
@@ -153,15 +168,22 @@ public final class TrackerInfo extends DataValidateInspector {
 
     public TrackerInfo (
             final Patrul patrul,
-            final ReqCar reqCar ) {
+            final ReqCar reqCar
+    ) {
         this.setStatus( true );
 
-        final Icons icons = super.icons.getOrDefault(
+        final Icons icons = Inspector.icons.getOrDefault(
                 patrul.getPoliceType(),
-                CassandraDataControl
-                        .getInstance()
-                        .getPoliceType
-                        .apply( patrul.getPoliceType() ) );
+                new Icons(
+                        CassandraDataControl
+                                .getInstance()
+                                .getRowFromTabletsKeyspace(
+                                        CassandraTables.POLICE_TYPE,
+                                        "policeType",
+                                        patrul.getPoliceType()
+                                )
+                )
+        );
 
         this.setIcon( icons.getIcon1() );
         this.setIcon2( icons.getIcon2() );
@@ -180,7 +202,8 @@ public final class TrackerInfo extends DataValidateInspector {
 
     public TrackerInfo (
             final TupleOfCar tupleOfCar,
-            final Row row ) {
+            final Row row
+    ) {
         this.setTupleOfCar( tupleOfCar );
         this.setGosNumber( tupleOfCar.getGosNumber() );
 
@@ -195,7 +218,8 @@ public final class TrackerInfo extends DataValidateInspector {
 
     public TrackerInfo (
             final Patrul patrul,
-            final TupleOfCar tupleOfCar ) {
+            final TupleOfCar tupleOfCar
+    ) {
         this.setStatus( true );
         this.setReqCar( null );
         this.setTotalActivityTime( 0L );
@@ -214,7 +238,8 @@ public final class TrackerInfo extends DataValidateInspector {
     public TrackerInfo (
             final Patrul patrul,
             final ReqCar reqCar,
-            final Row row ) {
+            final Row row
+    ) {
         this.setPatrul( patrul );
         this.setReqCar( reqCar );
         this.setGosNumber( reqCar.getGosNumber() );
@@ -233,7 +258,8 @@ public final class TrackerInfo extends DataValidateInspector {
     public TrackerInfo (
             final Patrul patrul,
             final TupleOfCar tupleOfCar,
-            final Row row ) {
+            final Row row
+    ) {
         this.setPatrul( patrul );
         this.setTupleOfCar( tupleOfCar );
         this.setStatus( row.getBool( "status" ) );
@@ -247,29 +273,27 @@ public final class TrackerInfo extends DataValidateInspector {
         this.setTotalActivityTime( Math.abs( (long) row.getDouble( "totalActivityTime" ) ) );
     }
 
-    private void save ( final Patrul patrul,  final Position position ) {
+    private void save (
+            final Patrul patrul,
+            final Position position
+    ) {
         // обновляем позицию патрульного, и трекера
-        position.setLongitudeOfTask( patrul.getPatrulLocationData().getLongitudeOfTask() );
-        position.setLatitudeOfTask( patrul.getPatrulLocationData().getLatitudeOfTask() );
-        position.setPatrulName( patrul.getPatrulFIOData().getName() );
-        position.setTaskId( patrul.getPatrulTaskInfo().getTaskId() );
-        position.setStatus( patrul.getPatrulTaskInfo().getStatus() );
-        position.setPoliceType( patrul.getPoliceType() );
-        position.setPatrulUUID( patrul.getUuid() );
+        position.update( patrul );
 
-        final Icons icons = super.icons.getOrDefault(
+        final Icons icons = Inspector.icons.getOrDefault(
                 patrul.getPoliceType(),
-                CassandraDataControl
-                        .getInstance()
-                        .getPoliceType
-                        .apply( patrul.getPoliceType() ) );
+                new Icons(
+                        CassandraDataControl
+                                .getInstance()
+                                .getRowFromTabletsKeyspace(
+                                        CassandraTables.POLICE_TYPE,
+                                        "policeType",
+                                        patrul.getPoliceType()
+                                )
+                )
+        );
 
-        position.setIcon( icons.getIcon1() );
-        position.setIcon2( icons.getIcon2() );
-
-        position.setRegionId( patrul.getPatrulRegionData().getRegionId() );
-        position.setMahallaId( patrul.getPatrulRegionData().getMahallaId() );
-        position.setDistrictId( patrul.getPatrulRegionData().getDistrictId() );
+        position.update( icons );
 
         this.setPatrul( patrul );
         this.setIcon( icons.getIcon1() );
@@ -277,7 +301,10 @@ public final class TrackerInfo extends DataValidateInspector {
         this.setPatrulPassportSeries( this.getPatrul().getPassportNumber() );
     }
 
-    private Position save ( final ReqCar reqCar, final Position position ) {
+    private Position save (
+            final ReqCar reqCar,
+            final Position position
+    ) {
         position.setCarGosNumber( reqCar.getGosNumber() );
         position.setCarType( reqCar.getVehicleType() );
 
@@ -290,16 +317,16 @@ public final class TrackerInfo extends DataValidateInspector {
         this.setReqCar( reqCar );
 
         if ( super.check( position ) ) {
-            CassandraDataControl
-                    .getInstance()
-                    .getUpdateReqCarPosition()
-                    .accept( this.getReqCar() );
+            this.getReqCar().updateEntity();
         }
 
         return position;
     }
 
-    private void save ( final TupleOfCar tupleOfCar,  final Position position ) {
+    private void save (
+            final TupleOfCar tupleOfCar,
+            final Position position
+    ) {
         // обновляем позицию патрульного, и трекера
         position.setCarGosNumber( tupleOfCar.getGosNumber() );
         position.setCarType( tupleOfCar.getCarModel() );
@@ -313,20 +340,19 @@ public final class TrackerInfo extends DataValidateInspector {
         this.setLongitude( position.getLongitude() );
         this.setLatitude( position.getLatitude() );
 
-        CassandraDataControlForEscort
-                .getInstance()
-                .updateEscortCarLocation(
-                        tupleOfCar.getLongitude(),
-                        tupleOfCar.getLatitude(),
-                        tupleOfCar );
+        tupleOfCar.updateEntity();
     }
 
-    public Position updateTime ( final Position position, final TupleOfCar tupleOfCar ) {
+    public Position updateTime (
+            final Position position,
+            final TupleOfCar tupleOfCar
+    ) {
         this.setPatrul( null );
         this.setPatrulPassportSeries( null );
         this.setLastActiveDate( super.newDate() );
         this.setTotalActivityTime(
-                super.getTimeDifference( this.getTotalActivityTime(), this.getLastActiveDate().toInstant() ) );
+                super.getTimeDifference( this.getTotalActivityTime(), this.getLastActiveDate().toInstant() )
+        );
 
         this.save( tupleOfCar, position );
 
@@ -336,15 +362,15 @@ public final class TrackerInfo extends DataValidateInspector {
     public Position updateTime (
             final Position position,
             final ReqCar reqCar,
-            final Patrul patrul ) {
-        CassandraDataControl
-                .getInstance()
-                .getSaveFuelConsumptionOfCar()
-                .accept( this, position.getSpeed() );
+            final Patrul patrul
+    ) {
+        this.setSpeed( position.getSpeed() );
+        this.updateEntity();
 
         this.setLastActiveDate( super.newDate() );
         this.setTotalActivityTime(
-                super.getTimeDifference( this.getTotalActivityTime(), this.getLastActiveDate().toInstant() ) );
+                super.getTimeDifference( this.getTotalActivityTime(), this.getLastActiveDate().toInstant() )
+        );
 
         this.save( patrul, this.save( reqCar, position ) );
         return position;
@@ -353,13 +379,113 @@ public final class TrackerInfo extends DataValidateInspector {
     public Position updateTime (
             final Position position,
             final TupleOfCar tupleOfCar,
-            final Patrul patrul ) {
+            final Patrul patrul
+    ) {
         this.setLastActiveDate( super.newDate() );
         this.setTotalActivityTime(
-                super.getTimeDifference( this.getTotalActivityTime(), this.getLastActiveDate().toInstant() ) );
+                super.getTimeDifference( this.getTotalActivityTime(), this.getLastActiveDate().toInstant() )
+        );
 
         this.save( tupleOfCar, position );
         this.save( patrul, position );
         return position;
+    }
+
+    @Override
+    public String getEntityUpdateCommand() {
+        return MessageFormat.format(
+                """
+                {0} {1}.{2}
+                ( imei, date, speed, distance )
+                VALUES( {3}, {4}, {5}, {6} );
+                """,
+                CassandraCommands.INSERT_INTO,
+
+                CassandraTables.TRACKERS,
+                CassandraTables.TRACKER_FUEL_CONSUMPTION,
+
+                super.joinWithAstrix( this.getTrackerId() ),
+                CassandraFunctions.TO_TIMESTAMP.formatted( CassandraFunctions.NOW ),
+                this.getSpeed(),
+                ( ( this.getSpeed() * 10 / 36 ) * 15 )
+        );
+    }
+
+    @Override
+    public String getEntityInsertCommand() {
+        return MessageFormat.format(
+                """
+                {0} {1}.{2}
+                (
+                    trackersId,
+                    patrulPassportSeries,
+                    gosnumber,
+                    policeType,
+                    policeType2,
+                    status,
+                    latitude,
+                    longitude,
+                    totalActivityTime,
+                    lastActiveDate,
+                    dateOfRegistration
+                )
+                VALUES( {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11,number,#}, {12}, {13} );
+                """,
+                CassandraCommands.INSERT_INTO,
+
+                CassandraTables.TRACKERS,
+                CassandraTables.TRACKERSID,
+
+                super.joinWithAstrix( this.getTrackerId() ),
+                super.joinWithAstrix( this.getPatrulPassportSeries() ),
+                super.joinWithAstrix( this.getGosNumber() ),
+                super.joinWithAstrix( this.getIcon() ),
+                super.joinWithAstrix( this.getIcon2() ),
+                super.joinWithAstrix( this.getStatus() ),
+
+                this.getLatitude(),
+                this.getLongitude(),
+                this.getTotalActivityTime(),
+
+                CassandraFunctions.TO_TIMESTAMP.formatted( CassandraFunctions.NOW ),
+                super.joinWithAstrix( this.getDateOfRegistration() )
+        );
+    }
+
+    @Override
+    public String getEntityDeleteCommand() {
+        return MessageFormat.format(
+                """
+                {0} {1}.{2}
+                (
+                    trackersId,
+                    patrulPassportSeries,
+                    gosnumber,
+                    status,
+                    latitude,
+                    longitude,
+                    totalActivityTime,
+                    lastActiveDate,
+                    dateOfRegistration
+                )
+                VALUES( {3}, {4}, {5}, {6}, {7}, {8}, {9,number,#}, {10}, {11} );
+                """,
+                CassandraCommands.INSERT_INTO,
+
+                CassandraTables.ESCORT,
+                CassandraTables.TRACKERSID,
+
+                super.joinWithAstrix( this.getTrackerId() ),
+                super.joinWithAstrix( this.getPatrulPassportSeries() ),
+                super.joinWithAstrix( this.getGosNumber() ),
+                super.joinWithAstrix( this.getStatus() ),
+
+                this.getLatitude(),
+                this.getLongitude(),
+                this.getTotalActivityTime(),
+
+                CassandraFunctions.TO_TIMESTAMP.formatted( CassandraFunctions.NOW ),
+                super.joinWithAstrix( this.getDateOfRegistration() )
+        );
     }
 }

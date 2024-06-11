@@ -3,7 +3,10 @@ package com.ssd.mvd.entity;
 import com.ssd.mvd.inspectors.DataValidateInspector;
 import com.ssd.mvd.database.CassandraDataControl;
 import com.ssd.mvd.entity.patrulDataSet.Patrul;
+import com.ssd.mvd.constants.CassandraTables;
+import com.ssd.mvd.inspectors.Inspector;
 import com.ssd.mvd.constants.Status;
+
 import java.util.UUID;
 
 public final class LastPosition extends DataValidateInspector {
@@ -47,19 +50,19 @@ public final class LastPosition extends DataValidateInspector {
         this.carGosNumber = carGosNumber;
     }
 
-    public Double getLastLatitude() {
+    public double getLastLatitude() {
         return this.lastLatitude;
     }
 
-    public void setLastLatitude( final Double lastLatitude ) {
+    public void setLastLatitude( final double lastLatitude ) {
         this.lastLatitude = lastLatitude;
     }
 
-    public Double getLastLongitude() {
+    public double getLastLongitude() {
         return this.lastLongitude;
     }
 
-    public void setLastLongitude( final Double lastLongitude ) {
+    public void setLastLongitude( final double lastLongitude ) {
         this.lastLongitude = lastLongitude;
     }
 
@@ -120,8 +123,8 @@ public final class LastPosition extends DataValidateInspector {
     private String trackerId;
     private String carGosNumber;
 
-    private Double lastLatitude;
-    private Double lastLongitude;
+    private double lastLatitude;
+    private double lastLongitude;
 
     // Patrul data
     private Status status;
@@ -133,43 +136,69 @@ public final class LastPosition extends DataValidateInspector {
     private String patrulpassportSeries;
 
     public LastPosition ( final TrackerInfo trackerInfo ) {
-        this.setCarType( trackerInfo.getReqCar().getVehicleType() );
-        this.setTrackerId( trackerInfo.getReqCar().getTrackerId() );
-        this.setLastLatitude( trackerInfo.getReqCar().getLatitude() );
-        this.setCarGosNumber( trackerInfo.getReqCar().getGosNumber() );
-        this.setLastLongitude( trackerInfo.getReqCar().getLongitude() );
+        super.checkAndSetParams(
+                trackerInfo,
+                trackerInfo1 -> {
+                    this.setCarType( trackerInfo1.getReqCar().getVehicleType() );
+                    this.setTrackerId( trackerInfo1.getReqCar().getTrackerId() );
+                    this.setLastLatitude( trackerInfo1.getReqCar().getLatitude() );
+                    this.setCarGosNumber( trackerInfo1.getReqCar().getGosNumber() );
+                    this.setLastLongitude( trackerInfo1.getReqCar().getLongitude() );
 
-        final Icons icons = super.icons.getOrDefault(
-                trackerInfo.getPatrul().getPoliceType(),
-                CassandraDataControl
-                        .getInstance()
-                        .getPoliceType
-                        .apply( trackerInfo.getPatrul().getPoliceType() ) );
+                    this.setPatrulUUID( trackerInfo1.getPatrul().getUuid() );
+                    this.setPoliceType( trackerInfo1.getPatrul().getPoliceType() );
+                    this.setStatus( trackerInfo1.getPatrul().getPatrulTaskInfo().getStatus() );
+                    this.setTaskId( trackerInfo1.getPatrul().getPatrulTaskInfo().getTaskId() );
+                    this.setPatrulName( trackerInfo1.getPatrul().getPatrulFIOData().getName() );
+                    this.setPatrulpassportSeries( trackerInfo1.getPatrul().getPassportNumber() );
+                }
+        );
 
-        this.setIcon( icons.getIcon1() );
-        this.setIcon2( icons.getIcon2() );
-        this.setPatrulUUID( trackerInfo.getPatrul().getUuid() );
-        this.setPoliceType( trackerInfo.getPatrul().getPoliceType() );
-        this.setStatus( trackerInfo.getPatrul().getPatrulTaskInfo().getStatus() );
-        this.setTaskId( trackerInfo.getPatrul().getPatrulTaskInfo().getTaskId() );
-        this.setPatrulName( trackerInfo.getPatrul().getPatrulFIOData().getName() );
-        this.setPatrulpassportSeries( trackerInfo.getPatrul().getPassportNumber() );
+        super.checkAndSetParams(
+                Inspector.icons.getOrDefault(
+                        trackerInfo.getPatrul().getPoliceType(),
+                        new Icons(
+                                CassandraDataControl
+                                        .getInstance()
+                                        .getRowFromTabletsKeyspace(
+                                                CassandraTables.POLICE_TYPE,
+                                                "policeType",
+                                                trackerInfo.getPatrul().getPoliceType()
+                                        )
+                        )
+                ),
+                icons -> {
+                    this.setIcon( icons.getIcon1() );
+                    this.setIcon2( icons.getIcon2() );
+                }
+        );
     }
 
-    public LastPosition ( final TrackerInfo trackerInfo, final Patrul patrul ) {
-        this.setCarType( trackerInfo.getTupleOfCar().getCarModel() );
-        this.setTrackerId( trackerInfo.getTupleOfCar().getTrackerId() );
-        this.setLastLatitude( trackerInfo.getTupleOfCar().getLatitude() );
-        this.setCarGosNumber( trackerInfo.getTupleOfCar().getGosNumber() );
-        this.setLastLongitude( trackerInfo.getTupleOfCar().getLongitude() );
+    public LastPosition (
+            final TrackerInfo trackerInfo,
+            final Patrul patrul
+    ) {
+        super.checkAndSetParams(
+                trackerInfo,
+                trackerInfo1 -> {
+                    this.setCarType( trackerInfo1.getTupleOfCar().getCarModel() );
+                    this.setTrackerId( trackerInfo1.getTupleOfCar().getTrackerId() );
+                    this.setLastLatitude( trackerInfo1.getTupleOfCar().getLatitude() );
+                    this.setCarGosNumber( trackerInfo1.getTupleOfCar().getGosNumber() );
+                    this.setLastLongitude( trackerInfo1.getTupleOfCar().getLongitude() );
+                }
+        );
 
-        if ( super.objectIsNotNull( patrul ) ) {
-            this.setPatrulUUID( patrul.getUuid() );
-            this.setPoliceType( patrul.getPoliceType() );
-            this.setStatus( patrul.getPatrulTaskInfo().getStatus() );
-            this.setTaskId( patrul.getPatrulTaskInfo().getTaskId() );
-            this.setPatrulName( patrul.getPatrulFIOData().getName() );
-            this.setPatrulpassportSeries( patrul.getPassportNumber() );
-        }
+        super.checkAndSetParams(
+                patrul,
+                patrul1 -> {
+                    this.setPatrulUUID( patrul1.getUuid() );
+                    this.setPoliceType( patrul1.getPoliceType() );
+                    this.setStatus( patrul1.getPatrulTaskInfo().getStatus() );
+                    this.setTaskId( patrul1.getPatrulTaskInfo().getTaskId() );
+                    this.setPatrulName( patrul1.getPatrulFIOData().getName() );
+                    this.setPatrulpassportSeries( patrul1.getPassportNumber() );
+                }
+        );
     }
 }

@@ -14,7 +14,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.Map;
 
 @RestController
@@ -23,7 +22,7 @@ public final class CarForEscortController extends LogInspector {
     public Flux< TupleOfCar > getAllCarsForEscort() {
         return CassandraDataControl
                 .getInstance()
-                .getGetAllEntities()
+                .getAllEntities
                 .apply( CassandraTables.ESCORT, CassandraTables.TUPLE_OF_CAR )
                 .map( TupleOfCar::new )
                 .sequential()
@@ -35,7 +34,7 @@ public final class CarForEscortController extends LogInspector {
     public Flux< TrackerInfo > getAllTrackersForEscortCar () {
         return CassandraDataControlForEscort
                 .getInstance()
-                .getGetAllTrackers()
+                .getAllTrackers
                 .get()
                 .onErrorContinue( super::logging );
     }
@@ -44,18 +43,24 @@ public final class CarForEscortController extends LogInspector {
     public Mono< TrackerInfo > getCurrentTracker ( final String trackerId ) {
         return CassandraDataControlForEscort
                 .getInstance()
-                .getGetCurrentTracker()
+                .getCurrentTracker
                 .apply( trackerId )
                 .onErrorContinue( super::logging );
     }
 
     @MessageMapping ( value = "getCurrentForEscort" )
     public Mono< TupleOfCar > getCurrentForEscort ( final String gosNumber ) {
-        return CassandraDataControlForEscort
-                .getInstance()
-                .getGetCurrentTupleOfCar()
-                .apply( UUID.fromString( gosNumber ) )
-                .onErrorContinue( super::logging );
+        return super.convert(
+                new TupleOfCar(
+                        CassandraDataControlForEscort
+                                .getInstance()
+                                .getRowFromTabletsKeyspace(
+                                        CassandraTables.TUPLE_OF_CAR,
+                                        "uuid",
+                                        gosNumber
+                                )
+                )
+        ).onErrorContinue( super::logging );
     }
 
     @MessageMapping ( value = "findTheClosestCarsInRadius" )
@@ -63,7 +68,7 @@ public final class CarForEscortController extends LogInspector {
             return super.check( point )
                     ? CassandraDataControlForEscort
                             .getInstance()
-                            .getFindTheClosestCarsInRadius()
+                            .findTheClosestCarsInRadius
                             .apply( point )
                             .onErrorContinue( super::logging )
                     : Flux.empty();
@@ -73,7 +78,7 @@ public final class CarForEscortController extends LogInspector {
     public Mono< ApiResponseModel > deleteCarForEscort ( final String gosNumber ) {
         return CassandraDataControlForEscort
                 .getInstance()
-                .getDeleteTupleOfCar()
+                .deleteTupleOfCar
                 .apply( gosNumber )
                 .onErrorResume( super::logging );
     }
@@ -82,7 +87,7 @@ public final class CarForEscortController extends LogInspector {
     public Mono< ApiResponseModel > updateEscortCar ( final TupleOfCar tupleOfCar ) {
         return CassandraDataControlForEscort
                 .getInstance()
-                .getUpdateEscortCar()
+                .updateEscortCar
                 .apply( tupleOfCar )
                 .onErrorResume( super::logging );
     }
@@ -91,7 +96,7 @@ public final class CarForEscortController extends LogInspector {
     public Flux< LastPosition > getAllTrackersId ( final Map< String, Long > params ) {
         return CassandraDataControlForEscort
             .getInstance()
-            .getGetAllTrackers()
+            .getAllTrackers
             .get()
             .filter( trackerInfo -> !super.objectIsNotNull( params )
                     || params.isEmpty()
@@ -105,7 +110,7 @@ public final class CarForEscortController extends LogInspector {
     public Mono< ApiResponseModel > addNewCarForEscort ( final TupleOfCar tupleOfCar ) {
         return CassandraDataControlForEscort
                 .getInstance()
-                .getSaveNewTupleOfCar()
+                .saveNewTupleOfCar
                 .apply( tupleOfCar )
                 .onErrorContinue( super::logging );
     }
@@ -115,7 +120,7 @@ public final class CarForEscortController extends LogInspector {
             return super.isCollectionNotEmpty( pointList )
                     ? CassandraDataControlForEscort
                     .getInstance()
-                    .getFindTheClosestCarsInPolygon()
+                    .findTheClosestCarsInPolygon
                     .apply( pointList )
                     .onErrorContinue( super::logging )
                     : Flux.empty();

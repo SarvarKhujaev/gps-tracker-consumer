@@ -7,12 +7,12 @@ import java.util.List;
 @lombok.NoArgsConstructor
 @lombok.AllArgsConstructor
 public final class Address {
-    private Long osm_id;
-    private Long place_id;
+    private long osm_id;
+    private long place_id;
 
-    private Double lat;
-    private Double lon;
-    private Double importance;
+    private double lat;
+    private double lon;
+    private double importance;
 
     private String type;
     private String licence;

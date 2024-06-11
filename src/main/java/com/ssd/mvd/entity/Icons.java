@@ -1,9 +1,9 @@
 package com.ssd.mvd.entity;
 
 import com.datastax.driver.core.Row;
-import java.util.Optional;
+import com.ssd.mvd.inspectors.DataValidateInspector;
 
-public final class Icons {
+public final class Icons extends DataValidateInspector {
     public String getIcon1() {
         return this.icon1;
     }
@@ -24,9 +24,12 @@ public final class Icons {
     private String icon2;
 
     public Icons ( final Row row ) {
-        Optional.ofNullable( row ).ifPresent( row1 -> {
-            this.setIcon1( row.getString( "icon" ) );
-            this.setIcon2( row.getString( "icon2" ) );
-        } );
+        super.checkAndSetParams(
+                row,
+                row1 -> {
+                    this.setIcon1( row.getString( "icon" ) );
+                    this.setIcon2( row.getString( "icon2" ) );
+                }
+        );
     }
 }

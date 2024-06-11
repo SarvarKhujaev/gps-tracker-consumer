@@ -1,24 +1,24 @@
 package com.ssd.mvd.entity;
 
 public final class ConsumptionData {
-    public Double getFuelLevel() {
+    public double getFuelLevel() {
         return this.fuelLevel;
     }
 
-    public void setFuelLevel( final Double fuelLevel ) {
+    public void setFuelLevel( final double fuelLevel ) {
         this.fuelLevel = fuelLevel;
     }
 
-    public Double getDistance() {
+    public double getDistance() {
         return this.distance;
     }
 
-    public void setDistance( final Double distance ) {
+    public void setDistance( final double distance ) {
         this.distance = distance;
     }
 
-    private Double fuelLevel;
-    private Double distance;
+    private double fuelLevel;
+    private double distance;
 
     public ConsumptionData () {}
 }

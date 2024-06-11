@@ -2,31 +2,33 @@ package com.ssd.mvd.entity;
 
 import java.util.Date;
 import com.datastax.driver.core.Row;
+
 import com.ssd.mvd.controller.UnirestController;
+import com.ssd.mvd.inspectors.DataValidateInspector;
 
 // хранит исторические данные о передвижениях машины
-public final class PositionInfo {
-    public Double getLat() {
+public final class PositionInfo extends DataValidateInspector {
+    public double getLat() {
         return this.lat;
     }
 
-    public void setLat( final Double lat ) {
+    public void setLat( final double lat ) {
         this.lat = lat;
     }
 
-    public Double getLng() {
+    public double getLng() {
         return this.lng;
     }
 
-    public void setLng( final Double lng ) {
+    public void setLng( final double lng ) {
         this.lng = lng;
     }
 
-    public Double getSpeed() {
+    public double getSpeed() {
         return this.speed;
     }
 
-    public void setSpeed( final Double speed ) {
+    public void setSpeed( final double speed ) {
         this.speed = speed;
     }
 
@@ -46,24 +48,32 @@ public final class PositionInfo {
         this.positionWasSavedDate = positionWasSavedDate;
     }
 
-    private Double lat;
-    private Double lng;
-    private Double speed;
+    private double lat;
+    private double lng;
+    private double speed;
 
     private String address;
     private Date positionWasSavedDate;
 
-    public PositionInfo ( final Row row, final Boolean flag ) {
-        this.setSpeed( row.getDouble( "speed" ) );
-        this.setLng( row.getDouble( "latitude" ) );
-        this.setLat( row.getDouble( "longitude" ) );
-        if ( flag ) {
-            this.setAddress(
-                    UnirestController
-                        .getInstance()
-                        .getAddressByLocation
-                        .apply( this.getLat(), this.getLng() ) );
-        }
-        this.setPositionWasSavedDate( row.getTimestamp( "date" ) );
+    public PositionInfo (
+            final Row row,
+            final boolean flag
+    ) {
+        super.checkAndSetParams(
+                row,
+                row1 -> {
+                    this.setSpeed( row.getDouble( "speed" ) );
+                    this.setLng( row.getDouble( "latitude" ) );
+                    this.setLat( row.getDouble( "longitude" ) );
+                    if ( flag ) {
+                        this.setAddress(
+                                UnirestController
+                                        .getInstance()
+                                        .getAddressByLocation
+                                        .apply( this.getLat(), this.getLng() ) );
+                    }
+                    this.setPositionWasSavedDate( row.getTimestamp( "date" ) );
+                }
+        );
     }
 }

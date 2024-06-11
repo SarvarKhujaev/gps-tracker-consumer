@@ -5,22 +5,22 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 
-public class TimeInspector extends Inspector {
+public class TimeInspector extends CollectionsInspector {
     protected TimeInspector () {}
 
     public final static int DAY_IN_SECOND = 86400;
 
-    protected final Date date = new Date( 1605006666774L );
+    protected final static Date date = new Date( 1605006666774L );
 
-    protected Date newDate () {
+    protected final synchronized Date newDate () {
         return new Date();
     }
 
-    protected Calendar calendarInstance () {
+    protected final synchronized Calendar calendarInstance () {
         return Calendar.getInstance();
     }
 
-    protected long getTimeDifference (
+    protected final synchronized long getTimeDifference (
             final long timestamp,
             final Instant instant
     ) {

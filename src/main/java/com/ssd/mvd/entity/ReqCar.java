@@ -1,16 +1,38 @@
 package com.ssd.mvd.entity;
 
+import com.ssd.mvd.interfaces.EntityToCassandraConverter;
+import com.ssd.mvd.constants.CassandraFunctions;
+import com.ssd.mvd.constants.CassandraCommands;
+import com.ssd.mvd.database.CassandraConverter;
+import com.ssd.mvd.constants.CassandraTables;
+
 import com.datastax.driver.core.Row;
-import java.util.Optional;
+import java.text.MessageFormat;
 import java.util.UUID;
 
-public final class ReqCar {
+public final class ReqCar extends CassandraConverter implements EntityToCassandraConverter {
+    public UUID getPatrulId() {
+        return this.patrulId;
+    }
+
+    public void setPatrulId( final UUID uuid ) {
+        this.patrulId = uuid;
+    }
+
     public UUID getUuid() {
         return this.uuid;
     }
 
     public void setUuid ( final UUID uuid ) {
         this.uuid = uuid;
+    }
+
+    public UUID getLustraId() {
+        return this.lustraId;
+    }
+
+    public void setLustraId ( final UUID lustraId ) {
+        this.lustraId = lustraId;
     }
 
     public String getGosNumber() {
@@ -37,6 +59,14 @@ public final class ReqCar {
         this.vehicleType = vehicleType;
     }
 
+    public String getCarImageLink() {
+        return this.carImageLink;
+    }
+
+    public void setCarImageLink ( final String carImageLink ) {
+        this.carImageLink = carImageLink;
+    }
+
     public String getPatrulPassportSeries() {
         return this.patrulPassportSeries;
     }
@@ -45,53 +75,219 @@ public final class ReqCar {
         this.patrulPassportSeries = patrulPassportSeries;
     }
 
-    public Double getLatitude() {
+    public int getSideNumber() {
+        return this.sideNumber;
+    }
+
+    public void setSideNumber ( final int sideNumber ) {
+        this.sideNumber = sideNumber;
+    }
+
+    public int getSimCardNumber() {
+        return this.simCardNumber;
+    }
+
+    public void setSimCardNumber ( final int simCardNumber ) {
+        this.simCardNumber = simCardNumber;
+    }
+
+    public double getLatitude() {
         return this.latitude;
     }
 
-    public void setLatitude ( final Double latitude ) {
+    public void setLatitude ( final double latitude ) {
         this.latitude = latitude;
     }
 
-    public Double getLongitude() {
+    public double getLongitude() {
         return this.longitude;
     }
 
-    public void setLongitude ( final Double longitude ) {
+    public void setLongitude ( final double longitude ) {
         this.longitude = longitude;
     }
 
-    public Double getAverageFuelSize() {
+    public double getAverageFuelSize() {
         return this.averageFuelSize;
     }
 
-    public void setAverageFuelSize ( final Double averageFuelSize ) {
+    public void setAverageFuelSize ( final double averageFuelSize ) {
         this.averageFuelSize = averageFuelSize;
     }
 
+    public double getAverageFuelConsumption() {
+        return this.averageFuelConsumption;
+    }
+
+    public void setAverageFuelConsumption ( final double averageFuelConsumption ) {
+        this.averageFuelConsumption = averageFuelConsumption;
+    }
+
     private UUID uuid;
+    private UUID lustraId;
+    private UUID patrulId;
 
     private String gosNumber;
     private String trackerId;
     private String vehicleType;
+    private String carImageLink;
     private String patrulPassportSeries;
 
-    private Double latitude;
-    private Double longitude;
-    private Double averageFuelSize; // средний расход топлива по документам
+    private int sideNumber; // бортовой номер
+    private int simCardNumber;
+
+    private double latitude;
+    private double longitude;
+    private double averageFuelSize; // средний расход топлива по документам
+    private double averageFuelConsumption = 0.0; // средний расход топлива исходя из стиля вождения водителя
+
+    public ReqCar () {}
 
     public ReqCar ( final Row row ) {
-        Optional.ofNullable( row ).ifPresent( row1 -> {
-            this.setUuid( row.getUUID( "uuid" ) );
+        super.checkAndSetParams(
+                row,
+                row1 -> {
+                    this.setUuid( row.getUUID( "uuid" ) );
+                    this.setPatrulId( row.getUUID( "patrulId" ) );
+                    this.setLustraId( row.getUUID( "lustraId" ) );
 
-            this.setGosNumber( row.getString( "gosNumber" ) );
-            this.setTrackerId( row.getString( "trackerId" ) );
-            this.setVehicleType( row.getString( "vehicleType" ) );
-            this.setPatrulPassportSeries( row.getString( "patrulPassportSeries" ) );
+                    this.setGosNumber( row.getString( "gosNumber" ) );
+                    this.setTrackerId( row.getString( "trackerId" ) );
+                    this.setVehicleType( row.getString( "vehicleType" ) );
+                    this.setCarImageLink( row.getString( "carImageLink" ) );
+                    this.setPatrulPassportSeries( row.getString( "patrulPassportSeries" ) );
 
-            this.setLatitude( row.getDouble( "latitude" ) );
-            this.setLongitude( row.getDouble( "longitude" ) );
-            this.setAverageFuelSize( row.getDouble( "averageFuelSize" ) );
-        } );
+                    this.setSideNumber( row.getInt( "sideNumber" ) );
+                    this.setSimCardNumber( row.getInt( "simCardNumber" ) );
+
+                    this.setLatitude( row.getDouble( "latitude" ) );
+                    this.setLongitude( row.getDouble( "longitude" ) );
+                    this.setAverageFuelSize( row.getDouble( "averageFuelSize" ) );
+                    this.setAverageFuelConsumption( row.getDouble( "averageFuelConsumption" ) );
+                }
+        );
+    }
+
+    @Override
+    public String getEntityInsertCommand() {
+        return MessageFormat.format(
+                """
+                {0} {1} {2} {3}
+                """,
+                CassandraCommands.BEGIN_BATCH,
+
+                /*
+                обновляем данные патрульного чтобы связать его с машиной
+                */
+                MessageFormat.format(
+                        """
+                        {0} {1}.{2}
+                        SET carNumber = {3},
+                        carType = {4},
+                        uuidForPatrulCar = {5}
+                        WHERE uuid = {6};
+                        """,
+                        CassandraCommands.UPDATE,
+
+                        CassandraTables.TABLETS,
+                        CassandraTables.PATRULS,
+
+                        super.joinWithAstrix( this.getGosNumber() ),
+                        super.joinWithAstrix( this.getVehicleType() ),
+
+                        this.getUuid(),
+                        this.getPatrulId()
+                ),
+
+                /*
+                сохраняем данные самой машины
+                */
+                MessageFormat.format(
+                        """
+                        {0} {1}.{2} {3}
+                        VALUES ( {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}, {14}, {15}, {16} {17} );
+                        """,
+                        CassandraCommands.INSERT_INTO,
+
+                        CassandraTables.TABLETS,
+                        CassandraTables.CARS,
+
+                        super.getAllParamsNamesForClass.apply( ReqCar.class ),
+
+                        CassandraFunctions.UUID,
+                        this.getLustraId(),
+                        this.getPatrulId(),
+
+                        super.joinWithAstrix( this.getGosNumber() ),
+                        super.joinWithAstrix( this.getTrackerId() ),
+                        super.joinWithAstrix( this.getVehicleType() ),
+                        super.joinWithAstrix( this.getCarImageLink() ),
+                        super.joinWithAstrix( this.getPatrulPassportSeries() ),
+
+                        this.getSideNumber(),
+                        this.getSimCardNumber(),
+
+                        this.getLatitude(),
+                        this.getLongitude(),
+                        this.getAverageFuelSize(),
+                        this.getAverageFuelConsumption()
+                ),
+                CassandraCommands.APPLY_BATCH
+        );
+    }
+
+    @Override
+    public String getEntityDeleteCommand() {
+        return MessageFormat.format(
+                """
+                {0} {1} {2} {3};
+                """,
+                CassandraCommands.BEGIN_BATCH,
+
+                MessageFormat.format(
+                        """
+                        {0} {1}.{2} WHERE uuid = {3};
+                        """,
+                        CassandraCommands.DELETE,
+
+                        CassandraTables.TABLETS,
+                        CassandraTables.CARS,
+
+                        this.getGosNumber()
+                ),
+
+                MessageFormat.format(
+                        """
+                        {0} {1}.{2} WHERE trackersId = {3};
+                        """,
+                        CassandraCommands.DELETE,
+
+                        CassandraTables.TRACKERS,
+                        CassandraTables.TRACKERSID,
+
+                        super.joinWithAstrix( this.getTrackerId() )
+                ),
+
+                CassandraCommands.APPLY_BATCH
+        );
+    }
+
+    @Override
+    public String getEntityUpdateCommand() {
+        return MessageFormat.format(
+                """
+                {0} {1}.{2}
+                SET longitude = {3}, latitude = {4}
+                WHERE uuid = {5};
+                """,
+                CassandraCommands.UPDATE,
+
+                CassandraTables.TABLETS,
+                CassandraTables.CARS,
+
+                this.getLongitude(),
+                this.getLatitude(),
+                this.getUuid()
+        );
     }
 }

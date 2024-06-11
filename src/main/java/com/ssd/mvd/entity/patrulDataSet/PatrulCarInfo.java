@@ -1,10 +1,13 @@
 package com.ssd.mvd.entity.patrulDataSet;
 
-import com.datastax.driver.core.UDTValue;
+import com.ssd.mvd.inspectors.DataValidateInspector;
+import com.ssd.mvd.interfaces.ObjectCommonMethods;
 import com.ssd.mvd.entity.TupleOfCar;
+
+import com.datastax.driver.core.UDTValue;
 import com.datastax.driver.core.Row;
 
-public final class PatrulCarInfo {
+public final class PatrulCarInfo extends DataValidateInspector implements ObjectCommonMethods< PatrulCarInfo > {
     public String getCarType() {
         return this.carType;
     }
@@ -29,19 +32,35 @@ public final class PatrulCarInfo {
     private String carType; // модель машины
     private String carNumber;
 
-    public static <T> PatrulCarInfo generate ( final T object ) {
-        return object instanceof Row
-                ? new PatrulCarInfo( (Row) object )
-                : new PatrulCarInfo( (UDTValue) object );
+    public static PatrulCarInfo empty () {
+        return new PatrulCarInfo();
     }
 
-    private PatrulCarInfo ( final Row row ) {
+    private PatrulCarInfo () {}
+
+    @Override
+    public PatrulCarInfo generate( final Row row ) {
         this.setCarType( row.getString( "carType" ) );
         this.setCarNumber( row.getString( "carNumber" ) );
+        return this;
     }
 
-    private PatrulCarInfo( final UDTValue udtValue ) {
-        this.setCarType( udtValue.getString( "carType" ) );
-        this.setCarNumber( udtValue.getString( "carNumber" ) );
+    @Override
+    public PatrulCarInfo generate( final UDTValue udtValue ) {
+        super.checkAndSetParams(
+                udtValue,
+                udtValue1 -> {
+                    this.setCarType( udtValue.getString( "carType" ) );
+                    this.setCarNumber( udtValue.getString( "carNumber" ) );
+                }
+        );
+        return this;
+    }
+
+    @Override
+    public UDTValue fillUdtByEntityParams( final UDTValue udtValue ) {
+        return udtValue
+                .setString( "carType", this.getCarType() )
+                .setString( "carNumber", this.getCarNumber() );
     }
 }

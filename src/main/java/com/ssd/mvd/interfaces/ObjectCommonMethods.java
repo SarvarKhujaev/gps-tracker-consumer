@@ -4,7 +4,9 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.UDTValue;
 
 public interface ObjectCommonMethods< T > extends EntityToCassandraConverter {
-    T generate ( final UDTValue udtValue );
+    default T generate ( final UDTValue udtValue ) {
+        return null;
+    };
 
     default T generate () {
         return null;
@@ -14,5 +16,7 @@ public interface ObjectCommonMethods< T > extends EntityToCassandraConverter {
         return null;
     }
 
-    UDTValue fillUdtByEntityParams ( final UDTValue udtValue );
+    default UDTValue fillUdtByEntityParams ( final UDTValue udtValue ) {
+        return null;
+    };
 }

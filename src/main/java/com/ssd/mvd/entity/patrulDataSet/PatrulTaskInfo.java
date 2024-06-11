@@ -1,27 +1,15 @@
 package com.ssd.mvd.entity.patrulDataSet;
 
+import com.ssd.mvd.inspectors.CollectionsInspector;
+import com.ssd.mvd.interfaces.ObjectCommonMethods;
+import com.ssd.mvd.constants.Status;
+
 import com.datastax.driver.core.UDTValue;
 import com.datastax.driver.core.Row;
-import com.ssd.mvd.constants.Status;
+
 import java.util.Map;
 
-public final class PatrulTaskInfo {
-    public static <T> PatrulTaskInfo generate ( final T object ) {
-        return object instanceof Row
-                ? new PatrulTaskInfo( (Row) object )
-                : new PatrulTaskInfo( (UDTValue) object );
-    }
-
-    private PatrulTaskInfo( final Row row ) {
-        this.setStatus( Status.valueOf( row.getString( "status" ) ) );
-        this.setListOfTasks( row.getMap( "listOfTasks", String.class, String.class ) );
-    }
-
-    private PatrulTaskInfo( final UDTValue udtValue ) {
-        this.setStatus( Status.valueOf( udtValue.getString( "status" ) ) );
-        this.setListOfTasks( udtValue.getMap( "listOfTasks", String.class, String.class ) );
-    }
-
+public final class PatrulTaskInfo extends CollectionsInspector implements ObjectCommonMethods< PatrulTaskInfo > {
     public String getTaskId() {
         return this.taskId;
     }
@@ -38,11 +26,11 @@ public final class PatrulTaskInfo {
         this.status = status;
     }
 
-    public Map<String, String> getListOfTasks() {
+    public Map< String, String > getListOfTasks() {
         return this.listOfTasks;
     }
 
-    public void setListOfTasks( final Map<String, String> listOfTasks ) {
+    public void setListOfTasks( final Map< String, String > listOfTasks ) {
         this.listOfTasks = listOfTasks;
     }
 
@@ -50,5 +38,34 @@ public final class PatrulTaskInfo {
     // busy, free by default, available or not available
     private Status status;
     // the list which will store ids of all tasks which have been completed by Patrul
-    private Map< String, String > listOfTasks;
+    private Map< String, String > listOfTasks = super.newMap();
+
+    public static PatrulTaskInfo empty() {
+        return new PatrulTaskInfo();
+    }
+
+    private PatrulTaskInfo () {}
+
+    @Override
+    public PatrulTaskInfo generate( final Row row ) {
+        this.setListOfTasks( row.getMap( "listOfTasks", String.class, String.class ) );
+        this.setStatus( Status.valueOf( row.getString( "status" ) ) );
+        return this;
+    }
+
+    @Override
+    public PatrulTaskInfo generate( final UDTValue udtValue ) {
+        this.setListOfTasks( udtValue.getMap( "listOfTasks", String.class, String.class ) );
+        this.setStatus( Status.valueOf( udtValue.getString( "status" ) ) );
+
+        return this;
+    }
+
+    @Override
+    public UDTValue fillUdtByEntityParams( final UDTValue udtValue ) {
+        return udtValue
+                .setString( "taskId", this.getTaskId() )
+                .setString( "status", this.getStatus().name() )
+                .setMap( "listOfTasks", this.getListOfTasks() );
+    }
 }
