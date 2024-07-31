@@ -1,16 +1,15 @@
 package com.ssd.mvd.entity;
 
-import com.ssd.mvd.inspectors.EntitiesInstances;
-import com.ssd.mvd.interfaces.EntityToCassandraConverter;
-import com.ssd.mvd.inspectors.DataValidateInspector;
-import com.ssd.mvd.database.CassandraDataControl;
-import com.ssd.mvd.constants.CassandraFunctions;
-import com.ssd.mvd.entity.patrulDataSet.Patrul;
-import com.ssd.mvd.constants.CassandraCommands;
-import com.ssd.mvd.constants.CassandraTables;
-import com.ssd.mvd.inspectors.Inspector;
-
 import com.datastax.driver.core.Row;
+import com.ssd.mvd.constants.CassandraCommands;
+import com.ssd.mvd.constants.CassandraFunctions;
+import com.ssd.mvd.constants.CassandraTables;
+import com.ssd.mvd.database.CassandraDataControl;
+import com.ssd.mvd.entity.patrulDataSet.Patrul;
+import com.ssd.mvd.inspectors.DataValidateInspector;
+import com.ssd.mvd.inspectors.EntitiesInstances;
+import com.ssd.mvd.inspectors.Inspector;
+import com.ssd.mvd.interfaces.EntityToCassandraConverter;
 
 import java.text.MessageFormat;
 import java.util.Date;

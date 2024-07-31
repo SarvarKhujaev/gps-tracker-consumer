@@ -1,13 +1,11 @@
 package com.ssd.mvd.controller;
 
+import com.ssd.mvd.database.CassandraDataControl;
+import com.ssd.mvd.entity.*;
+import com.ssd.mvd.entity.patrulDataSet.PatrulFuelStatistics;
+import com.ssd.mvd.inspectors.Inspector;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.ssd.mvd.entity.patrulDataSet.PatrulFuelStatistics;
-import com.ssd.mvd.database.CassandraDataControl;
-import com.ssd.mvd.inspectors.Inspector;
-import com.ssd.mvd.entity.*;
-
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

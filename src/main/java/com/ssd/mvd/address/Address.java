@@ -1,6 +1,7 @@
 package com.ssd.mvd.address;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 import java.util.List;
 
 @lombok.Data
@@ -22,5 +23,5 @@ public final class Address {
     @JsonDeserialize
     private List< String > boundingbox;
     @JsonDeserialize
-    private com.ssd.mvd.address.Data address;
+    private Data address;
 }

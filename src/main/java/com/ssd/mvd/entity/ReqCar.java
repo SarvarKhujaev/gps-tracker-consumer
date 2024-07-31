@@ -1,17 +1,21 @@
 package com.ssd.mvd.entity;
 
-import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
-import com.ssd.mvd.constants.CassandraFunctions;
-import com.ssd.mvd.constants.CassandraCommands;
-import com.ssd.mvd.database.cassandraRegistry.CassandraConverter;
-import com.ssd.mvd.constants.CassandraTables;
-
 import com.datastax.driver.core.Row;
+import com.ssd.mvd.constants.CassandraCommands;
+import com.ssd.mvd.constants.CassandraFunctions;
+import com.ssd.mvd.constants.CassandraTables;
+import com.ssd.mvd.database.cassandraRegistry.CassandraConverter;
+import com.ssd.mvd.interfaces.KafkaEntitiesCommonMethods;
+import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
+import com.ssd.mvd.kafka.kafkaConfigs.KafkaTopics;
 
 import java.text.MessageFormat;
 import java.util.UUID;
 
-public final class ReqCar extends CassandraConverter implements ObjectFromRowConvertInterface< ReqCar > {
+public final class ReqCar
+        extends CassandraConverter
+        implements ObjectFromRowConvertInterface< ReqCar >,
+        KafkaEntitiesCommonMethods {
     public UUID getPatrulId() {
         return this.patrulId;
     }
@@ -306,5 +310,15 @@ public final class ReqCar extends CassandraConverter implements ObjectFromRowCon
                 this.getLatitude(),
                 this.getUuid()
         );
+    }
+
+    @Override
+    public KafkaTopics getTopicName() {
+        return KafkaTopics.NEW_CAR_TOPIC;
+    }
+
+    @Override
+    public String getSuccessMessage() {
+        return "Kafka got ReqCar: " + this.getTrackerId();
     }
 }

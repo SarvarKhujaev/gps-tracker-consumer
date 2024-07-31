@@ -1,11 +1,10 @@
 package com.ssd.mvd.inspectors;
 
-import com.ssd.mvd.entity.ApiResponseModel;
-import com.ssd.mvd.entity.TrackerInfo;
-import com.ssd.mvd.entity.Status;
-import com.ssd.mvd.entity.Icons;
-
 import com.datastax.driver.core.Row;
+import com.ssd.mvd.entity.ApiResponseModel;
+import com.ssd.mvd.entity.Icons;
+import com.ssd.mvd.entity.Status;
+import com.ssd.mvd.entity.TrackerInfo;
 import reactor.core.publisher.Mono;
 
 import java.util.Date;
@@ -44,7 +43,7 @@ public class Inspector extends DataValidateInspector {
         tupleOfCarMap.putIfAbsent( trackerInfo.getTrackerId(), trackerInfo );
     }
 
-    protected final synchronized  <T> Mono< T > convert ( final T o ) {
+    protected final synchronized <T> Mono< T > convert ( final T o ) {
         return super.objectIsNotNull( o ) ? Mono.just( o ) : Mono.empty();
     }
 

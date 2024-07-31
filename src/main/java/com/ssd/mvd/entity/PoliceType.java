@@ -1,7 +1,7 @@
 package com.ssd.mvd.entity;
 
-import com.ssd.mvd.interfaces.EntityToCassandraConverter;
 import com.ssd.mvd.constants.CassandraTables;
+import com.ssd.mvd.interfaces.EntityToCassandraConverter;
 
 import java.util.UUID;
 

@@ -1,10 +1,9 @@
 package com.ssd.mvd.entity.patrulDataSet;
 
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.UDTValue;
 import com.ssd.mvd.inspectors.DataValidateInspector;
 import com.ssd.mvd.interfaces.ObjectCommonMethods;
-
-import com.datastax.driver.core.UDTValue;
-import com.datastax.driver.core.Row;
 
 import java.util.Optional;
 

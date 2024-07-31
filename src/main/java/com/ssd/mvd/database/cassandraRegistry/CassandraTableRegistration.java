@@ -1,12 +1,12 @@
 package com.ssd.mvd.database.cassandraRegistry;
 
-import java.text.MessageFormat;
-
 import com.ssd.mvd.constants.*;
 import com.ssd.mvd.entity.TupleOfCar;
-import com.ssd.mvd.inspectors.TimeInspector;
 import com.ssd.mvd.inspectors.StringOperations;
+import com.ssd.mvd.inspectors.TimeInspector;
 import com.ssd.mvd.interfaces.DatabaseCommonMethods;
+
+import java.text.MessageFormat;
 
 public final class CassandraTableRegistration extends StringOperations implements DatabaseCommonMethods {
     public static void generate () {

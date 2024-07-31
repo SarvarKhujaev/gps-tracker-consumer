@@ -1,19 +1,21 @@
 package com.ssd.mvd.entity;
 
-import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
-import com.ssd.mvd.constants.CassandraFunctions;
-import com.ssd.mvd.database.cassandraRegistry.CassandraConverter;
-import com.ssd.mvd.constants.CassandraCommands;
-import com.ssd.mvd.constants.CassandraTables;
-
 import com.datastax.driver.core.Row;
+import com.ssd.mvd.constants.CassandraCommands;
+import com.ssd.mvd.constants.CassandraFunctions;
+import com.ssd.mvd.constants.CassandraTables;
+import com.ssd.mvd.database.cassandraRegistry.CassandraConverter;
+import com.ssd.mvd.interfaces.KafkaEntitiesCommonMethods;
+import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
+import com.ssd.mvd.kafka.kafkaConfigs.KafkaTopics;
 
 import java.text.MessageFormat;
 import java.util.UUID;
 
 public final class TupleOfCar
         extends CassandraConverter
-        implements ObjectFromRowConvertInterface< TupleOfCar > {
+        implements ObjectFromRowConvertInterface< TupleOfCar >,
+        KafkaEntitiesCommonMethods {
     public UUID getUuid() {
         return this.uuid;
     }
@@ -243,5 +245,21 @@ public final class TupleOfCar
     @Override
     public TupleOfCar generate() {
         return new TupleOfCar();
+    }
+
+    @Override
+    public KafkaTopics getTopicName() {
+        return KafkaTopics.NEW_TUPLE_OF_CAR_TOPIC;
+    }
+
+    @Override
+    public String getSuccessMessage() {
+        return String.join(
+                " ",
+                "Kafka got",
+                this.getClass().getName(),
+                "with id:",
+                this.getTrackerId()
+        );
     }
 }

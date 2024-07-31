@@ -1,10 +1,6 @@
 package com.ssd.mvd.database.cassandraConfigs;
 
-import com.datastax.driver.core.ProtocolOptions;
-import com.datastax.driver.core.PoolingOptions;
-import com.datastax.driver.core.SocketOptions;
-import com.datastax.driver.core.HostDistance;
-
+import com.datastax.driver.core.*;
 import com.ssd.mvd.database.cassandraRegistry.CassandraConverter;
 
 public class CassandraParamsAndOptionsStore extends CassandraConverter {
@@ -127,5 +123,11 @@ public class CassandraParamsAndOptionsStore extends CassandraConverter {
                         ProtocolOptions.DEFAULT_MAX_SCHEMA_AGREEMENT_WAIT_SECONDS
                 )
         );
+    }
+
+    protected final synchronized QueryOptions getQueryOptions () {
+        return new QueryOptions()
+                .setDefaultIdempotence( true )
+                .setConsistencyLevel( ConsistencyLevel.ONE );
     }
 }

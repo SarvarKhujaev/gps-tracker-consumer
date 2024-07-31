@@ -215,8 +215,7 @@ public final class CassandraDataControlForEscort
                                  */
                                 KafkaDataControl
                                         .getInstance()
-                                        .writeToKafkaTupleOfCar
-                                        .accept( tupleOfCar );
+                                        .sendMessageToKafka( tupleOfCar );
 
                                 /*
                                 сохраняем в статичный кэш

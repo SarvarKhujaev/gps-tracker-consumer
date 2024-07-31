@@ -7,16 +7,16 @@ import java.text.MessageFormat;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Predicate;
+
+import com.datastax.driver.core.*;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.publisher.ParallelFlux;
-
-import com.datastax.driver.core.*;
 
 import com.ssd.mvd.entity.*;
 import com.ssd.mvd.inspectors.Inspector;
@@ -40,7 +40,7 @@ public final class CassandraDataControl
     private final Cluster cluster;
     private final Session session;
 
-    private static CassandraDataControl instance = new CassandraDataControl();
+    private static CassandraDataControl INSTANCE = new CassandraDataControl();
 
     @Override
     public Cluster getCluster() {
@@ -83,7 +83,7 @@ public final class CassandraDataControl
     }
 
     public static CassandraDataControl getInstance () {
-        return instance != null ? instance : ( instance = new CassandraDataControl() );
+        return INSTANCE != null ? INSTANCE : ( INSTANCE = new CassandraDataControl() );
     }
 
     private CassandraDataControl () {
@@ -95,11 +95,8 @@ public final class CassandraDataControl
                         .withClusterName( super.CLUSTER_NAME )
                         .withProtocolVersion( ProtocolVersion.V4 )
                         .withRetryPolicy( super.getCustomRetryPolicy() )
-                        .withQueryOptions(
-                                new QueryOptions()
-                                        .setDefaultIdempotence( true )
-                                        .setConsistencyLevel( ConsistencyLevel.ONE )
-                        ).withSocketOptions( super.getSocketOptions() )
+                        .withQueryOptions( super.getQueryOptions() )
+                        .withSocketOptions( super.getSocketOptions() )
                         .withPoolingOptions( super.getPoolingOptions() )
                         .withCompression( ProtocolOptions.Compression.LZ4 )
                         .build()
@@ -170,18 +167,20 @@ public final class CassandraDataControl
             Эскорт или Патрулю
             */
             if ( optional.filter( position1 -> super.check( position.getDeviceId() ) ).isPresent() ) {
-                        super.convert(
-                                EntitiesInstances.TUPLE_OF_CAR.generate(
-                                        this.getRowFromTabletsKeyspace(
-                                                EntitiesInstances.TUPLE_OF_CAR,
-                                                "trackerId",
-                                                super.joinWithAstrix( position.getDeviceId() )
-                                        )
+                super.convert(
+                        EntitiesInstances.TUPLE_OF_CAR.generate(
+                                this.getRowFromTabletsKeyspace(
+                                        EntitiesInstances.TUPLE_OF_CAR,
+                                        "trackerId",
+                                        super.joinWithAstrix( position.getDeviceId() )
                                 )
-                        // проверяем что такая машина существует
-                        ).filter( tupleOfCar -> super.objectIsNotNull( tupleOfCar.getUuid() )
-                                && super.objectIsNotNull( tupleOfCar.getGosNumber() ) )
-                        .subscribe( new CustomSubscriber<>(
+                        )
+                // проверяем что такая машина существует
+                ).filter(
+                        tupleOfCar -> super.objectIsNotNull( tupleOfCar.getUuid() )
+                                && super.objectIsNotNull( tupleOfCar.getGosNumber() )
+                ).subscribe(
+                        new CustomSubscriber<>(
                                 tupleOfCar -> {
                                     /*
                                     проверяем не прикреплена ли машина Эскорта к патрульному
@@ -218,8 +217,7 @@ public final class CassandraDataControl
                                         */
                                         KafkaDataControl
                                                 .getInstance()
-                                                .writeToKafkaEscort
-                                                .accept( updatedPosition );
+                                                .sendMessageToKafka( updatedPosition );
                                     } else {
                                         /*
                                         обновляем данные самого трекера,
@@ -242,11 +240,11 @@ public final class CassandraDataControl
                                         */
                                         KafkaDataControl
                                                 .getInstance()
-                                                .writeToKafkaEscort
-                                                .accept( updatedPosition );
+                                                .sendMessageToKafka( updatedPosition );
                                     }
                                 }
-                        ) );
+                        )
+                );
             }
 
             else {
@@ -273,8 +271,7 @@ public final class CassandraDataControl
 
                                         KafkaDataControl
                                                 .getInstance()
-                                                .writeToKafkaPosition
-                                                .accept(
+                                                .sendMessageToKafka(
                                                         Inspector
                                                                 .trackerInfoMap
                                                                 .get( optional.get().getDeviceId() )
@@ -307,8 +304,7 @@ public final class CassandraDataControl
 
                                         KafkaDataControl
                                                 .getInstance()
-                                                .writeToKafka
-                                                .accept( reqCar );
+                                                .sendMessageToKafka( reqCar );
 
                                         /*
                                         сохраняет новый трекер
@@ -334,7 +330,7 @@ public final class CassandraDataControl
                         MessageFormat.format(
                                 """
                                 {0} {1}.{2}
-                                WHERE imei = {3} AND DATE <= {4} AND date >= {5};
+                                WHERE imei = {3} AND date <= {4} AND date >= {5};
                                 """,
                                 CassandraCommands.SELECT_ALL,
 
@@ -398,12 +394,12 @@ public final class CassandraDataControl
                         this.getSession().execute(
                                 MessageFormat.format(
                                         """
-                                        {0} {1}.{2} WHERE trackersid = {3};
+                                        {0} {1}.{2} WHERE trackersId = {3};
                                         """,
                                         CassandraCommands.SELECT_ALL.replaceAll( "[*]", "lastActiveDate" ),
 
-                                        EntitiesInstances.TRACKER_INFO,
-                                        EntitiesInstances.TRACKER_INFO,
+                                        EntitiesInstances.TRACKER_INFO.getEntityKeyspaceName(),
+                                        EntitiesInstances.TRACKER_INFO.getEntityTableName(),
 
                                         super.joinWithAstrix(
                                                 EntitiesInstances.REQ_CAR.generate(
@@ -478,47 +474,55 @@ public final class CassandraDataControl
 
                                 consumptionData.setDistance(
                                         this.getSession().execute(
-                                                        MessageFormat.format(
-                                                                """
-                                                                {0} {1}.{2}
-                                                                WHERE imei = {3} AND date >= {4} AND date <= {5};
-                                                                """,
-                                                                CassandraCommands.SELECT_ALL.replaceAll( "[*]", "sum(distance) AS distance_summary" ),
-                                                                CassandraTables.TRACKERS,
-                                                                CassandraTables.TRACKER_FUEL_CONSUMPTION,
-                                                                reqCar.getTrackerId(),
-                                                                date.toInstant(),
-                                                                this.start.toInstant() ) )
-                                                .one().getDouble( "distance_summary" ) / 1000 );
+                                                MessageFormat.format(
+                                                        """
+                                                        {0} {1}.{2}
+                                                        WHERE imei = {3} AND date >= {4} AND date <= {5};
+                                                        """,
+
+                                                        CassandraCommands.SELECT_ALL.replaceAll( "[*]", "sum(distance) AS distance_summary" ),
+
+                                                        CassandraTables.TRACKERS,
+                                                        CassandraTables.TRACKER_FUEL_CONSUMPTION,
+
+                                                        super.joinWithAstrix( reqCar.getTrackerId() ),
+                                                        super.joinWithAstrix( date ),
+
+                                                        super.joinWithAstrix( this.start )
+                                                )
+                                        ).one().getDouble( "distance_summary" ) / 1000
+                                );
 
                                 // переведем метры в километры
-                                consumptionData.setFuelLevel( ( consumptionData.getDistance() / 1000 ) /
-                                        ( reqCar.getAverageFuelSize() > 0 ? reqCar.getAverageFuelSize() : 10 ) );
+                                consumptionData.setFuelLevel(
+                                        ( consumptionData.getDistance() / 1000 ) /
+                                        ( reqCar.getAverageFuelSize() > 0 ? reqCar.getAverageFuelSize() : 10 )
+                                );
 
                                 patrulFuelStatistics.getMap().put( date, consumptionData );
 
                                 patrulFuelStatistics.setAverageFuelConsumption(
-                                        patrulFuelStatistics.getAverageFuelConsumption()
-                                                + consumptionData.getFuelLevel() );
+                                        patrulFuelStatistics.getAverageFuelConsumption() + consumptionData.getFuelLevel()
+                                );
 
                                 patrulFuelStatistics.setAverageDistance(
-                                        patrulFuelStatistics.getAverageDistance()
-                                                + consumptionData.getDistance() );
+                                        patrulFuelStatistics.getAverageDistance() + consumptionData.getDistance() );
                             }
 
                             patrulFuelStatistics.setAverageFuelConsumption(
-                                    patrulFuelStatistics.getAverageFuelConsumption() / patrulFuelStatistics.getMap().size() );
+                                    patrulFuelStatistics.getAverageFuelConsumption() / patrulFuelStatistics.getMap().size()
+                            );
 
                             patrulFuelStatistics.setAverageDistance(
-                                    patrulFuelStatistics.getAverageDistance() / patrulFuelStatistics.getMap().size() );
+                                    patrulFuelStatistics.getAverageDistance() / patrulFuelStatistics.getMap().size()
+                            );
 
                             patrulFuelStatistics.setUuid( patrul.getUuid() );
-
                         }
 
                         return patrulFuelStatistics;
                     } )
-                    .onErrorReturn( new PatrulFuelStatistics() );
+                    .onErrorReturn( EntitiesInstances.PATRUL_FUEL_STATISTICS );
 
     public final Function< EntityToCassandraConverter, ParallelFlux< Row > > getAllEntities =
             entityToCassandraConverter -> super.convertValuesToParallelFlux(
@@ -585,7 +589,7 @@ public final class CassandraDataControl
 
     @Override
     public void close() {
-        instance = null;
+        INSTANCE = null;
         super.logging( this );
         this.getCluster().close();
         this.getSession().close();

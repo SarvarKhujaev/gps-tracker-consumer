@@ -1,21 +1,22 @@
 package com.ssd.mvd.inspectors;
 
-import com.ssd.mvd.database.CassandraDataControlForEscort;
-import com.ssd.mvd.database.CassandraDataControl;
-import com.ssd.mvd.entity.patrulDataSet.Patrul;
-import com.ssd.mvd.GpsTrackerApplication;
-import com.ssd.mvd.entity.*;
-
 import com.datastax.driver.core.Row;
+import com.ssd.mvd.GpsTrackerApplication;
+import com.ssd.mvd.database.CassandraDataControl;
+import com.ssd.mvd.database.CassandraDataControlForEscort;
+import com.ssd.mvd.entity.Point;
+import com.ssd.mvd.entity.Position;
+import com.ssd.mvd.entity.ReqCar;
+import com.ssd.mvd.entity.Request;
+import com.ssd.mvd.entity.patrulDataSet.Patrul;
 
-import static java.lang.Math.cos;
-import static java.lang.Math.*;
-
-import java.util.function.Consumer;
-import java.util.Optional;
-import java.util.Objects;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Consumer;
+
+import static java.lang.Math.*;
 
 public class DataValidateInspector extends TimeInspector {
     protected DataValidateInspector () {}
@@ -165,21 +166,41 @@ public class DataValidateInspector extends TimeInspector {
     проверят что context внутри main класса GpsTabletsServiceApplication  инициализирован
     и среди параметров сервиса сузествует переданный параметр
     */
-    protected final synchronized <T> T checkContextOrReturnDefaultValue (
+    protected final synchronized int checkContextOrReturnDefaultValue (
             final String paramName,
-            final T defaultValue
+            final int defaultValue
     ) {
         return this.objectIsNotNull( GpsTrackerApplication.context )
                 && this.objectIsNotNull(
-                        GpsTrackerApplication
-                                .context
-                                .getEnvironment()
-                                .getProperty( paramName )
-                )
-                ? (T) GpsTrackerApplication
+                GpsTrackerApplication
                         .context
                         .getEnvironment()
                         .getProperty( paramName )
+        )
+                ? Integer.parseInt(
+                GpsTrackerApplication
+                        .context
+                        .getEnvironment()
+                        .getProperty( paramName )
+        )
+                : defaultValue;
+    }
+
+    public final synchronized String checkContextOrReturnDefaultValue (
+            final String paramName,
+            final String defaultValue
+    ) {
+        return this.objectIsNotNull( GpsTrackerApplication.context )
+                && this.objectIsNotNull(
+                GpsTrackerApplication
+                        .context
+                        .getEnvironment()
+                        .getProperty( paramName )
+        )
+                ? GpsTrackerApplication
+                .context
+                .getEnvironment()
+                .getProperty( paramName )
                 : defaultValue;
     }
 }

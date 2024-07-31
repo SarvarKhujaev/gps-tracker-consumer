@@ -1,8 +1,8 @@
 package com.ssd.mvd.inspectors;
 
-import java.util.Calendar;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Calendar;
 import java.util.Date;
 
 public class TimeInspector extends CollectionsInspector {

@@ -1,11 +1,11 @@
 package com.ssd.mvd.entity;
 
-import com.ssd.mvd.inspectors.DataValidateInspector;
-import com.ssd.mvd.database.CassandraDataControl;
-import com.ssd.mvd.inspectors.EntitiesInstances;
-import com.ssd.mvd.entity.patrulDataSet.Patrul;
-import com.ssd.mvd.inspectors.Inspector;
 import com.ssd.mvd.constants.Status;
+import com.ssd.mvd.database.CassandraDataControl;
+import com.ssd.mvd.entity.patrulDataSet.Patrul;
+import com.ssd.mvd.inspectors.DataValidateInspector;
+import com.ssd.mvd.inspectors.EntitiesInstances;
+import com.ssd.mvd.inspectors.Inspector;
 
 import java.util.UUID;
 

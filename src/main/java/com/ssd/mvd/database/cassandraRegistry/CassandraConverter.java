@@ -2,11 +2,14 @@ package com.ssd.mvd.database.cassandraRegistry;
 
 import com.ssd.mvd.constants.CassandraDataTypes;
 import com.ssd.mvd.inspectors.LogInspector;
-import java.lang.reflect.Field;
 
 import java.util.function.Function;
 import java.util.stream.Stream;
-import java.util.*;
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
 public class CassandraConverter extends LogInspector {
     protected CassandraConverter () {}

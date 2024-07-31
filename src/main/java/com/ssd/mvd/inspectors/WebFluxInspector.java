@@ -2,10 +2,9 @@ package com.ssd.mvd.inspectors;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
-
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.ParallelFlux;
 import reactor.core.scheduler.Schedulers;
-import reactor.core.publisher.Flux;
 
 import java.util.stream.Stream;
 

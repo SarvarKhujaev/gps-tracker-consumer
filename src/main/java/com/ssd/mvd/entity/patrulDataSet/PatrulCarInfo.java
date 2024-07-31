@@ -1,11 +1,10 @@
 package com.ssd.mvd.entity.patrulDataSet;
 
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.UDTValue;
+import com.ssd.mvd.entity.TupleOfCar;
 import com.ssd.mvd.inspectors.DataValidateInspector;
 import com.ssd.mvd.interfaces.ObjectCommonMethods;
-import com.ssd.mvd.entity.TupleOfCar;
-
-import com.datastax.driver.core.UDTValue;
-import com.datastax.driver.core.Row;
 
 public final class PatrulCarInfo extends DataValidateInspector implements ObjectCommonMethods< PatrulCarInfo > {
     public String getCarType() {

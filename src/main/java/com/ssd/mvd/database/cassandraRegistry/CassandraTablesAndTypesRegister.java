@@ -1,9 +1,8 @@
 package com.ssd.mvd.database.cassandraRegistry;
 
 import com.datastax.driver.core.Session;
-
-import com.ssd.mvd.constants.CassandraTables;
 import com.ssd.mvd.constants.CassandraCommands;
+import com.ssd.mvd.constants.CassandraTables;
 import com.ssd.mvd.interfaces.DatabaseCommonMethods;
 
 /*

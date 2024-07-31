@@ -1,7 +1,7 @@
 package com.ssd.mvd.entity.patrulDataSet;
 
-import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
 import com.ssd.mvd.database.cassandraRegistry.CassandraConverter;
+import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
 import com.ssd.mvd.constants.CassandraCommands;
 import com.ssd.mvd.constants.CassandraTables;
 import com.ssd.mvd.entity.TupleOfCar;
@@ -20,48 +20,24 @@ public final class Patrul extends CassandraConverter implements ObjectFromRowCon
         this.uuid = uuid;
     }
 
-    public long getTotalActivityTime() {
-        return this.totalActivityTime;
-    }
-
     public void setTotalActivityTime( final long totalActivityTime ) {
         this.totalActivityTime = totalActivityTime;
-    }
-
-    public boolean getInPolygon() {
-        return this.inPolygon;
     }
 
     public void setInPolygon( final boolean inPolygon ) {
         this.inPolygon = inPolygon;
     }
 
-    public boolean getTuplePermission() {
-        return this.tuplePermission;
-    }
-
     public void setTuplePermission( final boolean tuplePermission ) {
         this.tuplePermission = tuplePermission;
-    }
-
-    public String getRank() {
-        return this.rank;
     }
 
     public void setRank( final String rank ) {
         this.rank = rank;
     }
 
-    public String getEmail() {
-        return this.email;
-    }
-
     public void setEmail( final String email ) {
         this.email = email;
-    }
-
-    public String getOrganName() {
-        return this.organName;
     }
 
     public void setOrganName( final String organName ) {
@@ -76,10 +52,6 @@ public final class Patrul extends CassandraConverter implements ObjectFromRowCon
         this.policeType = policeType;
     }
 
-    public String getDateOfBirth() {
-        return this.dateOfBirth;
-    }
-
     public void setDateOfBirth( final String dateOfBirth ) {
         this.dateOfBirth = dateOfBirth;
     }
@@ -90,10 +62,6 @@ public final class Patrul extends CassandraConverter implements ObjectFromRowCon
 
     public void setPassportNumber( final String passportNumber ) {
         this.passportNumber = passportNumber;
-    }
-
-    public String getPatrulImageLink() {
-        return this.patrulImageLink;
     }
 
     public void setPatrulImageLink( final String patrulImageLink ) {

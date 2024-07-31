@@ -1,22 +1,26 @@
 package com.ssd.mvd.publisher;
 
+import com.ssd.mvd.kafka.kafkaConfigs.KafkaTopics;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import org.apache.kafka.clients.producer.ProducerRecord;
 
 public final class CustomPublisher implements Publisher< ProducerRecord< String, String > > {
     private final ProducerRecord< String, String > producerRecord;
 
     public static CustomPublisher generate (
-            final String topic,
+            final KafkaTopics topic,
             final String message
     ) {
         return new CustomPublisher( topic, message );
     }
 
-    private CustomPublisher ( final String topic, final String message ) {
-        this.producerRecord = new ProducerRecord<>( topic, message );
+    private CustomPublisher (
+            final KafkaTopics topic,
+            final String message
+    ) {
+        this.producerRecord = new ProducerRecord<>( topic.getTopicName(), message );
     }
 
     @Override

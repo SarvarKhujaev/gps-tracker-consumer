@@ -2,16 +2,14 @@ package com.ssd.mvd.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.gson.Gson;
-
 import com.mashape.unirest.http.ObjectMapper;
 import com.mashape.unirest.http.Unirest;
-
-import com.ssd.mvd.inspectors.LogInspector;
-import com.ssd.mvd.constants.Status;
 import com.ssd.mvd.address.Address;
+import com.ssd.mvd.constants.Status;
+import com.ssd.mvd.inspectors.LogInspector;
 
-import java.util.function.BiFunction;
 import java.util.List;
+import java.util.function.BiFunction;
 
 public final class UnirestController extends LogInspector {
     private final String ADDRESS_LOCATION_API = super.checkContextOrReturnDefaultValue(

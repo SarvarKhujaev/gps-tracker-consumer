@@ -1,11 +1,10 @@
 package com.ssd.mvd.interfaces;
 
-import com.ssd.mvd.database.CassandraDataControl;
-import com.ssd.mvd.constants.CassandraCommands;
-
 import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Session;
 import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Session;
+import com.ssd.mvd.constants.CassandraCommands;
+import com.ssd.mvd.database.CassandraDataControl;
 
 import java.text.MessageFormat;
 import java.util.Collections;

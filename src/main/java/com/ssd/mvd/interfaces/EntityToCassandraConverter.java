@@ -1,8 +1,8 @@
 package com.ssd.mvd.interfaces;
 
-import com.ssd.mvd.database.CassandraDataControl;
 import com.ssd.mvd.constants.CassandraCommands;
 import com.ssd.mvd.constants.CassandraTables;
+import com.ssd.mvd.database.CassandraDataControl;
 
 import java.text.MessageFormat;
 

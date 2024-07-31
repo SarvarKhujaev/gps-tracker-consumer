@@ -1,11 +1,11 @@
 package com.ssd.mvd.entity;
 
-import java.util.Date;
 import com.datastax.driver.core.Row;
-
 import com.ssd.mvd.controller.UnirestController;
 import com.ssd.mvd.inspectors.DataValidateInspector;
 import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
+
+import java.util.Date;
 
 // хранит исторические данные о передвижениях машины
 public final class PositionInfo

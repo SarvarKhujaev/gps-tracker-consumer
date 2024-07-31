@@ -35,4 +35,15 @@ public class LogInspector extends WebFluxInspector {
     protected final synchronized void logging ( final Object o ) {
         this.getLOGGER().info( o.getClass().getName() + " was closed successfully at: " + super.newDate() );
     }
+
+    protected final synchronized void logging ( final Class<?> clazz ) {
+        this.getLOGGER().info(
+                String.join(
+                        "",
+                        clazz.getName(),
+                        " was created at: ",
+                        super.newDate().toString()
+                )
+        );
+    }
 }
