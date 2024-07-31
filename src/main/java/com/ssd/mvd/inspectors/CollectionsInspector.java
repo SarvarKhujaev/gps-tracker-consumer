@@ -1,10 +1,6 @@
 package com.ssd.mvd.inspectors;
 
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 import java.util.*;
 
 public class CollectionsInspector extends StringOperations {
@@ -19,10 +15,6 @@ public class CollectionsInspector extends StringOperations {
             final Consumer<T> someConsumer
     ) {
         someList.forEach( someConsumer );
-    }
-
-    protected Stream< Row > convertRowToStream ( final ResultSet resultSet ) {
-        return resultSet.all().parallelStream();
     }
 
     protected <T> boolean isCollectionNotEmpty ( final Collection<T> collection ) {

@@ -5,7 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
 
-public class LogInspector extends Inspector {
+public class LogInspector extends WebFluxInspector {
     protected LogInspector() {}
 
     private final Logger LOGGER = LogManager.getLogger();

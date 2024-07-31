@@ -1,16 +1,17 @@
 package com.ssd.mvd.entity;
 
-import com.ssd.mvd.interfaces.EntityToCassandraConverter;
+import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
 import com.ssd.mvd.constants.CassandraFunctions;
 import com.ssd.mvd.constants.CassandraCommands;
-import com.ssd.mvd.database.CassandraConverter;
+import com.ssd.mvd.database.cassandraRegistry.CassandraConverter;
 import com.ssd.mvd.constants.CassandraTables;
 
 import com.datastax.driver.core.Row;
+
 import java.text.MessageFormat;
 import java.util.UUID;
 
-public final class ReqCar extends CassandraConverter implements EntityToCassandraConverter {
+public final class ReqCar extends CassandraConverter implements ObjectFromRowConvertInterface< ReqCar > {
     public UUID getPatrulId() {
         return this.patrulId;
     }
@@ -143,7 +144,18 @@ public final class ReqCar extends CassandraConverter implements EntityToCassandr
 
     public ReqCar () {}
 
-    public ReqCar ( final Row row ) {
+    @Override
+    public CassandraTables getEntityTableName() {
+        return CassandraTables.TABLETS;
+    }
+
+    @Override
+    public CassandraTables getEntityKeyspaceName() {
+        return CassandraTables.CARS;
+    }
+
+    @Override
+    public ReqCar generate( final Row row ) {
         super.checkAndSetParams(
                 row,
                 row1 -> {
@@ -166,6 +178,13 @@ public final class ReqCar extends CassandraConverter implements EntityToCassandr
                     this.setAverageFuelConsumption( row.getDouble( "averageFuelConsumption" ) );
                 }
         );
+
+        return this;
+    }
+
+    @Override
+    public ReqCar generate() {
+        return new ReqCar();
     }
 
     @Override
@@ -182,14 +201,12 @@ public final class ReqCar extends CassandraConverter implements EntityToCassandr
                 MessageFormat.format(
                         """
                         {0} {1}.{2}
-                        SET carNumber = {3},
-                        carType = {4},
-                        uuidForPatrulCar = {5}
+                        SET carNumber = {3}, carType = {4}, uuidForPatrulCar = {5}
                         WHERE uuid = {6};
                         """,
                         CassandraCommands.UPDATE,
 
-                        CassandraTables.TABLETS,
+                        this.getEntityKeyspaceName(),
                         CassandraTables.PATRULS,
 
                         super.joinWithAstrix( this.getGosNumber() ),
@@ -209,8 +226,8 @@ public final class ReqCar extends CassandraConverter implements EntityToCassandr
                         """,
                         CassandraCommands.INSERT_INTO,
 
-                        CassandraTables.TABLETS,
-                        CassandraTables.CARS,
+                        this.getEntityKeyspaceName(),
+                        this.getEntityTableName(),
 
                         super.getAllParamsNamesForClass.apply( ReqCar.class ),
 
@@ -250,8 +267,8 @@ public final class ReqCar extends CassandraConverter implements EntityToCassandr
                         """,
                         CassandraCommands.DELETE,
 
-                        CassandraTables.TABLETS,
-                        CassandraTables.CARS,
+                        this.getEntityKeyspaceName(),
+                        this.getEntityTableName(),
 
                         this.getGosNumber()
                 ),
@@ -282,8 +299,8 @@ public final class ReqCar extends CassandraConverter implements EntityToCassandr
                 """,
                 CassandraCommands.UPDATE,
 
-                CassandraTables.TABLETS,
-                CassandraTables.CARS,
+                this.getEntityKeyspaceName(),
+                this.getEntityTableName(),
 
                 this.getLongitude(),
                 this.getLatitude(),

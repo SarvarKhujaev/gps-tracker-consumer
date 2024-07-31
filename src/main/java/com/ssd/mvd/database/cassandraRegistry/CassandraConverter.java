@@ -1,4 +1,4 @@
-package com.ssd.mvd.database;
+package com.ssd.mvd.database.cassandraRegistry;
 
 import com.ssd.mvd.constants.CassandraDataTypes;
 import com.ssd.mvd.inspectors.LogInspector;

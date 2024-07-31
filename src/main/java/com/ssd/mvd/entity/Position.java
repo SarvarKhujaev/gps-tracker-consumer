@@ -217,6 +217,16 @@ public final class Position extends StringOperations implements EntityToCassandr
     private double longitudeOfTask;
 
     @Override
+    public CassandraTables getEntityTableName() {
+        return CassandraTables.TRACKERS;
+    }
+
+    @Override
+    public CassandraTables getEntityKeyspaceName() {
+        return CassandraTables.TRACKERS_LOCATION_TABLE;
+    }
+
+    @Override
     public String getEntityInsertCommand() {
         return MessageFormat.format(
                 """
@@ -225,8 +235,9 @@ public final class Position extends StringOperations implements EntityToCassandr
                 VALUES ( {3}, {4}, {5}, {6}, {7}, '' )
                 """,
                 CassandraCommands.INSERT_INTO,
-                CassandraTables.TRACKERS,
-                CassandraTables.TRACKERS_LOCATION_TABLE,
+
+                this.getEntityKeyspaceName(),
+                this.getEntityTableName(),
 
                 super.joinWithAstrix( this.getDeviceId() ),
                 super.joinWithAstrix( this.getDeviceTime() ),

@@ -1,32 +1,19 @@
 package com.ssd.mvd.database.cassandraRegistry;
 
-import com.ssd.mvd.constants.*;
-import com.ssd.mvd.database.CassandraConverter;
-import com.ssd.mvd.entity.TupleOfCar;
-
-import com.datastax.driver.core.Session;
-import com.ssd.mvd.inspectors.StringOperations;
-import com.ssd.mvd.inspectors.TimeInspector;
-
 import java.text.MessageFormat;
 
-public final class CassandraTableRegistration extends StringOperations {
-    private final Session session;
+import com.ssd.mvd.constants.*;
+import com.ssd.mvd.entity.TupleOfCar;
+import com.ssd.mvd.inspectors.TimeInspector;
+import com.ssd.mvd.inspectors.StringOperations;
+import com.ssd.mvd.interfaces.DatabaseCommonMethods;
 
-    private Session getSession() {
-        return this.session;
+public final class CassandraTableRegistration extends StringOperations implements DatabaseCommonMethods {
+    public static void generate () {
+        new CassandraTableRegistration();
     }
 
-    public static void generate (
-            final Session session
-    ) {
-        new CassandraTableRegistration( session );
-    }
-
-    public CassandraTableRegistration(
-            final Session session
-    ) {
-        this.session = session;
+    public CassandraTableRegistration() {
         this.createAllTables();
     }
 
@@ -325,9 +312,12 @@ public final class CassandraTableRegistration extends StringOperations {
                         {0} {1}.{2} {3} {4}
                         """,
                         CassandraCommands.CREATE_TABLE,
+
                         tableRegistration.getKeyspace(),
                         tableRegistration.getTableName(),
                         tableRegistration.getConvertedValue(),
-                        tableRegistration.getPrefix() ) );
+                        tableRegistration.getPrefix()
+                )
+        );
     }
 }

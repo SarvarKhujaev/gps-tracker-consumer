@@ -29,7 +29,7 @@ public class Inspector extends DataValidateInspector {
     protected final synchronized void save (
             final Row row
     ) {
-        icons.put( row.getString( "policeType" ), new Icons( row ) );
+        icons.put( row.getString( "policeType" ), new Icons().generate( row ) );
     }
 
     protected final synchronized void save (

@@ -2,8 +2,11 @@ package com.ssd.mvd.entity;
 
 import com.datastax.driver.core.Row;
 import com.ssd.mvd.inspectors.DataValidateInspector;
+import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
 
-public final class Icons extends DataValidateInspector {
+public final class Icons
+        extends DataValidateInspector
+        implements ObjectFromRowConvertInterface< Icons > {
     public String getIcon1() {
         return this.icon1;
     }
@@ -23,7 +26,10 @@ public final class Icons extends DataValidateInspector {
     private String icon1;
     private String icon2;
 
-    public Icons ( final Row row ) {
+    public Icons () {}
+
+    @Override
+    public Icons generate( final Row row ) {
         super.checkAndSetParams(
                 row,
                 row1 -> {
@@ -31,5 +37,12 @@ public final class Icons extends DataValidateInspector {
                     this.setIcon2( row.getString( "icon2" ) );
                 }
         );
+
+        return this;
+    }
+
+    @Override
+    public Icons generate() {
+        return new Icons();
     }
 }

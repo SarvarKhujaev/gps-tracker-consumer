@@ -1,8 +1,9 @@
-package com.ssd.mvd.database;
+package com.ssd.mvd.database.cassandraConfigs;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.WriteType;
+import com.ssd.mvd.database.CassandraDataControl;
 import com.ssd.mvd.inspectors.LogInspector;
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.policies.RetryPolicy;

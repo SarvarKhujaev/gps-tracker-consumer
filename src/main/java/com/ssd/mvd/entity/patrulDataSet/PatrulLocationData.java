@@ -57,21 +57,27 @@ public final class PatrulLocationData extends DataValidateInspector implements O
     // локация заданной задачи по Y
     private double longitudeOfTask;
 
-    public static PatrulLocationData empty () {
-        return new PatrulLocationData();
-    }
-
-    private PatrulLocationData () {}
+    public PatrulLocationData () {}
 
     @Override
     public PatrulLocationData generate( final Row row ) {
-        this.setLongitudeOfTask( row.getDouble( "longitudeOfTask" ) );
-        this.setLatitudeOfTask( row.getDouble( "latitudeOfTask" ) );
-        this.setLongitude( row.getDouble( "longitude" ) );
-        this.setLatitude( row.getDouble( "latitude" ) );
-        this.setDistance( row.getDouble( "distance" ) );
+        super.checkAndSetParams(
+                row,
+                row1 -> {
+                    this.setLongitudeOfTask( row.getDouble( "longitudeOfTask" ) );
+                    this.setLatitudeOfTask( row.getDouble( "latitudeOfTask" ) );
+                    this.setLongitude( row.getDouble( "longitude" ) );
+                    this.setLatitude( row.getDouble( "latitude" ) );
+                    this.setDistance( row.getDouble( "distance" ) );
+                }
+        );
 
         return this;
+    }
+
+    @Override
+    public PatrulLocationData generate() {
+        return new PatrulLocationData();
     }
 
     @Override
@@ -88,13 +94,5 @@ public final class PatrulLocationData extends DataValidateInspector implements O
         );
 
         return this;
-    }
-
-    @Override
-    public UDTValue fillUdtByEntityParams( final UDTValue udtValue ) {
-        return udtValue
-                .setDouble( "distance", this.getDistance() )
-                .setDouble( "latitude", this.getLatitude() )
-                .setDouble( "longitude", this.getLongitude() );
     }
 }

@@ -5,9 +5,12 @@ import com.datastax.driver.core.Row;
 
 import com.ssd.mvd.controller.UnirestController;
 import com.ssd.mvd.inspectors.DataValidateInspector;
+import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
 
 // хранит исторические данные о передвижениях машины
-public final class PositionInfo extends DataValidateInspector {
+public final class PositionInfo
+        extends DataValidateInspector
+        implements ObjectFromRowConvertInterface< PositionInfo > {
     public double getLat() {
         return this.lat;
     }
@@ -55,25 +58,41 @@ public final class PositionInfo extends DataValidateInspector {
     private String address;
     private Date positionWasSavedDate;
 
+    public PositionInfo () {}
+
     public PositionInfo (
             final Row row,
             final boolean flag
     ) {
+        this.generate( row );
+
+        if ( flag ) {
+            this.setAddress(
+                    UnirestController
+                            .getInstance()
+                            .getAddressByLocation
+                            .apply( this.getLat(), this.getLng() )
+            );
+        }
+    }
+
+    @Override
+    public PositionInfo generate( final Row row ) {
         super.checkAndSetParams(
                 row,
                 row1 -> {
                     this.setSpeed( row.getDouble( "speed" ) );
                     this.setLng( row.getDouble( "latitude" ) );
                     this.setLat( row.getDouble( "longitude" ) );
-                    if ( flag ) {
-                        this.setAddress(
-                                UnirestController
-                                        .getInstance()
-                                        .getAddressByLocation
-                                        .apply( this.getLat(), this.getLng() ) );
-                    }
                     this.setPositionWasSavedDate( row.getTimestamp( "date" ) );
                 }
         );
+
+        return this;
+    }
+
+    @Override
+    public PositionInfo generate() {
+        return new PositionInfo();
     }
 }

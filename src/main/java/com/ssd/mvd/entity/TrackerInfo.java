@@ -1,5 +1,6 @@
 package com.ssd.mvd.entity;
 
+import com.ssd.mvd.inspectors.EntitiesInstances;
 import com.ssd.mvd.interfaces.EntityToCassandraConverter;
 import com.ssd.mvd.inspectors.DataValidateInspector;
 import com.ssd.mvd.database.CassandraDataControl;
@@ -155,6 +156,13 @@ public final class TrackerInfo extends DataValidateInspector implements EntityTo
     private Date lastActiveDate;
     private Date dateOfRegistration;
 
+    @Override
+    public CassandraTables getEntityTableName () {
+        return CassandraTables.TRACKERSID;
+    }
+
+    public TrackerInfo () {}
+
     public TrackerInfo ( final TupleOfCar tupleOfCar ) {
         this.setStatus( true );
 
@@ -174,11 +182,11 @@ public final class TrackerInfo extends DataValidateInspector implements EntityTo
 
         final Icons icons = Inspector.icons.getOrDefault(
                 patrul.getPoliceType(),
-                new Icons(
+                new Icons().generate(
                         CassandraDataControl
                                 .getInstance()
                                 .getRowFromTabletsKeyspace(
-                                        CassandraTables.POLICE_TYPE,
+                                        EntitiesInstances.ICONS,
                                         "policeType",
                                         patrul.getPoliceType()
                                 )
@@ -282,11 +290,11 @@ public final class TrackerInfo extends DataValidateInspector implements EntityTo
 
         final Icons icons = Inspector.icons.getOrDefault(
                 patrul.getPoliceType(),
-                new Icons(
+                new Icons().generate(
                         CassandraDataControl
                                 .getInstance()
                                 .getRowFromTabletsKeyspace(
-                                        CassandraTables.POLICE_TYPE,
+                                        EntitiesInstances.POLICE_TYPE,
                                         "policeType",
                                         patrul.getPoliceType()
                                 )
@@ -401,7 +409,7 @@ public final class TrackerInfo extends DataValidateInspector implements EntityTo
                 """,
                 CassandraCommands.INSERT_INTO,
 
-                CassandraTables.TRACKERS,
+                this.getEntityKeyspaceName(),
                 CassandraTables.TRACKER_FUEL_CONSUMPTION,
 
                 super.joinWithAstrix( this.getTrackerId() ),
@@ -433,7 +441,7 @@ public final class TrackerInfo extends DataValidateInspector implements EntityTo
                 """,
                 CassandraCommands.INSERT_INTO,
 
-                CassandraTables.TRACKERS,
+                this.getEntityKeyspaceName(),
                 CassandraTables.TRACKERSID,
 
                 super.joinWithAstrix( this.getTrackerId() ),

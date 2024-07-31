@@ -106,7 +106,7 @@ public final class TrackerController extends Inspector {
     }
 
     @MessageMapping ( value = "CALCULATE_AVERAGE_FUEL_CONSUMPTION" )
-    public Mono<PatrulFuelStatistics> calculate_average_fuel_consumption (final Request request ) {
+    public Mono< PatrulFuelStatistics > calculate_average_fuel_consumption (final Request request ) {
             return CassandraDataControl
                     .getInstance()
                     .calculateAverageFuelConsumption

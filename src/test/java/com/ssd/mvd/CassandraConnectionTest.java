@@ -1,13 +1,16 @@
 package com.ssd.mvd;
 
 import com.ssd.mvd.database.CassandraDataControl;
+import com.ssd.mvd.inspectors.EntitiesInstances;
 import com.ssd.mvd.entity.patrulDataSet.Patrul;
 import com.ssd.mvd.constants.CassandraTables;
 
 import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.core.Row;
 
+import org.junit.jupiter.api.DisplayName;
 import junit.framework.TestCase;
+
 import java.text.MessageFormat;
 
 import java.util.List;
@@ -34,11 +37,12 @@ public final class CassandraConnectionTest extends TestCase {
         CassandraDataControl.getInstance().close();
     }
 
+    @DisplayName( value = "testGetListOfEntities method" )
     public void testGetListOfEntities () {
         final List< Row > rows = CassandraDataControl
                 .getInstance()
                 .getListOfEntities(
-                        CassandraTables.PATRULS,
+                        EntitiesInstances.PATRUL,
                         "id",
                         List.of( this.uuid, this.uuid )
                 );
@@ -51,6 +55,7 @@ public final class CassandraConnectionTest extends TestCase {
     checks and make sure that Cassandra Cluster was established
     and session from Cluster was initiated
     */
+    @DisplayName( value = "testConnectionWasEstablished method" )
     public void testConnectionWasEstablished () {
         assertNotNull( CassandraDataControl.getInstance() );
         assertNotNull( CassandraDataControl.getInstance().getCluster() );
@@ -59,7 +64,7 @@ public final class CassandraConnectionTest extends TestCase {
         assertFalse( CassandraDataControl.getInstance().getSession().isClosed() );
 
         Row row = CassandraDataControl.getInstance().getRowFromTabletsKeyspace(
-                CassandraTables.PATRULS,
+                EntitiesInstances.PATRUL,
                 "uuid",
                 this.uuid.toString()
         );
@@ -74,7 +79,7 @@ public final class CassandraConnectionTest extends TestCase {
                            FROM {0}.{1};
                            """,
                         CassandraTables.TABLETS,
-                        CassandraTables.PATRULS
+                        EntitiesInstances.PATRUL
                 )
         ).one();
 
@@ -82,17 +87,19 @@ public final class CassandraConnectionTest extends TestCase {
         assertTrue( row.getLong( "count" ) > 2 );
     }
 
+    @DisplayName( value = "testPatrulInsert method" )
     public void testPatrulInsert () {
-        final Patrul patrul = Patrul.empty();
+        final Patrul patrul = EntitiesInstances.PATRUL;
 
         assertTrue( patrul.save() );
     }
 
+    @DisplayName( value = "testPatrulUpdate method" )
     public void testPatrulUpdate () {
         assertTrue(
-                new Patrul(
+                EntitiesInstances.PATRUL.generate(
                         CassandraDataControl.getInstance().getRowFromTabletsKeyspace(
-                                CassandraTables.PATRULS,
+                                EntitiesInstances.PATRUL,
                                 "uuid",
                                 this.uuid.toString()
                         )
@@ -100,11 +107,12 @@ public final class CassandraConnectionTest extends TestCase {
         );
     }
 
+    @DisplayName( value = "testPatrulDelete method" )
     public void testPatrulDelete () {
         assertTrue(
-                new Patrul(
+                EntitiesInstances.PATRUL.generate(
                         CassandraDataControl.getInstance().getRowFromTabletsKeyspace(
-                                CassandraTables.PATRULS,
+                                EntitiesInstances.PATRUL,
                                 "uuid",
                                 this.uuid.toString()
                         )

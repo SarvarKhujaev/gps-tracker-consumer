@@ -5,20 +5,20 @@ import com.datastax.driver.core.PoolingOptions;
 import com.datastax.driver.core.SocketOptions;
 import com.datastax.driver.core.HostDistance;
 
-import com.ssd.mvd.database.CassandraConverter;
-import com.ssd.mvd.database.CustomRetryPolicy;
-import com.ssd.mvd.GpsTrackerApplication;
+import com.ssd.mvd.database.cassandraRegistry.CassandraConverter;
 
 public class CassandraParamsAndOptionsStore extends CassandraConverter {
-    protected static final String CLUSTER_NAME = GpsTrackerApplication
-            .context
-            .getEnvironment()
-            .getProperty( "variables.CASSANDRA_VARIABLES.CASSANDRA_CLUSTER_NAME" );
+    protected CassandraParamsAndOptionsStore () {}
 
-    protected static final String HOST = GpsTrackerApplication
-            .context
-            .getEnvironment()
-            .getProperty( "variables.CASSANDRA_VARIABLES.CASSANDRA_HOST" );
+    protected final String CLUSTER_NAME = super.checkContextOrReturnDefaultValue(
+            "variables.CASSANDRA_VARIABLES.CASSANDRA_CLUSTER_NAME",
+            "TEST_CLUSTER"
+    );
+
+    protected final String HOST = super.checkContextOrReturnDefaultValue(
+            "variables.CASSANDRA_VARIABLES.CASSANDRA_HOST",
+            "localhost"
+    );
 
     protected final synchronized PoolingOptions getPoolingOptions () {
         return new PoolingOptions()

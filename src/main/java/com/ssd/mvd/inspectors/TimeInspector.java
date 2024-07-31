@@ -16,6 +16,12 @@ public class TimeInspector extends CollectionsInspector {
         return new Date();
     }
 
+    protected final synchronized Date newDate (
+            final long timeInterval
+    ) {
+        return new Date( timeInterval );
+    }
+
     protected final synchronized Calendar calendarInstance () {
         return Calendar.getInstance();
     }
@@ -25,5 +31,17 @@ public class TimeInspector extends CollectionsInspector {
             final Instant instant
     ) {
         return Math.abs( timestamp + Duration.between( Instant.now(), instant ).getSeconds() );
+    }
+
+    protected final synchronized int getTimeDifference(
+            final Date startDate,
+            final Date endDate
+    ) {
+        return (int) Math.abs(
+                Duration.between(
+                        startDate.toInstant(),
+                        endDate.toInstant()
+                ).toDays()
+        );
     }
 }

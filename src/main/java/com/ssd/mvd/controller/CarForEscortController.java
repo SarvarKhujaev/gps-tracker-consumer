@@ -5,11 +5,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ssd.mvd.database.CassandraDataControlForEscort;
 import com.ssd.mvd.database.CassandraDataControl;
-import com.ssd.mvd.constants.CassandraTables;
+import com.ssd.mvd.inspectors.EntitiesInstances;
 import com.ssd.mvd.inspectors.LogInspector;
 import com.ssd.mvd.entity.*;
 
-import reactor.core.scheduler.Schedulers;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -22,11 +21,7 @@ public final class CarForEscortController extends LogInspector {
     public Flux< TupleOfCar > getAllCarsForEscort() {
         return CassandraDataControl
                 .getInstance()
-                .getAllEntities
-                .apply( CassandraTables.ESCORT, CassandraTables.TUPLE_OF_CAR )
-                .map( TupleOfCar::new )
-                .sequential()
-                .publishOn( Schedulers.single() )
+                .getConvertedEntities( EntitiesInstances.TUPLE_OF_CAR )
                 .onErrorContinue( super::logging );
     }
 
@@ -51,11 +46,11 @@ public final class CarForEscortController extends LogInspector {
     @MessageMapping ( value = "getCurrentForEscort" )
     public Mono< TupleOfCar > getCurrentForEscort ( final String gosNumber ) {
         return super.convert(
-                new TupleOfCar(
+                EntitiesInstances.TUPLE_OF_CAR.generate(
                         CassandraDataControlForEscort
                                 .getInstance()
                                 .getRowFromTabletsKeyspace(
-                                        CassandraTables.TUPLE_OF_CAR,
+                                        EntitiesInstances.TUPLE_OF_CAR,
                                         "uuid",
                                         gosNumber
                                 )

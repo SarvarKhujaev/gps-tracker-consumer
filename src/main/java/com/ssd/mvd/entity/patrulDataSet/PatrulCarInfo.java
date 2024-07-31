@@ -32,18 +32,7 @@ public final class PatrulCarInfo extends DataValidateInspector implements Object
     private String carType; // модель машины
     private String carNumber;
 
-    public static PatrulCarInfo empty () {
-        return new PatrulCarInfo();
-    }
-
-    private PatrulCarInfo () {}
-
-    @Override
-    public PatrulCarInfo generate( final Row row ) {
-        this.setCarType( row.getString( "carType" ) );
-        this.setCarNumber( row.getString( "carNumber" ) );
-        return this;
-    }
+    public PatrulCarInfo () {}
 
     @Override
     public PatrulCarInfo generate( final UDTValue udtValue ) {
@@ -54,13 +43,25 @@ public final class PatrulCarInfo extends DataValidateInspector implements Object
                     this.setCarNumber( udtValue.getString( "carNumber" ) );
                 }
         );
+
         return this;
     }
 
     @Override
-    public UDTValue fillUdtByEntityParams( final UDTValue udtValue ) {
-        return udtValue
-                .setString( "carType", this.getCarType() )
-                .setString( "carNumber", this.getCarNumber() );
+    public PatrulCarInfo generate( final Row row ) {
+        super.checkAndSetParams(
+                row,
+                row1 -> {
+                    this.setCarType( row.getString( "carType" ) );
+                    this.setCarNumber( row.getString( "carNumber" ) );
+                }
+        );
+
+        return this;
+    }
+
+    @Override
+    public PatrulCarInfo generate() {
+        return new PatrulCarInfo();
     }
 }

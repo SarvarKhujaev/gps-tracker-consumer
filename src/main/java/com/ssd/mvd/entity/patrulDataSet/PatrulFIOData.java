@@ -50,20 +50,26 @@ public final class PatrulFIOData extends DataValidateInspector implements Object
     private String fatherName;
     private String surnameNameFatherName; // Ф.И.О
 
-    private PatrulFIOData () {}
-
-    public static PatrulFIOData empty() {
-        return new PatrulFIOData();
-    }
+    public PatrulFIOData () {}
 
     @Override
     public PatrulFIOData generate( final Row row ) {
-        this.setSurnameNameFatherName( row.getString( "surnameNameFatherName" ) );
-        this.setFatherName( row.getString( "fatherName" ) );
-        this.setSurname( row.getString( "surname" ) );
-        this.setName( row.getString( "name" ) );
+        super.checkAndSetParams(
+                row,
+                row1 -> {
+                    this.setSurnameNameFatherName( row.getString( "surnameNameFatherName" ) );
+                    this.setFatherName( row.getString( "fatherName" ) );
+                    this.setSurname( row.getString( "surname" ) );
+                    this.setName( row.getString( "name" ) );
+                }
+        );
 
         return this;
+    }
+
+    @Override
+    public PatrulFIOData generate() {
+        return new PatrulFIOData();
     }
 
     @Override
@@ -74,14 +80,5 @@ public final class PatrulFIOData extends DataValidateInspector implements Object
         this.setName( udtValue.getString( "name" ) );
 
         return this;
-    }
-
-    @Override
-    public UDTValue fillUdtByEntityParams( final UDTValue udtValue ) {
-        return udtValue
-                .setString( "name", this.getName() )
-                .setString( "surname", this.getSurname() )
-                .setString( "fatherName", this.getFatherName() )
-                .setString( "surnameNameFatherName", this.getSurnameNameFatherName() );
     }
 }

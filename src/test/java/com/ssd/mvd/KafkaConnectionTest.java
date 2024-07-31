@@ -1,11 +1,9 @@
 package com.ssd.mvd;
 
 import com.ssd.mvd.database.CassandraDataControl;
-import com.ssd.mvd.constants.CassandraTables;
+import com.ssd.mvd.inspectors.EntitiesInstances;
 import com.ssd.mvd.kafka.KafkaDataControl;
-import com.ssd.mvd.entity.TupleOfCar;
 import com.ssd.mvd.entity.Position;
-import com.ssd.mvd.entity.ReqCar;
 
 import com.datastax.driver.core.utils.UUIDs;
 import junit.framework.TestCase;
@@ -36,11 +34,11 @@ public final class KafkaConnectionTest extends TestCase {
                 .getInstance()
                 .writeToKafka
                 .accept(
-                        new ReqCar(
+                        EntitiesInstances.REQ_CAR.generate(
                                 CassandraDataControl
                                         .getInstance()
                                         .getRowFromTabletsKeyspace(
-                                                CassandraTables.CARS,
+                                                EntitiesInstances.REQ_CAR,
                                                 this.uuid.toString(),
                                                 "uuid"
                                         )
@@ -51,11 +49,11 @@ public final class KafkaConnectionTest extends TestCase {
                 .getInstance()
                 .writeToKafkaTupleOfCar
                 .accept(
-                        new TupleOfCar(
+                        EntitiesInstances.TUPLE_OF_CAR.generate(
                                 CassandraDataControl
                                         .getInstance()
                                         .getRowFromTabletsKeyspace(
-                                                CassandraTables.TUPLE_OF_CAR,
+                                                EntitiesInstances.TUPLE_OF_CAR,
                                                 this.uuid.toString(),
                                                 "uuid"
                                         )

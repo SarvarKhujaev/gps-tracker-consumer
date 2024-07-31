@@ -3,7 +3,6 @@ package com.ssd.mvd.inspectors;
 import com.ssd.mvd.database.CassandraDataControlForEscort;
 import com.ssd.mvd.database.CassandraDataControl;
 import com.ssd.mvd.entity.patrulDataSet.Patrul;
-import com.ssd.mvd.constants.CassandraTables;
 import com.ssd.mvd.GpsTrackerApplication;
 import com.ssd.mvd.entity.*;
 
@@ -116,14 +115,14 @@ public class DataValidateInspector extends TimeInspector {
         return CassandraDataControlForEscort
                 .getInstance()
                 .getRowFromTabletsKeyspace(
-                        CassandraTables.TUPLE_OF_CAR,
+                        EntitiesInstances.TUPLE_OF_CAR,
                         "gosnumber",
                         carNumber
                 ) == null
                 && CassandraDataControl
                     .getInstance()
                     .getRowFromTabletsKeyspace(
-                            CassandraTables.CARS,
+                            EntitiesInstances.REQ_CAR,
                             "gosnumber",
                             carNumber
                     ) == null;

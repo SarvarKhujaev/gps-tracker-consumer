@@ -9,24 +9,12 @@ import com.datastax.driver.core.Row;
 import java.util.UUID;
 
 public final class PatrulUniqueValues extends DataValidateInspector implements ObjectCommonMethods< PatrulUniqueValues > {
-    public UUID getOrgan() {
-        return this.organ;
-    }
-
     public void setOrgan( final UUID organ ) {
         this.organ = organ;
     }
 
-    public UUID getSos_id() {
-        return this.sos_id;
-    }
-
     public void setSos_id( final UUID sos_id ) {
         this.sos_id = sos_id;
-    }
-
-    public UUID getUuidOfEscort() {
-        return this.uuidOfEscort;
     }
 
     public void setUuidOfEscort( final UUID uuidOfEscort ) {
@@ -55,38 +43,27 @@ public final class PatrulUniqueValues extends DataValidateInspector implements O
     private UUID uuidForPatrulCar; // choosing from dictionary
     private UUID uuidForEscortCar; // choosing from dictionary
 
-    /*
-        отвязываем патрульного от Эскорта
-    */
-    public void unlinkFromEscortCar () {
-        this.setUuidForEscortCar( null );
-        this.setUuidOfEscort( null );
-    }
-
-    public PatrulUniqueValues setInitialValues () {
-        this.setOrgan( null );
-        this.setSos_id( null );
-        this.unlinkFromEscortCar();
-        this.setUuidForPatrulCar( null );
-
-        return this;
-    }
-
-    public static PatrulUniqueValues empty () {
-        return new PatrulUniqueValues();
-    }
-
-    private PatrulUniqueValues () {}
+    public PatrulUniqueValues () {}
 
     @Override
     public PatrulUniqueValues generate( final Row row ) {
-        this.setUuidForEscortCar( row.getUUID( "uuidForEscortCar" ) );
-        this.setUuidForPatrulCar( row.getUUID( "uuidForPatrulCar" ) );
-        this.setUuidOfEscort( row.getUUID( "uuidOfEscort" ) );
-        this.setSos_id( row.getUUID( "sos_id" ) );
-        this.setOrgan( row.getUUID( "organ" ) );
+        super.checkAndSetParams(
+                row,
+                row1 -> {
+                    this.setUuidForEscortCar( row.getUUID( "uuidForEscortCar" ) );
+                    this.setUuidForPatrulCar( row.getUUID( "uuidForPatrulCar" ) );
+                    this.setUuidOfEscort( row.getUUID( "uuidOfEscort" ) );
+                    this.setSos_id( row.getUUID( "sos_id" ) );
+                    this.setOrgan( row.getUUID( "organ" ) );
+                }
+        );
 
         return this;
+    }
+
+    @Override
+    public PatrulUniqueValues generate() {
+        return new PatrulUniqueValues();
     }
 
     @Override
@@ -103,15 +80,5 @@ public final class PatrulUniqueValues extends DataValidateInspector implements O
         );
 
         return this;
-    }
-
-    @Override
-    public UDTValue fillUdtByEntityParams( final UDTValue udtValue ) {
-        return udtValue
-                .setUUID( "organ", this.getOrgan() )
-                .setUUID( "sos_id", this.getSos_id() )
-                .setUUID( "uuidOfEscort", this.getUuidOfEscort() )
-                .setUUID( "uuidForPatrulCar", this.getUuidForPatrulCar() )
-                .setUUID( "uuidForEscortCar", this.getUuidForEscortCar() );
     }
 }

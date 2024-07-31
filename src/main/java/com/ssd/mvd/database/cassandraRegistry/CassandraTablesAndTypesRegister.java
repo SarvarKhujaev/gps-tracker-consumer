@@ -1,31 +1,24 @@
-package com.ssd.mvd.database;
+package com.ssd.mvd.database.cassandraRegistry;
 
 import com.datastax.driver.core.Session;
+
 import com.ssd.mvd.constants.CassandraTables;
 import com.ssd.mvd.constants.CassandraCommands;
-import com.ssd.mvd.database.cassandraRegistry.CassandraTableRegistration;
+import com.ssd.mvd.interfaces.DatabaseCommonMethods;
 
 /*
 создает все таблицыб типыб кодеки и пространство ключей
 */
-public final class CassandraTablesAndTypesRegister extends CassandraConverter {
-    private final Session session;
-
-    private Session getSession() {
-        return this.session;
-    }
-
+public final class CassandraTablesAndTypesRegister extends CassandraConverter implements DatabaseCommonMethods {
     public static CassandraTablesAndTypesRegister generate (
             final Session session
     ) {
-        return new CassandraTablesAndTypesRegister( session );
+        return new CassandraTablesAndTypesRegister();
     }
 
-    private CassandraTablesAndTypesRegister( final Session session ) {
-        this.session = session;
-
+    private CassandraTablesAndTypesRegister() {
         this.createAllKeyspace();
-        CassandraTableRegistration.generate( this.session );
+        CassandraTableRegistration.generate();
 
         super.logging( "All tables, keyspace and types were created" );
     }
@@ -62,24 +55,16 @@ public final class CassandraTablesAndTypesRegister extends CassandraConverter {
                     """,
                     CassandraCommands.CREATE_KEYSPACE,
                     CassandraCommands.IF_NOT_EXISTS.replaceAll( ";", "" ),
-                    keyspace );
+                    keyspace
+            );
         }
     }
 
     private void createAllKeyspace () {
         /*
         создаем все пространства в БД
-         */
-        this.createKeyspace( KeyspaceRegistration.from( CassandraTables.TRACKERS ) );
-        this.createKeyspace( KeyspaceRegistration.from( CassandraTables.ESCORT ) );
-    }
-
-    /*
-    функция создает новые пространства в БД
-    */
-    private void createKeyspace (
-            final KeyspaceRegistration keyspaceRegistration
-    ) {
-        this.getSession().execute( keyspaceRegistration.getPrefix() );
+        */
+        this.getSession().execute( KeyspaceRegistration.from( CassandraTables.TRACKERS ).getPrefix() );
+        this.getSession().execute( KeyspaceRegistration.from( CassandraTables.ESCORT ).getPrefix() );
     }
 }

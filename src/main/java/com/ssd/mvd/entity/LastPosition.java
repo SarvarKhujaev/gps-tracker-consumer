@@ -2,8 +2,8 @@ package com.ssd.mvd.entity;
 
 import com.ssd.mvd.inspectors.DataValidateInspector;
 import com.ssd.mvd.database.CassandraDataControl;
+import com.ssd.mvd.inspectors.EntitiesInstances;
 import com.ssd.mvd.entity.patrulDataSet.Patrul;
-import com.ssd.mvd.constants.CassandraTables;
 import com.ssd.mvd.inspectors.Inspector;
 import com.ssd.mvd.constants.Status;
 
@@ -157,11 +157,11 @@ public final class LastPosition extends DataValidateInspector {
         super.checkAndSetParams(
                 Inspector.icons.getOrDefault(
                         trackerInfo.getPatrul().getPoliceType(),
-                        new Icons(
+                        new Icons().generate(
                                 CassandraDataControl
                                         .getInstance()
                                         .getRowFromTabletsKeyspace(
-                                                CassandraTables.POLICE_TYPE,
+                                                EntitiesInstances.ICONS,
                                                 "policeType",
                                                 trackerInfo.getPatrul().getPoliceType()
                                         )

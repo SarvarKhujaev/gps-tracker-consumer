@@ -12,19 +12,19 @@ public final class PatrulFuelStatistics {
         this.uuid = uuid;
     }
 
-    public Double getAverageDistance() {
+    public double getAverageDistance() {
         return this.averageDistance;
     }
 
-    public void setAverageDistance( final Double averageDistance ) {
+    public void setAverageDistance( final double averageDistance ) {
         this.averageDistance = averageDistance;
     }
 
-    public Double getAverageFuelConsumption() {
+    public double getAverageFuelConsumption() {
         return this.averageFuelConsumption;
     }
 
-    public void setAverageFuelConsumption( final Double averageFuelConsumption ) {
+    public void setAverageFuelConsumption( final double averageFuelConsumption ) {
         this.averageFuelConsumption = averageFuelConsumption;
     }
 
@@ -37,7 +37,7 @@ public final class PatrulFuelStatistics {
     }
 
     private UUID uuid; // patrul id
-    private Double averageDistance = 0.0;
-    private Double averageFuelConsumption = 0.0;
+    private double averageDistance = 0.0;
+    private double averageFuelConsumption = 0.0;
     private SortedMap< Date, ConsumptionData > map = new TreeMap<>();
 }

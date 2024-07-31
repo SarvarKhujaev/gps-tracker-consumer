@@ -1,8 +1,8 @@
 package com.ssd.mvd.entity;
 
-import com.ssd.mvd.interfaces.EntityToCassandraConverter;
+import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
 import com.ssd.mvd.constants.CassandraFunctions;
-import com.ssd.mvd.database.CassandraConverter;
+import com.ssd.mvd.database.cassandraRegistry.CassandraConverter;
 import com.ssd.mvd.constants.CassandraCommands;
 import com.ssd.mvd.constants.CassandraTables;
 
@@ -11,7 +11,9 @@ import com.datastax.driver.core.Row;
 import java.text.MessageFormat;
 import java.util.UUID;
 
-public final class TupleOfCar extends CassandraConverter implements EntityToCassandraConverter {
+public final class TupleOfCar
+        extends CassandraConverter
+        implements ObjectFromRowConvertInterface< TupleOfCar > {
     public UUID getUuid() {
         return this.uuid;
     }
@@ -114,25 +116,16 @@ public final class TupleOfCar extends CassandraConverter implements EntityToCass
     private double longitude;
     private double averageFuelConsumption;
 
-    public TupleOfCar ( final Row row ) {
-        super.checkAndSetParams(
-                row,
-                row1 -> {
-                    this.setUuid( row.getUUID( "uuid" ) );
-                    this.setUuidOfEscort( row.getUUID( "uuidOfEscort" ) );
-                    this.setUuidOfPatrul( row.getUUID( "uuidOfPatrul" ) );
+    public TupleOfCar () {}
 
-                    this.setCarModel( row.getString( "carModel" ) );
-                    this.setGosNumber( row.getString( "gosNumber" ) );
-                    this.setTrackerId( row.getString( "trackerId" ) );
-                    this.setNsfOfPatrul( row.getString( "nsfOfPatrul" ) );
-                    this.setSimCardNumber( row.getString( "simCardNumber" ) );
+    @Override
+    public CassandraTables getEntityKeyspaceName() {
+        return CassandraTables.ESCORT;
+    }
 
-                    this.setLatitude( row.getDouble( "latitude" ) );
-                    this.setLongitude( row.getDouble( "longitude" ) );
-                    this.setAverageFuelConsumption( row.getDouble( "averageFuelConsumption" ) );
-                }
-        );
+    @Override
+    public CassandraTables getEntityTableName() {
+        return CassandraTables.TUPLE_OF_CAR;
     }
 
     @Override
@@ -145,8 +138,8 @@ public final class TupleOfCar extends CassandraConverter implements EntityToCass
                 """,
                 CassandraCommands.UPDATE,
 
-                CassandraTables.ESCORT,
-                CassandraTables.TUPLE_OF_CAR,
+                this.getEntityKeyspaceName(),
+                this.getEntityTableName(),
 
                 this.getLongitude(),
                 this.getLatitude(),
@@ -164,8 +157,8 @@ public final class TupleOfCar extends CassandraConverter implements EntityToCass
                 """,
                 CassandraCommands.INSERT_INTO,
 
-                CassandraTables.ESCORT,
-                CassandraTables.TUPLE_OF_CAR,
+                this.getEntityKeyspaceName(),
+                this.getEntityTableName(),
 
                 super.getALlParamsNamesForClass.apply( this.getClass() ),
 
@@ -199,8 +192,8 @@ public final class TupleOfCar extends CassandraConverter implements EntityToCass
                         """,
                         CassandraCommands.DELETE,
 
-                        CassandraTables.ESCORT,
-                        CassandraTables.TUPLE_OF_CAR,
+                        this.getEntityKeyspaceName(),
+                        this.getEntityTableName(),
 
                         this.getUuid()
                 ),
@@ -211,7 +204,7 @@ public final class TupleOfCar extends CassandraConverter implements EntityToCass
                         """,
                         CassandraCommands.DELETE,
 
-                        CassandraTables.ESCORT,
+                        this.getEntityKeyspaceName(),
                         CassandraTables.TRACKERSID,
 
                         this.getTrackerId(),
@@ -221,5 +214,34 @@ public final class TupleOfCar extends CassandraConverter implements EntityToCass
 
                 CassandraCommands.APPLY_BATCH
         );
+    }
+
+    @Override
+    public TupleOfCar generate( final Row row ) {
+        super.checkAndSetParams(
+                row,
+                row1 -> {
+                    this.setUuid( row.getUUID( "uuid" ) );
+                    this.setUuidOfEscort( row.getUUID( "uuidOfEscort" ) );
+                    this.setUuidOfPatrul( row.getUUID( "uuidOfPatrul" ) );
+
+                    this.setCarModel( row.getString( "carModel" ) );
+                    this.setGosNumber( row.getString( "gosNumber" ) );
+                    this.setTrackerId( row.getString( "trackerId" ) );
+                    this.setNsfOfPatrul( row.getString( "nsfOfPatrul" ) );
+                    this.setSimCardNumber( row.getString( "simCardNumber" ) );
+
+                    this.setLatitude( row.getDouble( "latitude" ) );
+                    this.setLongitude( row.getDouble( "longitude" ) );
+                    this.setAverageFuelConsumption( row.getDouble( "averageFuelConsumption" ) );
+                }
+        );
+
+        return this;
+    }
+
+    @Override
+    public TupleOfCar generate() {
+        return new TupleOfCar();
     }
 }

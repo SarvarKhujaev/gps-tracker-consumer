@@ -54,27 +54,10 @@ public final class PatrulRegionData extends DataValidateInspector implements Obj
     private String regionName;
     private String districtName;
 
-    public static PatrulRegionData empty () {
-        return new PatrulRegionData();
-    }
+    public PatrulRegionData () {}
 
-    private PatrulRegionData () {}
-
-    private PatrulRegionData ( final Row row ) {
-        super.checkAndSetParams(
-                row,
-                row1 -> {
-                    this.setRegionId( row.getLong( "regionId" ) );
-                    this.setMahallaId( row.getLong( "mahallaId" ) );
-                    this.setDistrictId( row.getLong( "districtId" ) );
-
-                    this.setRegionName( row.getString( "regionName" ) );
-                    this.setDistrictName( row.getString( "districtName" ) );
-                }
-        );
-    }
-
-    private PatrulRegionData( final UDTValue udtValue ) {
+    @Override
+    public PatrulRegionData generate( final UDTValue udtValue ) {
         super.checkAndSetParams(
                 udtValue,
                 udtValue1 -> {
@@ -86,25 +69,29 @@ public final class PatrulRegionData extends DataValidateInspector implements Obj
                     this.setDistrictName( udtValue.getString( "districtName" ) );
                 }
         );
-    }
 
-    @Override
-    public PatrulRegionData generate( final UDTValue udtValue ) {
-        return new PatrulRegionData( udtValue );
+        return this;
     }
 
     @Override
     public PatrulRegionData generate( final Row row ) {
-        return new PatrulRegionData( row );
+        super.checkAndSetParams(
+                row,
+                row1 -> {
+                    this.setRegionId( row.getLong( "regionId" ) );
+                    this.setMahallaId( row.getLong( "mahallaId" ) );
+                    this.setDistrictId( row.getLong( "districtId" ) );
+
+                    this.setRegionName( row.getString( "regionName" ) );
+                    this.setDistrictName( row.getString( "districtName" ) );
+                }
+        );
+
+        return this;
     }
 
     @Override
-    public UDTValue fillUdtByEntityParams( final UDTValue udtValue ) {
-        return udtValue
-                .setLong( "regionId", this.getRegionId() )
-                .setLong( "mahallaId", this.getMahallaId() )
-                .setLong( "districtId", this.getDistrictId() )
-                .setString( "regionName", this.getRegionName() )
-                .setString( "districtName", this.getDistrictName() );
+    public PatrulRegionData generate() {
+        return new PatrulRegionData();
     }
 }

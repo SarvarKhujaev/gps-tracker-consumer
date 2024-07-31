@@ -1,16 +1,17 @@
 package com.ssd.mvd.entity.patrulDataSet;
 
-import com.ssd.mvd.interfaces.ObjectCommonMethods;
-import com.ssd.mvd.database.CassandraConverter;
+import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
+import com.ssd.mvd.database.cassandraRegistry.CassandraConverter;
 import com.ssd.mvd.constants.CassandraCommands;
 import com.ssd.mvd.constants.CassandraTables;
 import com.ssd.mvd.entity.TupleOfCar;
 
 import com.datastax.driver.core.Row;
+
 import java.text.MessageFormat;
 import java.util.UUID;
 
-public final class Patrul extends CassandraConverter implements ObjectCommonMethods< Patrul > {
+public final class Patrul extends CassandraConverter implements ObjectFromRowConvertInterface< Patrul > {
     public UUID getUuid () {
         return this.uuid;
     }
@@ -178,14 +179,21 @@ public final class Patrul extends CassandraConverter implements ObjectCommonMeth
         this.getPatrulCarInfo().setCarNumber( tupleOfCar );
     }
 
-    public static Patrul empty () {
-        return new Patrul();
+    public Patrul () {}
+
+    @Override
+    public CassandraTables getEntityTableName () {
+        return CassandraTables.PATRULS;
     }
 
-    private Patrul () {}
+    @Override
+    public CassandraTables getEntityKeyspaceName () {
+        return CassandraTables.TABLETS;
+    }
 
-    public Patrul ( final Row row ) {
-        this.generate( row );
+    @Override
+    public Patrul generate() {
+        return new Patrul();
     }
 
     @Override
@@ -206,12 +214,12 @@ public final class Patrul extends CassandraConverter implements ObjectCommonMeth
                     this.setPassportNumber( row.getString( "passportNumber" ) );
                     this.setPatrulImageLink( row.getString( "patrulImageLink" ) );
 
-                    this.setPatrulCarInfo( PatrulCarInfo.empty().generate( row.getUDTValue( "patrulCarInfo" ) ) );
-                    this.setPatrulFIOData( PatrulFIOData.empty().generate( row.getUDTValue( "patrulFIOData" ) ) );
-                    this.setPatrulTaskInfo( PatrulTaskInfo.empty().generate( row.getUDTValue( "patrulTaskInfo" ) ) );
-                    this.setPatrulRegionData( PatrulRegionData.empty().generate( row.getUDTValue( "patrulRegionData" ) ) );
-                    this.setPatrulLocationData( PatrulLocationData.empty().generate( row.getUDTValue( "patrulLocationData" ) ) );
-                    this.setPatrulUniqueValues( PatrulUniqueValues.empty().generate( row.getUDTValue( "patrulUniqueValues" ) ) );
+                    this.setPatrulCarInfo( new PatrulCarInfo().generate( row.getUDTValue( "patrulCarInfo" ) ) );
+                    this.setPatrulFIOData( new PatrulFIOData().generate( row.getUDTValue( "patrulFIOData" ) ) );
+                    this.setPatrulTaskInfo( new PatrulTaskInfo().generate( row.getUDTValue( "patrulTaskInfo" ) ) );
+                    this.setPatrulRegionData( new PatrulRegionData().generate( row.getUDTValue( "patrulRegionData" ) ) );
+                    this.setPatrulLocationData( new PatrulLocationData().generate( row.getUDTValue( "patrulLocationData" ) ) );
+                    this.setPatrulUniqueValues( new PatrulUniqueValues().generate( row.getUDTValue( "patrulUniqueValues" ) ) );
                 }
         );
 
@@ -230,8 +238,8 @@ public final class Patrul extends CassandraConverter implements ObjectCommonMeth
                 """,
                 CassandraCommands.UPDATE,
 
-                CassandraTables.TABLETS,
-                CassandraTables.PATRULS,
+                this.getEntityKeyspaceName(),
+                this.getEntityTableName(),
 
                 this.getPatrulUniqueValues().getUuidForEscortCar(),
                 super.joinWithAstrix( this.getPatrulCarInfo().getCarType() ),
