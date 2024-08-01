@@ -1,7 +1,6 @@
 package com.ssd.mvd.address;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-
 import java.util.List;
 
 @lombok.Data

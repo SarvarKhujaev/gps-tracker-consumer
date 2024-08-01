@@ -1,28 +1,21 @@
 package com.ssd.mvd.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.gson.Gson;
+
 import com.mashape.unirest.http.ObjectMapper;
 import com.mashape.unirest.http.Unirest;
-import com.ssd.mvd.address.Address;
-import com.ssd.mvd.constants.Status;
-import com.ssd.mvd.inspectors.LogInspector;
 
-import java.util.List;
+import com.ssd.mvd.inspectors.SerDes;
+import com.ssd.mvd.constants.Errors;
+import com.ssd.mvd.address.Address;
+
 import java.util.function.BiFunction;
 
-public final class UnirestController extends LogInspector {
-    private final String ADDRESS_LOCATION_API = super.checkContextOrReturnDefaultValue(
-            "variables.ADDRESS_LOCATION_API",
-            Status.NOT_AVAILABLE.name()
-    );
-
-    private static final UnirestController unirestController = new UnirestController();
-
-    private final Gson gson = new Gson();
+public final class UnirestController extends SerDes {
+    private static final UnirestController UNIREST_CONTROLLER = new UnirestController();
 
     public static UnirestController getInstance () {
-        return unirestController;
+        return UNIREST_CONTROLLER;
     }
 
     private UnirestController () {
@@ -50,20 +43,16 @@ public final class UnirestController extends LogInspector {
         } );
     }
 
-    private <T> List<T> stringToArrayList (
-            final String object,
-            final Class< T[] > clazz
-    ) {
-        return super.convertArrayToList( this.gson.fromJson( object, clazz ) );
-    }
-
     public final BiFunction< Double, Double, String > getAddressByLocation = ( latitude, longitude ) -> {
             try {
-                return this.stringToArrayList(
+                return super.stringToArrayList(
                         Unirest.get(
                                 String.join(
                                         "",
-                                        this.ADDRESS_LOCATION_API,
+                                        super.checkContextOrReturnDefaultValue(
+                                                "variables.ADDRESS_LOCATION_API",
+                                                Errors.DATA_NOT_FOUND.name()
+                                        ),
                                         String.join(
                                                 ",",
                                                 latitude.toString(),
@@ -80,8 +69,8 @@ public final class UnirestController extends LogInspector {
                     .getDisplay_name();
             }
             catch ( final Exception e ) {
-                super.logging( e, "address not found" );
-                return Status.NOT_AVAILABLE.name();
+                super.logging( e, Errors.DATA_NOT_FOUND.name() );
+                return Errors.DATA_NOT_FOUND.name();
             }
     };
 }

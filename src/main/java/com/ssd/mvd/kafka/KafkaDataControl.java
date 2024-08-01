@@ -1,15 +1,13 @@
 package com.ssd.mvd.kafka;
 
 import java.util.*;
-import com.google.gson.Gson;
-
 import java.util.function.Supplier;
 
+import com.ssd.mvd.inspectors.SerDes;
 import reactor.kafka.sender.KafkaSender;
 import reactor.kafka.sender.SenderOptions;
 
 import com.ssd.mvd.entity.Position;
-import com.ssd.mvd.inspectors.LogInspector;
 import com.ssd.mvd.publisher.CustomPublisher;
 import com.ssd.mvd.subscribers.CustomSubscriber;
 import com.ssd.mvd.database.CassandraDataControl;
@@ -26,7 +24,7 @@ import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.clients.producer.ProducerConfig;
 
-public final class KafkaDataControl extends LogInspector implements ServiceCommonMethods {
+public final class KafkaDataControl extends SerDes implements ServiceCommonMethods {
     private final String KAFKA_BROKER = super.checkContextOrReturnDefaultValue(
             "variables.KAFKA_VARIABLES.KAFKA_BROKER",
             "localhost:9092"
@@ -38,7 +36,6 @@ public final class KafkaDataControl extends LogInspector implements ServiceCommo
     );
 
     private KafkaStreams kafkaStreams;
-    private final Gson gson = new Gson();
     private final Properties properties = new Properties();
     private final StreamsBuilder builder = new StreamsBuilder();
     private static KafkaDataControl INSTANCE = new KafkaDataControl();
@@ -95,7 +92,7 @@ public final class KafkaDataControl extends LogInspector implements ServiceCommo
                     values -> CassandraDataControl
                             .getInstance()
                             .saveCarLocation
-                            .apply( this.gson.fromJson( values, Position.class ) )
+                            .apply( super.deserialize( values, Position.class ) )
             );
 
             this.kafkaStreams = new KafkaStreams( this.builder.build(), this.setStreamProperties.get() );
@@ -110,7 +107,7 @@ public final class KafkaDataControl extends LogInspector implements ServiceCommo
                 .send(
                         CustomPublisher.generate(
                                 kafkaEntitiesCommonMethods.getTopicName(),
-                                this.gson.toJson( kafkaEntitiesCommonMethods )
+                                super.serialize( kafkaEntitiesCommonMethods )
                         )
                 ).then()
                 .doOnError( this::close )

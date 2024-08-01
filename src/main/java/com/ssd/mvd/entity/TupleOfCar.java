@@ -1,134 +1,136 @@
 package com.ssd.mvd.entity;
 
-import com.datastax.driver.core.Row;
-import com.ssd.mvd.constants.CassandraCommands;
-import com.ssd.mvd.constants.CassandraFunctions;
-import com.ssd.mvd.constants.CassandraTables;
 import com.ssd.mvd.database.cassandraRegistry.CassandraConverter;
-import com.ssd.mvd.interfaces.KafkaEntitiesCommonMethods;
 import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
+import com.ssd.mvd.interfaces.KafkaEntitiesCommonMethods;
 import com.ssd.mvd.kafka.kafkaConfigs.KafkaTopics;
+import com.ssd.mvd.constants.CassandraFunctions;
+import com.ssd.mvd.constants.CassandraCommands;
+import com.ssd.mvd.constants.CassandraTables;
+
+import com.google.gson.annotations.Expose;
+import com.datastax.driver.core.Row;
 
 import java.text.MessageFormat;
 import java.util.UUID;
 
 public final class TupleOfCar
         extends CassandraConverter
-        implements ObjectFromRowConvertInterface< TupleOfCar >,
-        KafkaEntitiesCommonMethods {
+        implements ObjectFromRowConvertInterface< TupleOfCar >, KafkaEntitiesCommonMethods {
     public UUID getUuid() {
         return this.uuid;
-    }
-
-    public void setUuid ( final UUID uuid ) {
-        this.uuid = uuid;
-    }
-
-    public UUID getUuidOfEscort() {
-        return this.uuidOfEscort;
-    }
-
-    public void setUuidOfEscort ( final UUID uuidOfEscort ) {
-        this.uuidOfEscort = uuidOfEscort;
-    }
-
-    public UUID getUuidOfPatrul() {
-        return this.uuidOfPatrul;
-    }
-
-    public void setUuidOfPatrul ( final UUID uuidOfPatrul ) {
-        this.uuidOfPatrul = uuidOfPatrul;
     }
 
     public String getCarModel() {
         return this.carModel;
     }
 
-    public void setCarModel ( final String carModel ) {
-        this.carModel = carModel;
-    }
-
-    public String getGosNumber() {
-        return this.gosNumber;
-    }
-
-    public void setGosNumber ( final String gosNumber ) {
-        this.gosNumber = gosNumber;
-    }
-
-    public String getTrackerId() {
-        return this.trackerId;
-    }
-
-    public void setTrackerId ( final String trackerId ) {
-        this.trackerId = trackerId;
-    }
-
-    public String getNsfOfPatrul() {
-        return this.nsfOfPatrul;
-    }
-
-    public void setNsfOfPatrul ( final String nsfOfPatrul ) {
-        this.nsfOfPatrul = nsfOfPatrul;
-    }
-
-    public String getSimCardNumber() {
-        return this.simCardNumber;
-    }
-
-    public void setSimCardNumber ( final String simCardNumber ) {
-        this.simCardNumber = simCardNumber;
-    }
-
     public double getLatitude() {
         return this.latitude;
-    }
-
-    public void setLatitude ( final double latitude ) {
-        this.latitude = latitude;
     }
 
     public double getLongitude() {
         return this.longitude;
     }
 
-    public void setLongitude ( final double longitude ) {
-        this.longitude = longitude;
+    public String getGosNumber() {
+        return this.gosNumber;
+    }
+
+    public String getTrackerId() {
+        return this.trackerId;
+    }
+
+    public UUID getUuidOfEscort() {
+        return this.uuidOfEscort;
+    }
+
+    public UUID getUuidOfPatrul() {
+        return this.uuidOfPatrul;
+    }
+
+    public String getNsfOfPatrul() {
+        return this.nsfOfPatrul;
+    }
+
+    public String getSimCardNumber() {
+        return this.simCardNumber;
     }
 
     public double getAverageFuelConsumption() {
         return this.averageFuelConsumption;
     }
 
+    public void setUuid ( final UUID uuid ) {
+        this.uuid = uuid;
+    }
+
+    public void setCarModel ( final String carModel ) {
+        this.carModel = carModel;
+    }
+
+    public void setLatitude ( final double latitude ) {
+        this.latitude = latitude;
+    }
+
+    public void setLongitude ( final double longitude ) {
+        this.longitude = longitude;
+    }
+
+    public void setGosNumber ( final String gosNumber ) {
+        this.gosNumber = gosNumber;
+    }
+
+    public void setTrackerId ( final String trackerId ) {
+        this.trackerId = trackerId;
+    }
+
+    public void setNsfOfPatrul ( final String nsfOfPatrul ) {
+        this.nsfOfPatrul = nsfOfPatrul;
+    }
+
+    public void setUuidOfEscort ( final UUID uuidOfEscort ) {
+        this.uuidOfEscort = uuidOfEscort;
+    }
+
+    public void setUuidOfPatrul ( final UUID uuidOfPatrul ) {
+        this.uuidOfPatrul = uuidOfPatrul;
+    }
+
+    public void setSimCardNumber ( final String simCardNumber ) {
+        this.simCardNumber = simCardNumber;
+    }
+
     public void setAverageFuelConsumption ( final double averageFuelConsumption ) {
         this.averageFuelConsumption = averageFuelConsumption;
     }
 
+    @Expose
     private UUID uuid;
+    @Expose
     private UUID uuidOfEscort; // UUID of the Escort which this car is linked to
+    @Expose
     private UUID uuidOfPatrul;
 
+    @Expose
     private String carModel;
+    @Expose
     private String gosNumber;
+    @Expose
     private String trackerId;
+    @Expose
     private String nsfOfPatrul;
+    @Expose
     private String simCardNumber;
 
+    @Expose
     private double latitude;
+    @Expose
     private double longitude;
+    @Expose
     private double averageFuelConsumption;
 
     public TupleOfCar () {}
-
-    @Override
-    public CassandraTables getEntityKeyspaceName() {
-        return CassandraTables.ESCORT;
-    }
-
-    @Override
-    public CassandraTables getEntityTableName() {
-        return CassandraTables.TUPLE_OF_CAR;
-    }
 
     @Override
     public String getEntityUpdateCommand () {
@@ -165,6 +167,7 @@ public final class TupleOfCar
                 super.getALlParamsNamesForClass.apply( this.getClass() ),
 
                 CassandraFunctions.UUID,
+
                 this.getUuidOfEscort(),
                 this.getUuidOfPatrul(),
 
@@ -216,6 +219,16 @@ public final class TupleOfCar
 
                 CassandraCommands.APPLY_BATCH
         );
+    }
+
+    @Override
+    public CassandraTables getEntityTableName() {
+        return CassandraTables.TUPLE_OF_CAR;
+    }
+
+    @Override
+    public CassandraTables getEntityKeyspaceName() {
+        return CassandraTables.ESCORT;
     }
 
     @Override

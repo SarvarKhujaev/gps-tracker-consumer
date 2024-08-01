@@ -1,7 +1,7 @@
 package com.ssd.mvd.inspectors;
 
-import java.util.*;
 import java.util.function.Consumer;
+import java.util.*;
 
 public class CollectionsInspector extends StringOperations {
     protected CollectionsInspector() {}

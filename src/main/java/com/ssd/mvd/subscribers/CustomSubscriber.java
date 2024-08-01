@@ -1,8 +1,9 @@
 package com.ssd.mvd.subscribers;
 
 import com.ssd.mvd.inspectors.LogInspector;
-import org.reactivestreams.Subscriber;
+
 import org.reactivestreams.Subscription;
+import org.reactivestreams.Subscriber;
 
 import java.util.function.Consumer;
 

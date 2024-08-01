@@ -1,13 +1,16 @@
 package com.ssd.mvd.entity.patrulDataSet;
 
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.UDTValue;
-import com.ssd.mvd.inspectors.DataValidateInspector;
-import com.ssd.mvd.interfaces.ObjectCommonMethods;
-
 import java.util.UUID;
 
-public final class PatrulUniqueValues extends DataValidateInspector implements ObjectCommonMethods< PatrulUniqueValues > {
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.UDTValue;
+
+import com.ssd.mvd.interfaces.ObjectCommonMethods;
+import com.ssd.mvd.inspectors.DataValidateInspector;
+
+public final class PatrulUniqueValues
+        extends DataValidateInspector
+        implements ObjectCommonMethods< PatrulUniqueValues > {
     public void setOrgan( final UUID organ ) {
         this.organ = organ;
     }
@@ -45,6 +48,11 @@ public final class PatrulUniqueValues extends DataValidateInspector implements O
     public PatrulUniqueValues () {}
 
     @Override
+    public PatrulUniqueValues generate() {
+        return new PatrulUniqueValues();
+    }
+
+    @Override
     public PatrulUniqueValues generate( final Row row ) {
         super.checkAndSetParams(
                 row,
@@ -58,11 +66,6 @@ public final class PatrulUniqueValues extends DataValidateInspector implements O
         );
 
         return this;
-    }
-
-    @Override
-    public PatrulUniqueValues generate() {
-        return new PatrulUniqueValues();
     }
 
     @Override

@@ -2,10 +2,13 @@ package com.ssd.mvd.entity.patrulDataSet;
 
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.UDTValue;
-import com.ssd.mvd.inspectors.DataValidateInspector;
-import com.ssd.mvd.interfaces.ObjectCommonMethods;
 
-public final class PatrulRegionData extends DataValidateInspector implements ObjectCommonMethods< PatrulRegionData > {
+import com.ssd.mvd.interfaces.ObjectCommonMethods;
+import com.ssd.mvd.inspectors.DataValidateInspector;
+
+public final class PatrulRegionData
+        extends DataValidateInspector
+        implements ObjectCommonMethods< PatrulRegionData > {
     public long getRegionId() {
         return this.regionId;
     }
@@ -56,6 +59,11 @@ public final class PatrulRegionData extends DataValidateInspector implements Obj
     public PatrulRegionData () {}
 
     @Override
+    public PatrulRegionData generate() {
+        return new PatrulRegionData();
+    }
+
+    @Override
     public PatrulRegionData generate( final UDTValue udtValue ) {
         super.checkAndSetParams(
                 udtValue,
@@ -87,10 +95,5 @@ public final class PatrulRegionData extends DataValidateInspector implements Obj
         );
 
         return this;
-    }
-
-    @Override
-    public PatrulRegionData generate() {
-        return new PatrulRegionData();
     }
 }

@@ -1,22 +1,22 @@
 package com.ssd.mvd.inspectors;
 
+import static java.lang.Math.*;
 import com.datastax.driver.core.Row;
-import com.ssd.mvd.GpsTrackerApplication;
-import com.ssd.mvd.database.CassandraDataControl;
-import com.ssd.mvd.database.CassandraDataControlForEscort;
-import com.ssd.mvd.entity.Point;
-import com.ssd.mvd.entity.Position;
-import com.ssd.mvd.entity.ReqCar;
-import com.ssd.mvd.entity.Request;
-import com.ssd.mvd.entity.patrulDataSet.Patrul;
 
-import java.util.List;
 import java.util.Map;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import static java.lang.Math.*;
+import com.ssd.mvd.entity.Point;
+import com.ssd.mvd.entity.ReqCar;
+import com.ssd.mvd.entity.Request;
+import com.ssd.mvd.entity.Position;
+import com.ssd.mvd.GpsTrackerApplication;
+import com.ssd.mvd.entity.patrulDataSet.Patrul;
+import com.ssd.mvd.database.CassandraDataControl;
+import com.ssd.mvd.database.CassandraDataControlForEscort;
 
 public class DataValidateInspector extends TimeInspector {
     protected DataValidateInspector () {}
@@ -28,30 +28,30 @@ public class DataValidateInspector extends TimeInspector {
         return DATA_VALIDATE_INSPECTOR;
     }
 
-    protected <T> boolean objectIsNotNull ( final T value ) {
+    protected final synchronized <T> boolean objectIsNotNull ( final T value ) {
         return Objects.nonNull( value );
     }
 
-    protected boolean check (
+    protected final synchronized boolean check (
             final String trackerId
     ) {
         return Inspector.tupleOfCarMap.containsKey( trackerId )
                 && Inspector.trackerInfoMap.containsKey( trackerId );
     }
 
-    protected boolean check (
+    protected final synchronized boolean check (
             final Row row
     ) {
         return row.getDouble( "longitude" ) > 0 && row.getDouble( "latitude" ) > 0;
     }
 
-    protected boolean check (
+    protected final synchronized boolean check (
             final Request request
     ) {
         return request.getStartTime() == null && request.getEndTime() == null;
     }
 
-    protected boolean check (
+    protected final synchronized boolean check (
             final Position position
     ) {
         return position.getLatitude() > 0
@@ -60,15 +60,7 @@ public class DataValidateInspector extends TimeInspector {
                 && position.getDeviceTime().after( date );
     }
 
-    protected boolean check (
-            final Point point
-    ) {
-        return this.objectIsNotNull( point )
-                && this.objectIsNotNull( point.getLatitude() )
-                && this.objectIsNotNull( point.getLongitude() );
-    }
-
-    protected boolean check (
+    protected final synchronized boolean check (
             final ReqCar reqCar
     ) {
         return this.objectIsNotNull( reqCar )
@@ -77,31 +69,36 @@ public class DataValidateInspector extends TimeInspector {
                 && reqCar.getPatrulPassportSeries().compareTo( "null" ) != 0;
     }
 
-    protected boolean calculateDistanceInSquare (
+    protected final synchronized boolean calculateDistanceInSquare (
             final List< Point > pointList,
             final Row row
     ) {
         boolean result = false;
         int j = pointList.size() - 1;
         for ( int i = 0; i < pointList.size(); i++ ) {
-            if ( ( pointList.get( i ).getLatitude() < row.getDouble( "latitude" )
-                    && pointList.get( j ).getLatitude() >= row.getDouble( "latitude" )
-                    || pointList.get( j ).getLatitude() < row.getDouble( "latitude" )
-                    && pointList.get( i ).getLatitude() >= row.getDouble( "latitude" ) )
-                    && ( pointList.get( i ).getLongitude() + ( row.getDouble( "latitude" )
-                    - pointList.get( i ).getLatitude() ) / ( pointList.get( j ).getLatitude() - pointList.get( j ).getLongitude() )
-                    * ( pointList.get( j ).getLatitude() - pointList.get( i ).getLatitude() ) < row.getDouble( "longitude" ) ) )
+            if (
+                    ( pointList.get( i ).getLatitude() < row.getDouble( "latitude" )
+                        && pointList.get( j ).getLatitude() >= row.getDouble( "latitude" )
+                        || pointList.get( j ).getLatitude() < row.getDouble( "latitude" )
+                        && pointList.get( i ).getLatitude() >= row.getDouble( "latitude" ) )
+                        && ( pointList.get( i ).getLongitude() + ( row.getDouble( "latitude" )
+                        - pointList.get( i ).getLatitude() ) / ( pointList.get( j ).getLatitude() - pointList.get( j ).getLongitude() )
+                        * ( pointList.get( j ).getLatitude() - pointList.get( i ).getLatitude() ) < row.getDouble( "longitude" ) )
+            ) {
                 result = !result;
+            }
+
             j = i;
         }
+
         return result;
     }
 
-    protected int checkDifference ( final int integer ) {
+    protected final synchronized int checkDifference ( final int integer ) {
         return integer > 0 && integer < 100 ? integer : 10;
     }
 
-    protected double calculate (
+    protected final synchronized double calculate (
             final Point point,
             final Row row
     ) {
@@ -110,7 +107,7 @@ public class DataValidateInspector extends TimeInspector {
                 * ( 1 - cos( ( row.getDouble( "longitude" ) - point.getLongitude() ) * P ) ) / 2 ) ) * 1000;
     }
 
-    protected boolean checkCarNumber (
+    protected final synchronized boolean checkCarNumber (
             final String carNumber
     ) {
         return CassandraDataControlForEscort
@@ -129,7 +126,7 @@ public class DataValidateInspector extends TimeInspector {
                     ) == null;
     }
 
-    protected boolean checkParams (
+    protected final synchronized boolean checkParams (
             final Patrul patrul,
             final Map< String, Long > params
     ) {
@@ -172,17 +169,17 @@ public class DataValidateInspector extends TimeInspector {
     ) {
         return this.objectIsNotNull( GpsTrackerApplication.context )
                 && this.objectIsNotNull(
-                GpsTrackerApplication
-                        .context
-                        .getEnvironment()
-                        .getProperty( paramName )
-        )
+                        GpsTrackerApplication
+                                .context
+                                .getEnvironment()
+                                .getProperty( paramName )
+                )
                 ? Integer.parseInt(
-                GpsTrackerApplication
-                        .context
-                        .getEnvironment()
-                        .getProperty( paramName )
-        )
+                        GpsTrackerApplication
+                                .context
+                                .getEnvironment()
+                                .getProperty( paramName )
+                )
                 : defaultValue;
     }
 
@@ -192,15 +189,15 @@ public class DataValidateInspector extends TimeInspector {
     ) {
         return this.objectIsNotNull( GpsTrackerApplication.context )
                 && this.objectIsNotNull(
-                GpsTrackerApplication
+                        GpsTrackerApplication
+                                .context
+                                .getEnvironment()
+                                .getProperty( paramName )
+                )
+                ? GpsTrackerApplication
                         .context
                         .getEnvironment()
                         .getProperty( paramName )
-        )
-                ? GpsTrackerApplication
-                .context
-                .getEnvironment()
-                .getProperty( paramName )
                 : defaultValue;
     }
 }

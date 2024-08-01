@@ -1,8 +1,8 @@
 package com.ssd.mvd.inspectors;
 
-import com.ssd.mvd.constants.CassandraCommands;
-import com.ssd.mvd.constants.CassandraDataTypes;
 import com.ssd.mvd.entity.patrulDataSet.PatrulFIOData;
+import com.ssd.mvd.constants.CassandraDataTypes;
+import com.ssd.mvd.constants.CassandraCommands;
 
 import java.util.Date;
 import java.util.UUID;

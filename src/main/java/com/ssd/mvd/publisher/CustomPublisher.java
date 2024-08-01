@@ -1,10 +1,12 @@
 package com.ssd.mvd.publisher;
 
-import com.ssd.mvd.kafka.kafkaConfigs.KafkaTopics;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
+
+import com.ssd.mvd.kafka.kafkaConfigs.KafkaTopics;
+
 import org.reactivestreams.Subscription;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Publisher;
 
 public final class CustomPublisher implements Publisher< ProducerRecord< String, String > > {
     private final ProducerRecord< String, String > producerRecord;

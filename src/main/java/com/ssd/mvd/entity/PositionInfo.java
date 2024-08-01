@@ -1,9 +1,10 @@
 package com.ssd.mvd.entity;
 
-import com.datastax.driver.core.Row;
-import com.ssd.mvd.controller.UnirestController;
-import com.ssd.mvd.inspectors.DataValidateInspector;
 import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
+import com.ssd.mvd.inspectors.DataValidateInspector;
+import com.ssd.mvd.controller.UnirestController;
+
+import com.datastax.driver.core.Row;
 
 import java.util.Date;
 
@@ -77,6 +78,11 @@ public final class PositionInfo
     }
 
     @Override
+    public PositionInfo generate() {
+        return new PositionInfo();
+    }
+
+    @Override
     public PositionInfo generate( final Row row ) {
         super.checkAndSetParams(
                 row,
@@ -89,10 +95,5 @@ public final class PositionInfo
         );
 
         return this;
-    }
-
-    @Override
-    public PositionInfo generate() {
-        return new PositionInfo();
     }
 }

@@ -1,21 +1,22 @@
 package com.ssd.mvd.entity;
 
-import com.datastax.driver.core.Row;
-import com.ssd.mvd.constants.CassandraCommands;
-import com.ssd.mvd.constants.CassandraFunctions;
-import com.ssd.mvd.constants.CassandraTables;
 import com.ssd.mvd.database.cassandraRegistry.CassandraConverter;
-import com.ssd.mvd.interfaces.KafkaEntitiesCommonMethods;
 import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
+import com.ssd.mvd.interfaces.KafkaEntitiesCommonMethods;
 import com.ssd.mvd.kafka.kafkaConfigs.KafkaTopics;
+import com.ssd.mvd.constants.CassandraFunctions;
+import com.ssd.mvd.constants.CassandraCommands;
+import com.ssd.mvd.constants.CassandraTables;
+
+import com.google.gson.annotations.Expose;
+import com.datastax.driver.core.Row;
 
 import java.text.MessageFormat;
 import java.util.UUID;
 
 public final class ReqCar
         extends CassandraConverter
-        implements ObjectFromRowConvertInterface< ReqCar >,
-        KafkaEntitiesCommonMethods {
+        implements ObjectFromRowConvertInterface< ReqCar >, KafkaEntitiesCommonMethods {
     public UUID getPatrulId() {
         return this.patrulId;
     }
@@ -128,34 +129,43 @@ public final class ReqCar
         this.averageFuelConsumption = averageFuelConsumption;
     }
 
+    @Expose
     private UUID uuid;
+    @Expose
     private UUID lustraId;
+    @Expose
     private UUID patrulId;
 
+    @Expose
     private String gosNumber;
+    @Expose
     private String trackerId;
+    @Expose
     private String vehicleType;
+    @Expose
     private String carImageLink;
+    @Expose
     private String patrulPassportSeries;
 
+    @Expose
     private int sideNumber; // бортовой номер
+    @Expose
     private int simCardNumber;
 
+    @Expose
     private double latitude;
+    @Expose
     private double longitude;
+    @Expose
     private double averageFuelSize; // средний расход топлива по документам
+    @Expose
     private double averageFuelConsumption = 0.0; // средний расход топлива исходя из стиля вождения водителя
 
     public ReqCar () {}
 
     @Override
-    public CassandraTables getEntityTableName() {
-        return CassandraTables.TABLETS;
-    }
-
-    @Override
-    public CassandraTables getEntityKeyspaceName() {
-        return CassandraTables.CARS;
+    public ReqCar generate() {
+        return new ReqCar();
     }
 
     @Override
@@ -187,8 +197,13 @@ public final class ReqCar
     }
 
     @Override
-    public ReqCar generate() {
-        return new ReqCar();
+    public CassandraTables getEntityTableName() {
+        return CassandraTables.TABLETS;
+    }
+
+    @Override
+    public CassandraTables getEntityKeyspaceName() {
+        return CassandraTables.CARS;
     }
 
     @Override
@@ -236,6 +251,7 @@ public final class ReqCar
                         super.getAllParamsNamesForClass.apply( ReqCar.class ),
 
                         CassandraFunctions.UUID,
+
                         this.getLustraId(),
                         this.getPatrulId(),
 

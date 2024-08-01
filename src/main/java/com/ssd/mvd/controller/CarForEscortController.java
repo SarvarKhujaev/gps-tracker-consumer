@@ -1,12 +1,14 @@
 package com.ssd.mvd.controller;
 
-import com.ssd.mvd.database.CassandraDataControl;
-import com.ssd.mvd.database.CassandraDataControlForEscort;
-import com.ssd.mvd.entity.*;
-import com.ssd.mvd.inspectors.EntitiesInstances;
-import com.ssd.mvd.inspectors.LogInspector;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.ssd.mvd.database.CassandraDataControlForEscort;
+import com.ssd.mvd.database.CassandraDataControl;
+import com.ssd.mvd.inspectors.EntitiesInstances;
+import com.ssd.mvd.inspectors.LogInspector;
+import com.ssd.mvd.entity.*;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -44,7 +46,7 @@ public final class CarForEscortController extends LogInspector {
     @MessageMapping ( value = "getCurrentForEscort" )
     public Mono< TupleOfCar > getCurrentForEscort ( final String gosNumber ) {
         return super.convert(
-                EntitiesInstances.TUPLE_OF_CAR.generate(
+                EntitiesInstances.TUPLE_OF_CAR.generate().generate(
                         CassandraDataControlForEscort
                                 .getInstance()
                                 .getRowFromTabletsKeyspace(
@@ -58,7 +60,7 @@ public final class CarForEscortController extends LogInspector {
 
     @MessageMapping ( value = "findTheClosestCarsInRadius" )
     public Flux< TupleOfCar > findTheClosestCarsInRadius ( final Point point ) {
-            return super.check( point )
+            return super.objectIsNotNull( point )
                     ? CassandraDataControlForEscort
                             .getInstance()
                             .findTheClosestCarsInRadius
@@ -91,11 +93,12 @@ public final class CarForEscortController extends LogInspector {
             .getInstance()
             .getAllTrackers
             .get()
-            .filter( trackerInfo -> !super.objectIsNotNull( params )
-                    || params.isEmpty()
-                    || !super.objectIsNotNull( trackerInfo.getPatrul() )
-                    || super.checkParams( trackerInfo.getPatrul(), params ) )
-            .map( trackerInfo -> new LastPosition( trackerInfo, trackerInfo.getPatrul() ) )
+            .filter(
+                    trackerInfo -> !super.objectIsNotNull( params )
+                            || params.isEmpty()
+                            || !super.objectIsNotNull( trackerInfo.getPatrul() )
+                            || super.checkParams( trackerInfo.getPatrul(), params )
+            ).map( trackerInfo -> new LastPosition( trackerInfo, trackerInfo.getPatrul() ) )
             .onErrorContinue( super::logging );
     }
 
@@ -112,10 +115,10 @@ public final class CarForEscortController extends LogInspector {
     public Flux< TupleOfCar > findTheClosestCarsinPolygon ( final List< Point > pointList ) {
             return super.isCollectionNotEmpty( pointList )
                     ? CassandraDataControlForEscort
-                    .getInstance()
-                    .findTheClosestCarsInPolygon
-                    .apply( pointList )
-                    .onErrorContinue( super::logging )
+                            .getInstance()
+                            .findTheClosestCarsInPolygon
+                            .apply( pointList )
+                            .onErrorContinue( super::logging )
                     : Flux.empty();
     }
 }

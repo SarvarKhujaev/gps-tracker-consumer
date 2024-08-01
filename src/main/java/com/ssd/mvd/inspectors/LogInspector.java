@@ -1,16 +1,18 @@
 package com.ssd.mvd.inspectors;
 
 import com.ssd.mvd.entity.ApiResponseModel;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import reactor.core.publisher.Mono;
 
 public class LogInspector extends WebFluxInspector {
     protected LogInspector() {}
 
-    private final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LogManager.getLogger();
 
-    private Logger getLOGGER() { return this.LOGGER; }
+    private Logger getLOGGER() { return LOGGER; }
 
     protected final synchronized Mono< ApiResponseModel > logging (
             final Throwable error

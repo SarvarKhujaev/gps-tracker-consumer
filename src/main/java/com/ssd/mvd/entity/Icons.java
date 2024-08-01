@@ -11,12 +11,12 @@ public final class Icons
         return this.icon1;
     }
 
-    public void setIcon1 ( final String icon1 ) {
-        this.icon1 = icon1;
-    }
-
     public String getIcon2() {
         return this.icon2;
+    }
+
+    public void setIcon1 ( final String icon1 ) {
+        this.icon1 = icon1;
     }
 
     public void setIcon2 ( final String icon2 ) {

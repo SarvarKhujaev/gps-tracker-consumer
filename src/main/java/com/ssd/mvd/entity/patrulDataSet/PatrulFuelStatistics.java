@@ -1,10 +1,10 @@
 package com.ssd.mvd.entity.patrulDataSet;
 
-import com.ssd.mvd.entity.ConsumptionData;
 import com.ssd.mvd.inspectors.CollectionsInspector;
+import com.ssd.mvd.entity.ConsumptionData;
 
-import java.util.Date;
 import java.util.SortedMap;
+import java.util.Date;
 import java.util.UUID;
 
 public final class PatrulFuelStatistics extends CollectionsInspector {
@@ -40,7 +40,7 @@ public final class PatrulFuelStatistics extends CollectionsInspector {
         this.map = map;
     }
 
-    private UUID uuid; // patrul id
+    private UUID uuid;
     private double averageDistance = 0.0;
     private double averageFuelConsumption = 0.0;
     private SortedMap< Date, ConsumptionData > map = super.newTreeMap();

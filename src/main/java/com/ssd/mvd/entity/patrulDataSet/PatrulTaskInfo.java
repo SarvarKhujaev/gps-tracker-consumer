@@ -1,12 +1,13 @@
 package com.ssd.mvd.entity.patrulDataSet;
 
+import java.util.Map;
+
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.UDTValue;
-import com.ssd.mvd.constants.Status;
-import com.ssd.mvd.inspectors.DataValidateInspector;
-import com.ssd.mvd.interfaces.ObjectCommonMethods;
 
-import java.util.Map;
+import com.ssd.mvd.constants.Status;
+import com.ssd.mvd.interfaces.ObjectCommonMethods;
+import com.ssd.mvd.inspectors.DataValidateInspector;
 
 public final class PatrulTaskInfo extends DataValidateInspector implements ObjectCommonMethods< PatrulTaskInfo > {
     public String getTaskId() {
@@ -42,6 +43,11 @@ public final class PatrulTaskInfo extends DataValidateInspector implements Objec
     public PatrulTaskInfo () {}
 
     @Override
+    public PatrulTaskInfo generate() {
+        return new PatrulTaskInfo();
+    }
+
+    @Override
     public PatrulTaskInfo generate( final Row row ) {
         super.checkAndSetParams(
                 row,
@@ -52,11 +58,6 @@ public final class PatrulTaskInfo extends DataValidateInspector implements Objec
         );
 
         return this;
-    }
-
-    @Override
-    public PatrulTaskInfo generate() {
-        return new PatrulTaskInfo();
     }
 
     @Override
