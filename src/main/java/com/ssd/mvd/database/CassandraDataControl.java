@@ -185,63 +185,38 @@ public final class CassandraDataControl
                                     /*
                                     проверяем не прикреплена ли машина Эскорта к патрульному
                                     */
-                                    if ( super.objectIsNotNull( tupleOfCar.getUuidOfPatrul() ) ) {
-                                        /*
-                                        обновляем данные самого трекера,
-                                        данными машины и патрульного
-                                        */
-                                        final Position updatedPosition = tupleOfCarMap
-                                                .get( position.getDeviceId() )
-                                                .updateTime(
-                                                        position,
-                                                        tupleOfCar,
-                                                        EntitiesInstances.PATRUL.generate(
-                                                                this.getRowFromTabletsKeyspace(
-                                                                        EntitiesInstances.PATRUL,
-                                                                        tupleOfCar.getUuidOfPatrul().toString(),
-                                                                        "uuid"
-                                                                )
-                                                        )
-                                                );
+                                    final Position updatedPosition = super.objectIsNotNull( tupleOfCar.getUuidOfPatrul() )
+                                            ? tupleOfCarMap
+                                            .get( position.getDeviceId() )
+                                            .updateTime(
+                                                    position,
+                                                    tupleOfCar,
+                                                    EntitiesInstances.PATRUL.generate(
+                                                            this.getRowFromTabletsKeyspace(
+                                                                    EntitiesInstances.PATRUL,
+                                                                    tupleOfCar.getUuidOfPatrul().toString(),
+                                                                    "uuid"
+                                                            )
+                                                    )
+                                            )
+                                            : tupleOfCarMap
+                                            .get( position.getDeviceId() )
+                                            .updateTime( position, tupleOfCar );
 
-                                        /*
+                                    /*
                                         сохраняем все обновленные данные в БД
-                                        */
-                                        this.updateTrackerInfoAndCarLocation.accept(
-                                                updatedPosition,
-                                                tupleOfCarMap.get( position.getDeviceId() )
-                                        );
+                                    */
+                                    this.updateTrackerInfoAndCarLocation.accept(
+                                            updatedPosition,
+                                            tupleOfCarMap.get( position.getDeviceId() )
+                                    );
 
-                                        /*
-                                            отправляем обновленные данные о позиции машины в Кафку
-                                        */
-                                        KafkaDataControl
-                                                .getInstance()
-                                                .sendMessageToKafka( updatedPosition );
-                                    } else {
-                                        /*
-                                        обновляем данные самого трекера,
-                                        данными машины и патрульного
-                                        */
-                                        final Position updatedPosition = tupleOfCarMap
-                                                .get( position.getDeviceId() )
-                                                .updateTime( position, tupleOfCar );
-
-                                        /*
-                                        сохраняем все обновленные данные в БД
-                                        */
-                                        this.updateTrackerInfoAndCarLocation.accept(
-                                                updatedPosition,
-                                                tupleOfCarMap.get( position.getDeviceId() )
-                                        );
-
-                                        /*
+                                    /*
                                         отправляем обновленные данные о позиции машины в Кафку
-                                        */
-                                        KafkaDataControl
-                                                .getInstance()
-                                                .sendMessageToKafka( updatedPosition );
-                                    }
+                                    */
+                                    KafkaDataControl
+                                            .getInstance()
+                                            .sendMessageToKafka( updatedPosition );
                                 }
                         )
                 );
@@ -387,8 +362,7 @@ public final class CassandraDataControl
                 )
         );
 
-        return super.objectIsNotNull( patrul )
-                    && super.objectIsNotNull( patrul.getUuid() )
+        return super.objectIsNotNull( patrul.getUuid() )
                     && patrul.getPatrulCarInfo().getCarNumber().compareTo( "null" ) != 0
                 ? super.convert(
                         this.getSession().execute(
