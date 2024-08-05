@@ -16,7 +16,7 @@ public class CollectionsInspector extends StringOperations {
 
     protected <T> void analyze (
             final Collection< T > someList,
-            final Consumer<T> someConsumer
+            final Consumer< T > someConsumer
     ) {
         someList.forEach( someConsumer );
     }
@@ -29,5 +29,21 @@ public class CollectionsInspector extends StringOperations {
             final T[] objects
     ) {
         return Arrays.asList( objects );
+    }
+
+    protected final synchronized Map< String, Object > getMap (
+            final String key
+    ) {
+        return Map.of( "message", key );
+    }
+
+    protected final synchronized Map< String, Object > getMap (
+            final String key,
+            final boolean value
+    ) {
+        return Map.of(
+                "message", key,
+                "success", value
+        );
     }
 }

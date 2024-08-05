@@ -1,5 +1,6 @@
 package com.ssd.mvd.inspectors;
 
+import com.ssd.mvd.interfaces.ServiceCommonMethods;
 import com.ssd.mvd.entity.ApiResponseModel;
 
 import org.apache.logging.log4j.LogManager;
@@ -12,12 +13,10 @@ public class LogInspector extends WebFluxInspector {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private Logger getLOGGER() { return LOGGER; }
-
     protected final synchronized Mono< ApiResponseModel > logging (
             final Throwable error
     ) {
-        this.getLOGGER().error("Error: {}", error.getMessage() );
+        LOGGER.error("Error: {}", error.getMessage() );
         return super.getErrorResponse();
     }
 
@@ -25,21 +24,21 @@ public class LogInspector extends WebFluxInspector {
             final Throwable error,
             final Object o
     ) {
-        this.getLOGGER().error("Error: {} and reason: {}: ", error.getMessage(), o );
+        LOGGER.error("Error: {} and reason: {}: ", error.getMessage(), o );
     }
 
     protected final synchronized void logging (
             final String message
     ) {
-        this.getLOGGER().info( message );
+        LOGGER.info( message );
     }
 
     protected final synchronized void logging ( final Object o ) {
-        this.getLOGGER().info( o.getClass().getName() + " was closed successfully at: " + super.newDate() );
+        LOGGER.info( o.getClass().getName() + " was closed successfully at: " + super.newDate() );
     }
 
-    protected final synchronized void logging ( final Class<?> clazz ) {
-        this.getLOGGER().info(
+    protected final synchronized void logging ( final Class<? extends ServiceCommonMethods> clazz ) {
+        LOGGER.info(
                 String.join(
                         "",
                         clazz.getName(),

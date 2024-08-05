@@ -7,7 +7,6 @@ import com.ssd.mvd.interfaces.ServiceCommonMethods;
 import com.ssd.mvd.constants.CassandraFunctions;
 import com.ssd.mvd.inspectors.EntitiesInstances;
 import com.ssd.mvd.constants.CassandraCommands;
-import com.ssd.mvd.entity.patrulDataSet.Patrul;
 import com.ssd.mvd.constants.CassandraTables;
 import com.ssd.mvd.kafka.KafkaDataControl;
 import com.ssd.mvd.entity.*;
@@ -20,7 +19,6 @@ import java.text.MessageFormat;
 import java.util.function.*;
 import java.util.Optional;
 import java.util.List;
-import java.util.Map;
 
 public final class CassandraDataControlForEscort
         extends CassandraConverter
@@ -41,7 +39,7 @@ public final class CassandraDataControlForEscort
         после получения сигнала от трекера обновляем его значения в БД
     */
     private final Function< TrackerInfo, TrackerInfo > saveTackerInfo = trackerInfo -> {
-        this.getSession().execute(
+        this.completeCommand(
                 MessageFormat.format(
                         """
                         {0} {1}.{2}
@@ -83,12 +81,10 @@ public final class CassandraDataControlForEscort
 
     public final Function< TupleOfCar, Mono< ApiResponseModel > > updateEscortCar = tupleOfCar ->
             super.convert(
-                    EntitiesInstances.TUPLE_OF_CAR.generate(
-                            this.getRowFromTabletsKeyspace(
-                                    EntitiesInstances.TUPLE_OF_CAR,
-                                    "uuid",
-                                    tupleOfCar.getUuid().toString()
-                            )
+                    this.findRowAndReturnEntity(
+                            EntitiesInstances.TUPLE_OF_CAR,
+                            "uuid",
+                            tupleOfCar.getUuid().toString()
                     )
             ).flatMap( tupleOfCar1 -> {
                     final Optional< TupleOfCar > optional = Optional.of( tupleOfCar );
@@ -97,16 +93,16 @@ public final class CassandraDataControlForEscort
                             optional.filter( tupleOfCar2 -> !tupleOfCar1.getTrackerId().equals( tupleOfCar.getTrackerId() )
                                     && !super.check( tupleOfCar.getTrackerId() ) ).isPresent()
                     ) {
-                        return super.getResponse( Map.of( "message", "Wrong TrackerId", "code", 201 ) );
+                        return super.getResponse( super.getMap( "Wrong TrackerId" ) );
                     }
 
                     final StringBuilder stringBuilder = super.newStringBuilder();
 
-                    if (
-                            optional.filter( tupleOfCar2 -> super.objectIsNotNull( tupleOfCar1.getUuidOfPatrul() )
+                    optional.filter(
+                            tupleOfCar2 -> super.objectIsNotNull( tupleOfCar1.getUuidOfPatrul() )
                                     && super.objectIsNotNull( tupleOfCar.getUuidOfPatrul() )
-                                    && tupleOfCar1.getUuidOfPatrul().compareTo( tupleOfCar.getUuidOfPatrul() ) != 0 ).isPresent()
-                    ) {
+                                    && tupleOfCar1.getUuidOfPatrul().compareTo( tupleOfCar.getUuidOfPatrul() ) != 0
+                    ).map( tupleOfCar2 -> {
                         stringBuilder.append(
                                 MessageFormat.format(
                                         """
@@ -116,8 +112,8 @@ public final class CassandraDataControlForEscort
                                         """,
                                         CassandraCommands.UPDATE,
 
-                                        CassandraTables.TABLETS,
-                                        CassandraTables.PATRULS,
+                                        EntitiesInstances.PATRUL.getEntityKeyspaceName(),
+                                        EntitiesInstances.PATRUL.getEntityTableName(),
 
                                         tupleOfCar.getUuid(),
                                         tupleOfCar.getUuidOfPatrul()
@@ -131,53 +127,52 @@ public final class CassandraDataControlForEscort
                                         """,
                                         CassandraCommands.UPDATE,
 
-                                        CassandraTables.TABLETS,
-                                        CassandraTables.PATRULS,
+                                        EntitiesInstances.PATRUL.getEntityKeyspaceName(),
+                                        EntitiesInstances.PATRUL.getEntityTableName(),
+
                                         null,
                                         tupleOfCar1.getUuidOfPatrul()
                                 )
                         );
-                    }
+
+                        return tupleOfCar;
+                    } );
 
                     stringBuilder.append(
                             tupleOfCar.getEntityInsertCommand()
                     ).append( CassandraCommands.APPLY_BATCH );
 
-                    return this.getSession().execute( stringBuilder.toString() ).wasApplied()
+                    return this.completeCommand( stringBuilder.toString() ).wasApplied()
                             ? super.getResponse(
-                                    Map.of( "message", "Car" + tupleOfCar.getGosNumber() + " was updated successfully" )
+                                    super.getMap( "Car" + tupleOfCar.getGosNumber() + " was updated successfully" )
                             )
                             : super.getResponse(
-                                    Map.of(
-                                            "message", "This car does not exists",
-                                            "code", 201,
-                                            "success", false
+                                    super.getMap(
+                                            "This car does not exists",
+                                            false
                                     )
                             );
                 } );
 
     public final Function< String, Mono< ApiResponseModel > > deleteTupleOfCar = uuid ->
             super.convert(
-                    EntitiesInstances.TUPLE_OF_CAR.generate(
-                            this.getRowFromTabletsKeyspace(
-                                    EntitiesInstances.TUPLE_OF_CAR,
-                                    "uuid",
-                                    uuid
-                            )
+                    this.findRowAndReturnEntity(
+                            EntitiesInstances.TUPLE_OF_CAR,
+                            "uuid",
+                            uuid
                     )
             ).flatMap( tupleOfCar1 -> !super.objectIsNotNull( tupleOfCar1.getUuidOfPatrul() )
                     && !super.objectIsNotNull( tupleOfCar1.getUuidOfEscort() )
                     ? super.getResponse(
-                            Map.of(
-                                    "message", uuid + " was removed successfully",
-                                    "success", tupleOfCar1.delete()
+                            super.getMap(
+                                    uuid + " was removed successfully",
+                                    tupleOfCar1.delete()
                             )
                     )
                     : super.getResponse(
-                            Map.of(
-                                    "message", "You cannot delete this car, it is linked to Patrul or Escort",
-                                    "code", 201,
-                                    "success", false
+                            super.getMap(
+                                    "You cannot delete this car, it is linked to Patrul or Escort",
+                                    false
                             )
                     )
             );
@@ -194,12 +189,10 @@ public final class CassandraDataControlForEscort
                             если да, то находим патрульного и связываем его с эскортом
                              */
                             ? super.convert(
-                                    EntitiesInstances.PATRUL.generate(
-                                            this.getRowFromTabletsKeyspace(
-                                                    EntitiesInstances.PATRUL,
-                                                    tupleOfCar.getUuidOfPatrul().toString(),
-                                                    "uuid"
-                                            )
+                                    this.findRowAndReturnEntity(
+                                            EntitiesInstances.PATRUL,
+                                            tupleOfCar.getUuidOfPatrul().toString(),
+                                            "uuid"
                                     )
                             ).flatMap( patrul -> {
                                 /*
@@ -226,58 +219,53 @@ public final class CassandraDataControlForEscort
                                 );
 
                                 return super.getResponse(
-                                        Map.of(
-                                                "message", "Escort was saved successfully",
-                                                "success", true
+                                        super.getMap(
+                                                "Escort was saved successfully",
+                                                true
                                         )
                                 );
                             } )
                             : super.getResponse(
-                                    Map.of(
-                                            "message", "Escort was saved successfully",
-                                            "success", tupleOfCarMap.putIfAbsent(
+                                    super.getMap(
+                                            "Escort was saved successfully"
+                                            + tupleOfCarMap.putIfAbsent(
                                                     tupleOfCar.getTrackerId(),
                                                     this.saveTackerInfo.apply( new TrackerInfo( tupleOfCar ) )
-                                            )
+                                            ).getTrackerId()
                                     )
                             )
-                    : super.getResponse( Map.of( "message", "This car is already exists", "code", 201 ) )
+                    : super.getResponse( super.getMap( "This car is already exists" ) )
             : super.getResponse(
-                    Map.of(
-                            "message", "This trackers or gosnumber is already registered to another car, so choose another one",
-                            "code", 201
+                    super.getMap(
+                            "This trackers or gosnumber is already registered to another car, so choose another one"
                     )
             );
 
     public final Function< String, Mono< TrackerInfo > > getCurrentTracker = trackerId -> super.convert(
-                    this.getRowFromTabletsKeyspace(
-                            EntitiesInstances.TRACKER_INFO,
-                            "trackersId",
-                            super.joinWithAstrix( trackerId )
+            this.getRowFromTabletsKeyspace(
+                    EntitiesInstances.TRACKER_INFO,
+                    "trackersId",
+                    super.joinWithAstrix( trackerId )
+            )
+    ).map( row -> {
+            final TupleOfCar tupleOfCar = this.findRowAndReturnEntity(
+                    EntitiesInstances.TUPLE_OF_CAR,
+                    "gosNumber",
+                    row.getString( "gosnumber" )
+            );
+
+            return super.objectIsNotNull( tupleOfCar.getUuidOfPatrul() )
+                    ? new TrackerInfo(
+                            this.findRowAndReturnEntity(
+                                    EntitiesInstances.PATRUL,
+                                    "uuid",
+                                    tupleOfCar.getUuidOfPatrul().toString()
+                            ),
+                            tupleOfCar,
+                            row
                     )
-            ).map( row -> {
-                    final TupleOfCar tupleOfCar = EntitiesInstances.TUPLE_OF_CAR.generate(
-                            this.getRowFromTabletsKeyspace(
-                                    EntitiesInstances.TUPLE_OF_CAR,
-                                    "gosNumber",
-                                    row.getString( "gosnumber" )
-                            )
-                    );
-
-                    if ( super.objectIsNotNull( tupleOfCar.getUuidOfPatrul() ) ) {
-                        final Patrul patrul = EntitiesInstances.PATRUL.generate(
-                                this.getRowFromTabletsKeyspace(
-                                        EntitiesInstances.PATRUL,
-                                        "uuid",
-                                        tupleOfCar.getUuidOfPatrul().toString()
-                                )
-                        );
-
-                        return new TrackerInfo( patrul, tupleOfCar, row );
-                    }
-
-                    return new TrackerInfo( tupleOfCar, row );
-                } );
+                    : new TrackerInfo( tupleOfCar, row );
+        } );
 
     public final Supplier< Flux< TrackerInfo > > getAllTrackers = () -> CassandraDataControl
             .getInstance()
@@ -294,29 +282,23 @@ public final class CassandraDataControlForEscort
                 }
             } )
             .map( row -> {
-                final TupleOfCar tupleOfCar = EntitiesInstances.TUPLE_OF_CAR.generate(
-                        this.getRowFromTabletsKeyspace(
-                                EntitiesInstances.TUPLE_OF_CAR,
-                                "gosNumber",
-                                super.joinWithAstrix( row.getString( "gosnumber" ) )
-                        )
+                final TupleOfCar tupleOfCar = this.findRowAndReturnEntity(
+                        EntitiesInstances.TUPLE_OF_CAR,
+                        "gosNumber",
+                        super.joinWithAstrix( row.getString( "gosnumber" ) )
                 );
 
-                if ( super.objectIsNotNull( tupleOfCar.getUuidOfPatrul() ) ) {
-                    return new TrackerInfo(
-                            EntitiesInstances.PATRUL.generate(
-                                    this.getRowFromTabletsKeyspace(
-                                            EntitiesInstances.PATRUL,
-                                            "uuid",
-                                            tupleOfCar.getUuidOfPatrul().toString()
-                                    )
-                            ),
-                            tupleOfCar,
-                            row
-                    );
-                }
-
-                return new TrackerInfo( tupleOfCar, row );
+                return super.objectIsNotNull( tupleOfCar.getUuidOfPatrul() )
+                        ? new TrackerInfo(
+                                this.findRowAndReturnEntity(
+                                        EntitiesInstances.PATRUL,
+                                        "uuid",
+                                        tupleOfCar.getUuidOfPatrul().toString()
+                                ),
+                                tupleOfCar,
+                                row
+                        )
+                        : new TrackerInfo( tupleOfCar, row );
             } )
             .sequential()
             .publishOn( Schedulers.single() );
@@ -339,8 +321,9 @@ public final class CassandraDataControlForEscort
 
     @Override
     public void close() {
+        CassandraDataControl.getInstance().close();
         cassandraDataControl = null;
         super.logging( this );
-        this.getSession().close();
+        this.clean();
     }
 }

@@ -8,6 +8,10 @@ import java.util.Date;
 import java.util.UUID;
 
 public class StringOperations {
+    public final static String EMPTY = "";
+    public final static String SPACE = " ";
+    public final static String SPACE_WITH_COMMA = ", ";
+
     protected StringOperations () {}
 
     protected final synchronized StringBuilder newStringBuilder () {
@@ -64,7 +68,7 @@ public class StringOperations {
             final PatrulFIOData patrulFIOData
     ) {
         return String.join(
-                " ",
+                SPACE,
                 patrulFIOData.getName(),
                 patrulFIOData.getSurname(),
                 patrulFIOData.getFatherName()

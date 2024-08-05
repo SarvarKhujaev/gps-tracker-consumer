@@ -1,12 +1,13 @@
 package com.ssd.mvd.database.cassandraRegistry;
 
+import java.text.MessageFormat;
+
 import com.ssd.mvd.constants.*;
 import com.ssd.mvd.entity.TupleOfCar;
-import com.ssd.mvd.inspectors.StringOperations;
 import com.ssd.mvd.inspectors.TimeInspector;
+import com.ssd.mvd.inspectors.StringOperations;
 import com.ssd.mvd.interfaces.DatabaseCommonMethods;
-
-import java.text.MessageFormat;
+import com.ssd.mvd.interfaces.EntityToCassandraConverter;
 
 public final class CassandraTableRegistration extends StringOperations implements DatabaseCommonMethods {
     public static void generate () {
@@ -59,7 +60,7 @@ public final class CassandraTableRegistration extends StringOperations implement
         public static TableRegistration from (
                 final CassandraTables keyspace,
                 final CassandraTables tableName,
-                final Class<?> object,
+                final Class<? extends EntityToCassandraConverter> object,
                 final String prefix
         ) {
             return new TableRegistration( keyspace, tableName, object, prefix );
@@ -68,7 +69,7 @@ public final class CassandraTableRegistration extends StringOperations implement
         private TableRegistration (
                 final CassandraTables keyspace,
                 final CassandraTables tableName,
-                final Class<?> object,
+                final Class<? extends EntityToCassandraConverter> object,
                 final String prefix
         ) {
             this.convertedValue = super.convertClassToCassandra.apply( object );

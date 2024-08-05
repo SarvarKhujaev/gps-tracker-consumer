@@ -132,17 +132,23 @@ public class DataValidateInspector extends TimeInspector {
     ) {
         return switch ( params.size() ) {
             case 1 -> params.containsKey( "viloyat" ) && Objects.equals(
-                    patrul.getPatrulRegionData().getRegionId(), params.get( "viloyat" ) );
-            case 2 -> ( params.containsKey( "viloyat" ) && Objects.equals(
-                    patrul.getPatrulRegionData().getRegionId(), params.get( "viloyat" ) ) )
-                    && ( params.containsKey( "tuman" ) && Objects.equals(
-                    patrul.getPatrulRegionData().getDistrictId(), params.get( "tuman" ) ) );
-            default -> ( params.containsKey( "tuman" ) && Objects.equals(
-                    patrul.getPatrulRegionData().getDistrictId(), params.get( "tuman" ) ) )
-                    && ( params.containsKey( "viloyat" ) && Objects.equals(
-                    patrul.getPatrulRegionData().getRegionId(), params.get( "viloyat" ) ) )
-                    && ( params.containsKey( "mahalla" ) && Objects.equals(
-                    patrul.getPatrulRegionData().getMahallaId(), params.get( "mahalla" ) ) );
+                    patrul.getPatrulRegionData().getRegionId(), params.get( "viloyat" )
+            );
+            case 2 -> params.containsKey( "viloyat" ) && Objects.equals(
+                            patrul.getPatrulRegionData().getRegionId(), params.get( "viloyat" )
+                    )
+                    && params.containsKey( "tuman" ) && Objects.equals(
+                            patrul.getPatrulRegionData().getDistrictId(), params.get( "tuman" )
+                    );
+            default -> params.containsKey( "tuman" ) && Objects.equals(
+                            patrul.getPatrulRegionData().getDistrictId(), params.get( "tuman" )
+                    )
+                    && params.containsKey( "viloyat" ) && Objects.equals(
+                            patrul.getPatrulRegionData().getRegionId(), params.get( "viloyat" )
+                    )
+                    && params.containsKey( "mahalla" ) && Objects.equals(
+                            patrul.getPatrulRegionData().getMahallaId(), params.get( "mahalla" )
+                    );
         };
     }
 

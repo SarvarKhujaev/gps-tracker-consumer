@@ -1,11 +1,13 @@
 package com.ssd.mvd.database.cassandraRegistry;
 
+import com.ssd.mvd.interfaces.EntityToCassandraConverter;
 import com.ssd.mvd.constants.CassandraDataTypes;
 import com.ssd.mvd.inspectors.LogInspector;
 
+import java.lang.reflect.Field;
+
 import java.util.function.Function;
 import java.util.stream.Stream;
-import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -49,7 +51,7 @@ public class CassandraConverter extends LogInspector {
     для экземпляра Java класса конвертирует каждый его параметр,
     в Cassandra подобный тип данных
     */
-    protected final Function< Class<?>, String > convertClassToCassandra = object -> {
+    protected final Function< Class<? extends EntityToCassandraConverter>, String > convertClassToCassandra = object -> {
         final StringBuilder result = super.newStringBuilder( "( " );
 
         this.getFields.apply( object )
@@ -64,23 +66,23 @@ public class CassandraConverter extends LogInspector {
                         ^ field.getType().equals( boolean.class ) )
                 .forEach( field -> result
                         .append( field.getName() )
-                        .append( " " )
+                        .append( SPACE )
                         .append( this.getCorrectDataType.apply( field.getType() ) )
-                        .append( ", " ) );
+                        .append( SPACE_WITH_COMMA ) );
 
         return result.substring( 0, result.toString().length() - 2 );
     };
 
-    protected final Function< Class<?>, String > getALlParamsNamesForClass = object -> {
-        final StringBuilder result = super.newStringBuilder( "" );
-        this.getFields.apply( object ).forEach( field -> result.append( field.getName() ).append( ", " ) );
+    protected final Function< Class<? extends EntityToCassandraConverter>, String > getALlParamsNamesForClass = object -> {
+        final StringBuilder result = super.newStringBuilder( EMPTY );
+        this.getFields.apply( object ).forEach( field -> result.append( field.getName() ).append( SPACE_WITH_COMMA ) );
         return super.joinTextWithCorrectCollectionEnding(
                 result.substring( 0, result.length() - 2 ),
                 CassandraDataTypes.BOOLEAN
         );
     };
 
-    private final Function< Class<?>, Stream< Field > > getFields = object -> Arrays.stream( object.getDeclaredFields() ).toList().stream();
+    private final Function< Class<? extends EntityToCassandraConverter>, Stream< Field > > getFields = object -> Arrays.stream( object.getDeclaredFields() ).toList().stream();
 
     /*
     принимает список объектов и конвертирует в понятную для Cassandra команду
@@ -88,9 +90,9 @@ public class CassandraConverter extends LogInspector {
         [ 'asd', 'asd', 'asd', 'asd' ]
     */
     protected final Function< List< ? >, String > convertListToCassandra = list -> {
-        final StringBuilder stringBuilder = super.newStringBuilder( "" );
+        final StringBuilder stringBuilder = super.newStringBuilder( EMPTY );
 
-        super.analyze( list, s -> stringBuilder.append( s ).append( ", " ) );
+        super.analyze( list, s -> stringBuilder.append( s ).append( SPACE_WITH_COMMA ) );
 
         return stringBuilder.length() == 1
                 ? super.joinTextWithCorrectCollectionEnding( stringBuilder.toString(), CassandraDataTypes.LIST )
@@ -103,10 +105,10 @@ public class CassandraConverter extends LogInspector {
     /*
     принимает экземпляра Class и возвращает список названий всех его параметров
     */
-    protected final Function< Class<?>, String > getAllParamsNamesForClass = object -> {
-        final StringBuilder result = super.newStringBuilder( "" );
+    protected final Function< Class<? extends EntityToCassandraConverter>, String > getAllParamsNamesForClass = object -> {
+        final StringBuilder result = super.newStringBuilder( EMPTY );
 
-        this.getFields.apply( object ).forEach( field -> result.append( field.getName() ).append( ", " ) );
+        this.getFields.apply( object ).forEach( field -> result.append( field.getName() ).append( SPACE_WITH_COMMA ) );
 
         return super.joinTextWithCorrectCollectionEnding(
                 result.substring( 0, result.length() - 2 ),

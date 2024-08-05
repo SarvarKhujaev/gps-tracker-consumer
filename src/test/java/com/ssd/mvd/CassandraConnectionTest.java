@@ -12,8 +12,6 @@ import org.junit.jupiter.api.DisplayName;
 import junit.framework.TestCase;
 
 import java.text.MessageFormat;
-
-import java.util.List;
 import java.util.UUID;
 
 /*
@@ -35,20 +33,6 @@ public final class CassandraConnectionTest extends TestCase {
     @Override
     public void tearDown () {
         CassandraDataControl.getInstance().close();
-    }
-
-    @DisplayName( value = "testGetListOfEntities method" )
-    public void testGetListOfEntities () {
-        final List< Row > rows = CassandraDataControl
-                .getInstance()
-                .getListOfEntities(
-                        EntitiesInstances.PATRUL,
-                        "id",
-                        List.of( this.uuid, this.uuid )
-                );
-
-        assertNotNull( rows );
-        assertTrue( rows.isEmpty() );
     }
 
     /*

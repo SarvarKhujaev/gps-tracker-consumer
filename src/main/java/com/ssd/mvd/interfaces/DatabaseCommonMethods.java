@@ -1,14 +1,14 @@
 package com.ssd.mvd.interfaces;
 
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
-import com.ssd.mvd.constants.CassandraCommands;
 import com.ssd.mvd.database.CassandraDataControl;
+import com.ssd.mvd.constants.CassandraCommands;
+
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.Row;
 
 import java.text.MessageFormat;
-import java.util.Collections;
-import java.util.List;
 
 /*
 хранит все стандартные методы для сервисов работающих с БД
@@ -58,18 +58,10 @@ public interface DatabaseCommonMethods {
         );
     }
 
-    /*
-    возвращает список значений из БД
-    */
-    default <T> List< Row > getListOfEntities (
-            // название таблицы внутри Tablets
-            final EntityToCassandraConverter entityToCassandraConverter,
-            // название колонки
-            final String columnName,
-            // список параметрлв по которым введется поиск нескольких записей
-            final List< T > ids
+    default ResultSet completeCommand (
+            final String query
     ) {
-        return Collections.emptyList();
+        return this.getSession().execute( query );
     }
 
     default Session getSession() {

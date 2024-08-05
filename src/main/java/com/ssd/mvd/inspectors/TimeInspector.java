@@ -9,6 +9,7 @@ public class TimeInspector extends CollectionsInspector {
     protected TimeInspector () {}
 
     public final static int DAY_IN_SECOND = 86400;
+    public final static long FIVE_HOURS = 5L * 60 * 60 * 1000;
 
     protected final static Date date = new Date( 1605006666774L );
 
