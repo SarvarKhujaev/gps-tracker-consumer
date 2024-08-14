@@ -198,12 +198,12 @@ public final class ReqCar
 
     @Override
     public CassandraTables getEntityTableName() {
-        return CassandraTables.TABLETS;
+        return CassandraTables.CARS;
     }
 
     @Override
     public CassandraTables getEntityKeyspaceName() {
-        return CassandraTables.CARS;
+        return CassandraTables.TABLETS;
     }
 
     @Override

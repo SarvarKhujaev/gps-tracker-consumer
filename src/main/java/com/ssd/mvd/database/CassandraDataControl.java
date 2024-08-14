@@ -58,9 +58,7 @@ public final class CassandraDataControl
         /*
         создаем, регистрируем и сохраняем все таблицы, типы и кодеки
         */
-        CassandraTablesAndTypesRegister.generate(
-                this.getSession()
-        );
+        CassandraTablesAndTypesRegister.generate();
 
         this.register();
     }
@@ -104,27 +102,29 @@ public final class CassandraDataControl
         super.logging( this.getClass() );
     }
 
-    private final BiConsumer< Position, TrackerInfo > updateTrackerInfoAndCarLocation = ( updatedPosition, trackerInfo ) ->
-            this.completeCommand(
+    private final BiConsumer< Position, TrackerInfo > updateTrackerInfoAndCarLocation = ( updatedPosition, trackerInfo ) -> {
+        System.out.println( updatedPosition.getDeviceId() );
+        this.completeCommand(
                     /*
                     запускаем BATCH
                     */
-                    super.newStringBuilder()
-                            /*
-                            сохраняем локацию машин эскорта
-                            сохраняются данные всех трекеров
-                            */
-                            .append( updatedPosition.getEntityUpdateCommand() )
-                            /*
-                                после получения сигнала от трекера обновляем его значения в БД
-                            */
-                            .append( trackerInfo.getEntityDeleteCommand() )
-                            /*
-                            завершаем BATCH
-                             */
-                            .append( CassandraCommands.APPLY_BATCH )
-                            .toString()
-            );
+                super.newStringBuilder()
+                        /*
+                        сохраняем локацию машин эскорта
+                        сохраняются данные всех трекеров
+                        */
+                        .append( updatedPosition.getEntityUpdateCommand() )
+                        /*
+                            после получения сигнала от трекера обновляем его значения в БД
+                        */
+                        .append( trackerInfo.getEntityDeleteCommand() )
+                        /*
+                        завершаем BATCH
+                         */
+                        .append( CassandraCommands.APPLY_BATCH )
+                        .toString()
+        );
+    };
 
     public final Function< Position, String > saveCarLocation = position -> {
             final Optional< Position > optional = Optional.of( position );
@@ -141,6 +141,7 @@ public final class CassandraDataControl
             Эскорт или Патрулю
             */
             if ( optional.filter( position1 -> super.check( position.getDeviceId() ) ).isPresent() ) {
+                System.out.println( "TupleCar: " + position.getDeviceId() );
                 super.convert(
                         this.findRowAndReturnEntity(
                                 EntitiesInstances.TUPLE_OF_CAR,
@@ -197,7 +198,7 @@ public final class CassandraDataControl
                         this.findRowAndReturnEntity(
                                 EntitiesInstances.REQ_CAR,
                                 "trackerId",
-                                position.getDeviceId()
+                                super.joinWithAstrix( position.getDeviceId() )
                         )
                 ).filter( super::check )
                 .subscribe(
@@ -206,12 +207,13 @@ public final class CassandraDataControl
                                     // убираем уже зарегистрированный трекер
                                     unregisteredTrackers.remove( optional.get().getDeviceId() );
 
-                                    optional.filter( position1 -> super.check( position.getDeviceId() ) )
-                                            .map( position1 -> {
+                                    optional.map( position1 -> {
                                                 // сохраняем в базу только если машина двигается
-                                                if ( super.check( optional.get() ) ) {
-                                                    position.save();
-                                                }
+//                                                if ( super.check( optional.get() ) ) {
+//                                                    position.save();
+//                                                }
+
+                                                position.save();
 
                                                 KafkaDataControl
                                                         .getInstance()

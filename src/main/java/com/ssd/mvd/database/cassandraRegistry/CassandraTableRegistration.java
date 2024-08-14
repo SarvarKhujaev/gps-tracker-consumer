@@ -94,10 +94,23 @@ public final class CassandraTableRegistration extends StringOperations implement
                         longitude               {5},
                         totalActivityTime       {5},
                         lastActiveDate          {6},
-                        dateOfRegistration      {6}
-                        )  PRIMARY KEY ( trackersId ) WITH %s AND %s AND %s AND %s AND %s AND %s;
-                        """.formatted(
-                                CassandraCommands.WITH_CLUSTERING_ORDER.formatted( "simCardNumber ASC" ),
+                        dateOfRegistration      {6},
+                        PRIMARY KEY ( (trackersId), lastActiveDate )
+                        ) {7};
+                        """,
+                        CassandraCommands.CREATE_TABLE,
+
+                        CassandraTables.TRACKERS,
+                        CassandraTables.TRACKERSID,
+
+                        CassandraDataTypes.TEXT,
+                        CassandraDataTypes.BOOLEAN,
+                        CassandraDataTypes.DOUBLE,
+                        CassandraDataTypes.TIMESTAMP,
+
+                        String.join(
+                                " AND ",
+                                CassandraCommands.WITH_CLUSTERING_ORDER.formatted( "lastActiveDate ASC" ),
                                 CassandraCommands.WITH_COMPACTION.formatted( CassandraCompactionTypes.LEVELED_COMPACTION ),
                                 CassandraCommands.WITH_COMMENT.formatted(
                                         """
@@ -107,16 +120,7 @@ public final class CassandraTableRegistration extends StringOperations implement
                                 CassandraCommands.WITH_COMPRESSION.formatted( CassandraCompressionTypes.LZ4, 64 ),
                                 CassandraCommands.WITH_TTL.formatted( TimeInspector.DAY_IN_SECOND * 7 ),
                                 super.generateID()
-                        ),
-                        CassandraCommands.CREATE_TABLE,
-
-                        CassandraTables.TRACKERS,
-                        CassandraTables.TRACKERSID,
-
-                        CassandraDataTypes.TEXT,
-                        CassandraDataTypes.BOOLEAN,
-                        CassandraDataTypes.DOUBLE,
-                        CassandraDataTypes.TIMESTAMP
+                        )
                 )
         );
 
@@ -132,8 +136,19 @@ public final class CassandraTableRegistration extends StringOperations implement
                         longitude   {5},
                         address     {3},
                         PRIMARY KEY ( (imei), date ) )
-                        WITH %s AND %s AND %s AND %s AND %s AND %s;
-                        """.formatted(
+                        {6};
+                        """,
+                        CassandraCommands.CREATE_TABLE,
+
+                        CassandraTables.TRACKERS,
+                        CassandraTables.TRACKERS_LOCATION_TABLE,
+
+                        CassandraDataTypes.TEXT,
+                        CassandraDataTypes.TIMESTAMP,
+                        CassandraDataTypes.DOUBLE,
+
+                        String.join(
+                                " AND ",
                                 CassandraCommands.WITH_CLUSTERING_ORDER.formatted( "date ASC" ),
                                 CassandraCommands.WITH_COMPACTION.formatted( CassandraCompactionTypes.TIME_WINDOW_COMPACTION ),
                                 CassandraCommands.WITH_COMMENT.formatted(
@@ -144,15 +159,7 @@ public final class CassandraTableRegistration extends StringOperations implement
                                 CassandraCommands.WITH_COMPRESSION.formatted( CassandraCompressionTypes.LZ4, 64 ),
                                 CassandraCommands.WITH_TTL.formatted( TimeInspector.DAY_IN_SECOND * 60 ),
                                 super.generateID()
-                        ),
-                        CassandraCommands.CREATE_TABLE,
-
-                        CassandraTables.TRACKERS,
-                        CassandraTables.TRACKERS_LOCATION_TABLE,
-
-                        CassandraDataTypes.TEXT,
-                        CassandraDataTypes.TIMESTAMP,
-                        CassandraDataTypes.DOUBLE
+                        )
                 )
         );
 
@@ -164,8 +171,19 @@ public final class CassandraTableRegistration extends StringOperations implement
                                 date {4},
                                 speed {5},
                                 distance {5},
-                                PRIMARY KEY ( (imei), date ) ) WITH %s AND %s AND %s AND %s AND %s AND %s;
-                        """.formatted(
+                                PRIMARY KEY ( (imei), date ) ) {6};
+                        """,
+                        CassandraCommands.CREATE_TABLE,
+
+                        CassandraTables.TRACKERS,
+                        CassandraTables.TRACKER_FUEL_CONSUMPTION,
+
+                        CassandraDataTypes.TEXT,
+                        CassandraDataTypes.TIMESTAMP,
+                        CassandraDataTypes.DOUBLE,
+
+                        String.join(
+                                " AND ",
                                 CassandraCommands.WITH_CLUSTERING_ORDER.formatted( "date ASC" ),
                                 CassandraCommands.WITH_COMPACTION.formatted( CassandraCompactionTypes.LEVELED_COMPACTION ),
                                 CassandraCommands.WITH_COMMENT.formatted(
@@ -176,15 +194,7 @@ public final class CassandraTableRegistration extends StringOperations implement
                                 CassandraCommands.WITH_COMPRESSION.formatted( CassandraCompressionTypes.LZ4, 64 ),
                                 CassandraCommands.WITH_TTL.formatted( TimeInspector.DAY_IN_SECOND * 70 ),
                                 super.generateID()
-                        ),
-                        CassandraCommands.CREATE_TABLE,
-
-                        CassandraTables.TRACKERS,
-                        CassandraTables.TRACKER_FUEL_CONSUMPTION,
-
-                        CassandraDataTypes.TEXT,
-                        CassandraDataTypes.TIMESTAMP,
-                        CassandraDataTypes.DOUBLE
+                        )
                 )
         );
 
@@ -194,10 +204,10 @@ public final class CassandraTableRegistration extends StringOperations implement
                         CassandraTables.TUPLE_OF_CAR,
                         TupleOfCar.class,
                         """
-                        , PRIMARY KEY( ( uuid ), trackerId ) ) WITH %s AND %s AND %s AND %s AND %s AND %s;
+                        , PRIMARY KEY( ( uuid ), trackerId ) ) %s AND %s AND %s AND %s AND %s AND %s;
                         """.formatted(
                                 CassandraCommands.WITH_CLUSTERING_ORDER.formatted( "trackerId ASC" ),
-                                CassandraCommands.WITH_COMPACTION.formatted( CassandraCompactionTypes.COMPACT_STORAGE ),
+                                CassandraCommands.WITH_COMPACTION.formatted( CassandraCompactionTypes.LEVELED_COMPACTION ),
                                 CassandraCommands.WITH_COMMENT.formatted(
                                         """
                                         хранит данные, о том как долго патрульный пользовался планшетом
@@ -239,9 +249,21 @@ public final class CassandraTableRegistration extends StringOperations implement
                         lastActiveDate          {6}, -- время последнего приема сигнала от трекера
                         dateOfRegistration      {6}, -- дата регистрации трекера
                         PRIMARY KEY ( (trackersId), lastActiveDate ) )
-                        WITH %s AND %s AND %s AND %s AND %s AND %s;
-                        """.formatted(
-                                CassandraCommands.WITH_CLUSTERING_ORDER.formatted( "lastActiveDate ASC, trackersId" ),
+                        {7}
+                        """,
+                        CassandraCommands.CREATE_TABLE,
+
+                        CassandraTables.ESCORT,
+                        CassandraTables.TRACKERSID,
+
+                        CassandraDataTypes.TEXT,
+                        CassandraDataTypes.BOOLEAN,
+                        CassandraDataTypes.DOUBLE,
+                        CassandraDataTypes.TIMESTAMP,
+
+                        String.join(
+                                " AND ",
+                                CassandraCommands.WITH_CLUSTERING_ORDER.formatted( "lastActiveDate ASC" ),
                                 CassandraCommands.WITH_COMPACTION.formatted( CassandraCompactionTypes.LEVELED_COMPACTION ),
                                 CassandraCommands.WITH_COMMENT.formatted(
                                         """
@@ -251,16 +273,7 @@ public final class CassandraTableRegistration extends StringOperations implement
                                 CassandraCommands.WITH_COMPRESSION.formatted( CassandraCompressionTypes.LZ4, 64 ),
                                 CassandraCommands.WITH_TTL.formatted( TimeInspector.DAY_IN_SECOND * 70 ),
                                 super.generateID()
-                        ),
-                        CassandraCommands.CREATE_TABLE,
-
-                        CassandraTables.ESCORT,
-                        CassandraTables.TRACKERSID,
-
-                        CassandraDataTypes.TEXT,
-                        CassandraDataTypes.BOOLEAN,
-                        CassandraDataTypes.DOUBLE,
-                        CassandraDataTypes.TIMESTAMP
+                        )
                 )
         );
 
@@ -276,9 +289,20 @@ public final class CassandraTableRegistration extends StringOperations implement
                         longitude       {5},
                         address         {3},
                         PRIMARY KEY ( (imei), date ) )
-                        WITH %s AND %s AND %s AND %s AND %s AND %s;
-                        """.formatted(
-                                CassandraCommands.WITH_CLUSTERING_ORDER.formatted( "date ASC, imei" ),
+                        {6}
+                        """,
+                        CassandraCommands.CREATE_TABLE,
+
+                        CassandraTables.ESCORT,
+                        CassandraTables.ESCORT_LOCATION,
+
+                        CassandraDataTypes.TEXT,
+                        CassandraDataTypes.TIMESTAMP,
+                        CassandraDataTypes.DOUBLE,
+
+                        String.join(
+                                " AND ",
+                                CassandraCommands.WITH_CLUSTERING_ORDER.formatted( "date ASC" ),
                                 CassandraCommands.WITH_COMPACTION.formatted( CassandraCompactionTypes.LEVELED_COMPACTION ),
                                 CassandraCommands.WITH_COMMENT.formatted(
                                         """
@@ -288,15 +312,7 @@ public final class CassandraTableRegistration extends StringOperations implement
                                 CassandraCommands.WITH_COMPRESSION.formatted( CassandraCompressionTypes.LZ4, 64 ),
                                 CassandraCommands.WITH_TTL.formatted( TimeInspector.DAY_IN_SECOND * 7 ),
                                 super.generateID()
-                        ),
-                        CassandraCommands.CREATE_TABLE,
-
-                        CassandraTables.ESCORT,
-                        CassandraTables.ESCORT_LOCATION,
-
-                        CassandraDataTypes.TEXT,
-                        CassandraDataTypes.TIMESTAMP,
-                        CassandraDataTypes.DOUBLE
+                        )
                 )
         );
     }

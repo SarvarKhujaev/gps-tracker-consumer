@@ -23,10 +23,6 @@ public final class Position
         return this.speed;
     }
 
-    public Status getStatus() {
-        return this.status;
-    }
-
     public String getDeviceId() {
         return this.deviceId;
     }
@@ -183,12 +179,12 @@ public final class Position
 
     @Override
     public CassandraTables getEntityKeyspaceName() {
-        return CassandraTables.TRACKERS_LOCATION_TABLE;
+        return CassandraTables.TRACKERS;
     }
 
     @Override
     public CassandraTables getEntityTableName() {
-        return CassandraTables.TRACKERS;
+        return CassandraTables.TRACKERS_LOCATION_TABLE;
     }
 
     @Override
@@ -218,8 +214,8 @@ public final class Position
         return MessageFormat.format(
                 """
                 {0} {1}.{2}
-                ( imei, date, speed, latitude, longitude, address )
-                VALUES ( {3}, {4}, {5}, {6}, {7}, '' )
+                ( imei, date, speed, latitude, longitude )
+                VALUES ( {3}, {4}, {5} );
                 """,
                 CassandraCommands.INSERT_INTO,
 
@@ -229,9 +225,12 @@ public final class Position
                 super.joinWithAstrix( this.getDeviceId() ),
                 super.joinWithAstrix( this.getDeviceTime() ),
 
-                this.getSpeed(),
-                this.getLongitude(),
-                this.getLatitude()
+                String.join(
+                        ", ",
+                        String.valueOf( this.getSpeed() ),
+                        String.valueOf( this.getLatitude() ),
+                        String.valueOf( this.getLongitude() )
+                )
         );
     }
 

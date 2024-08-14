@@ -1,16 +1,14 @@
 package com.ssd.mvd.database.cassandraRegistry;
 
-import com.datastax.driver.core.Session;
+import com.ssd.mvd.interfaces.DatabaseCommonMethods;
 import com.ssd.mvd.constants.CassandraCommands;
 import com.ssd.mvd.constants.CassandraTables;
-import com.ssd.mvd.interfaces.DatabaseCommonMethods;
 
 /*
 создает все таблицыб типыб кодеки и пространство ключей
 */
 public final class CassandraTablesAndTypesRegister extends CassandraConverter implements DatabaseCommonMethods {
     public static CassandraTablesAndTypesRegister generate (
-            final Session session
     ) {
         return new CassandraTablesAndTypesRegister();
     }
