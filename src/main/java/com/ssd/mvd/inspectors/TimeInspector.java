@@ -17,7 +17,7 @@ public class TimeInspector extends CollectionsInspector {
         return new Date();
     }
 
-    protected final synchronized Date newDate (
+    public static synchronized Date newDate (
             final long timeInterval
     ) {
         return new Date( timeInterval );

@@ -1,4 +1,4 @@
-package com.ssd.mvd.entity.patrulDataSet;
+package com.ssd.mvd.entity.patrulDataSet.patrulSubClasses;
 
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.UDTValue;

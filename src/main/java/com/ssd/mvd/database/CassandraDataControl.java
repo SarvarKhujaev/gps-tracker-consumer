@@ -12,6 +12,7 @@ import java.util.function.BiFunction;
 
 import com.datastax.driver.core.*;
 
+import com.ssd.mvd.inspectors.TimeInspector;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -29,7 +30,7 @@ import com.ssd.mvd.interfaces.ServiceCommonMethods;
 import com.ssd.mvd.interfaces.DatabaseCommonMethods;
 import com.ssd.mvd.interfaces.EntityToCassandraConverter;
 import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
-import com.ssd.mvd.entity.patrulDataSet.PatrulFuelStatistics;
+import com.ssd.mvd.entity.patrulDataSet.patrulSubClasses.PatrulFuelStatistics;
 import com.ssd.mvd.database.cassandraConfigs.CassandraParamsAndOptionsStore;
 import com.ssd.mvd.database.cassandraRegistry.CassandraTablesAndTypesRegister;
 
@@ -102,12 +103,11 @@ public final class CassandraDataControl
         super.logging( this.getClass() );
     }
 
-    private final BiConsumer< Position, TrackerInfo > updateTrackerInfoAndCarLocation = ( updatedPosition, trackerInfo ) -> {
-        System.out.println( updatedPosition.getDeviceId() );
+    private final BiConsumer< Position, TrackerInfo > updateTrackerInfoAndCarLocation = ( updatedPosition, trackerInfo ) ->
         this.completeCommand(
-                    /*
-                    запускаем BATCH
-                    */
+                /*
+                запускаем BATCH
+                */
                 super.newStringBuilder()
                         /*
                         сохраняем локацию машин эскорта
@@ -124,7 +124,6 @@ public final class CassandraDataControl
                         .append( CassandraCommands.APPLY_BATCH )
                         .toString()
         );
-    };
 
     public final Function< Position, String > saveCarLocation = position -> {
             final Optional< Position > optional = Optional.of( position );
@@ -209,11 +208,9 @@ public final class CassandraDataControl
 
                                     optional.map( position1 -> {
                                                 // сохраняем в базу только если машина двигается
-//                                                if ( super.check( optional.get() ) ) {
-//                                                    position.save();
-//                                                }
-
-                                                position.save();
+                                                if ( super.check( optional.get() ) ) {
+                                                    position.save();
+                                                }
 
                                                 KafkaDataControl
                                                         .getInstance()
@@ -284,8 +281,8 @@ public final class CassandraDataControl
 
                                 super.joinWithAstrix( request.getTrackerId() ),
 
-                                super.joinWithAstrix( super.newDate( request.getStartTime().getTime() - FIVE_HOURS ) ),
-                                super.joinWithAstrix( super.newDate( request.getEndTime().getTime() - FIVE_HOURS ) )
+                                super.joinWithAstrix(TimeInspector.newDate( request.getStartTime().getTime() - FIVE_HOURS ) ),
+                                super.joinWithAstrix( TimeInspector.newDate( request.getEndTime().getTime() - FIVE_HOURS ) )
                         )
                 ),
                 super.getTimeDifference(

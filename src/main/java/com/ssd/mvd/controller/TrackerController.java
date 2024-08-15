@@ -3,7 +3,7 @@ package com.ssd.mvd.controller;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ssd.mvd.entity.patrulDataSet.PatrulFuelStatistics;
+import com.ssd.mvd.entity.patrulDataSet.patrulSubClasses.PatrulFuelStatistics;
 import com.ssd.mvd.database.CassandraDataControl;
 import com.ssd.mvd.inspectors.Inspector;
 import com.ssd.mvd.entity.*;

@@ -1,25 +1,37 @@
-package com.ssd.mvd.entity.patrulDataSet;
+package com.ssd.mvd.entity.patrulDataSet.patrulSubClasses;
 
 import com.ssd.mvd.inspectors.DataValidateInspector;
 import com.ssd.mvd.interfaces.ObjectCommonMethods;
 import com.ssd.mvd.entity.TupleOfCar;
+import com.ssd.mvd.annotations.*;
 
 import com.datastax.driver.core.UDTValue;
 import com.datastax.driver.core.Row;
 
+@EntityAnnotations( name = "PatrulCarInfo", isSubClass = true )
 public final class PatrulCarInfo extends DataValidateInspector implements ObjectCommonMethods< PatrulCarInfo > {
     public String getCarType() {
         return this.carType;
-    }
-
-    public void setCarType( final String carType ) {
-        this.carType = carType;
     }
 
     public String getCarNumber() {
         return this.carNumber;
     }
 
+    @MethodsAnnotations(
+            name = "carType",
+            withoutParams = false,
+            isReturnEntity = false
+    )
+    public void setCarType( final String carType ) {
+        this.carType = carType;
+    }
+
+    @MethodsAnnotations(
+            name = "carNumber",
+            withoutParams = false,
+            isReturnEntity = false
+    )
     public void setCarNumber( final String carNumber ) {
         this.carNumber = carNumber;
     }
@@ -29,7 +41,9 @@ public final class PatrulCarInfo extends DataValidateInspector implements Object
         this.setCarType( tupleOfCar.getCarModel() );
     }
 
+    @FieldAnnotation( name = "carType", hasToBeJoinedWithAstrix = true )
     private String carType; // модель машины
+    @FieldAnnotation( name = "carNumber", hasToBeJoinedWithAstrix = true )
     private String carNumber;
 
     public PatrulCarInfo () {}

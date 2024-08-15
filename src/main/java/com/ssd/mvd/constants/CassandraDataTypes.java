@@ -1,34 +1,256 @@
 package com.ssd.mvd.constants;
 
+import com.ssd.mvd.annotations.MethodsAnnotations;
+
+import com.ssd.mvd.inspectors.StringOperations;
+import com.ssd.mvd.inspectors.TimeInspector;
+
+import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.driver.core.UDTValue;
+import com.datastax.driver.core.Row;
+
 public enum CassandraDataTypes {
+    ALL,
+
+    NONE,
+
+    BLOB,
+
     /*
     UTF8 encoded string
     */
-    TEXT,
+    TEXT {
+        @Override
+        public Object getEmptyValue () {
+            return "''";
+        }
 
-    INT,
+        @Override
+        public Object getCorrectValueFromRow (
+                final Row row,
+                final MethodsAnnotations methodsAnnotations
+        ) {
+            return row.getString( methodsAnnotations.name() );
+        }
+
+        @Override
+        public Object getCorrectValueFromRow (
+                final UDTValue udtValue,
+                final MethodsAnnotations methodsAnnotations
+        ) {
+            return udtValue.getString( methodsAnnotations.name() );
+        }
+    },
+
+    /*
+    An IP address, either IPv4 (4 bytes long) or IPv6 (16 bytes long).
+    Note that there is no inet constant, IP address should be input as strings.
+     */
+    INET,
+
+    /*
+    A blob (Binary Large OBject) data type represents a constant hexadecimal number defined as 0[xX](hex)+
+    where hex is a hexadecimal character, such as [0-9a-fA-F]. For example, 0xcafe.
+    The maximum theoretical size for a blob is 2 GB. The practical limit on blob size, however, is less than 1 MB.
+    A blob type is suitable for storing a small image or short string.
+    */
+    VARCHAR,
+
+    STATUS {
+        @Override
+        public Object getEmptyValue () {
+            return Status.NOT_AVAILABLE;
+        }
+
+        @Override
+        public Object getCorrectValueFromRow (
+                final Row row,
+                final MethodsAnnotations methodsAnnotations
+        ) {
+            return Status.valueOf( row.getString( methodsAnnotations.name() ) );
+        }
+
+        @Override
+        public Object getCorrectValueFromRow (
+                final UDTValue udtValue,
+                final MethodsAnnotations methodsAnnotations
+        ) {
+            return Status.valueOf( udtValue.getString( methodsAnnotations.name() ) );
+        }
+    },
+
+    TASK_TYPE {
+        @Override
+        public Object getEmptyValue () {
+            return StringOperations.EMPTY;
+        }
+    },
+
+    INT {
+        @Override
+        public Object getCorrectValueFromRow (
+                final Row row,
+                final MethodsAnnotations methodsAnnotations
+        ) {
+            return row.getInt( methodsAnnotations.name() );
+        }
+
+        @Override
+        public Object getEmptyValue () {
+            return 0;
+        }
+    },
+
     /*
     64-bit signed long
     */
-    BIGINT,
+    BIGINT {
+        @Override
+        public Object getCorrectValueFromRow(
+                final Row row,
+                final MethodsAnnotations methodsAnnotations
+        ) {
+            return row.getLong( methodsAnnotations.name() );
+        }
+
+        @Override
+        public Object getCorrectValueFromRow(
+                final UDTValue udtValue,
+                final MethodsAnnotations methodsAnnotations
+        ) {
+            return udtValue.getLong( methodsAnnotations.name() );
+
+        }
+
+        @Override
+        public Object getEmptyValue () {
+            return 0L;
+        }
+    },
+
     /*
     64-bit IEEE-754 floating point
     */
-    DOUBLE,
+    DOUBLE {
+        @Override
+        public Object getCorrectValueFromRow (
+                final Row row,
+                final MethodsAnnotations methodsAnnotations
+        ) {
+            return row.getDouble( methodsAnnotations.name() );
+        }
+
+        @Override
+        public Object getCorrectValueFromRow (
+                final UDTValue udtValue,
+                final MethodsAnnotations methodsAnnotations
+        ) {
+            return udtValue.getDouble( methodsAnnotations.name() );
+        }
+
+        @Override
+        public Object getEmptyValue () {
+            return 0.0;
+        }
+    },
+
     /*
     8-bit signed int
     */
-    TINYINT,
+    TINYINT {
+        @Override
+        public Object getCorrectValueFromRow (
+                final Row row,
+                final MethodsAnnotations methodsAnnotations
+        ) {
+            return row.getByte( methodsAnnotations.name() );
+        }
 
-    UUID,
-    /*
-    Either true or false
-    */
-    BOOLEAN,
+        @Override
+        public Object getCorrectValueFromRow (
+                final UDTValue udtValue,
+                final MethodsAnnotations methodsAnnotations
+        ) {
+            return udtValue.getByte( methodsAnnotations.name() );
+        }
+
+        @Override
+        public Object getEmptyValue () {
+            return Short.valueOf( "0" );
+        }
+    },
+
+    UUID {
+        @Override
+        public Object getEmptyValue () {
+            return UUIDs.timeBased();
+        }
+
+        @Override
+        public Object getCorrectValueFromRow (
+                final Row row,
+                final MethodsAnnotations methodsAnnotations
+        ) {
+            return row.getUUID( methodsAnnotations.name() );
+        }
+
+        @Override
+        public Object getCorrectValueFromRow (
+                final UDTValue udtValue,
+                final MethodsAnnotations methodsAnnotations
+        ) {
+            return udtValue.getUUID( methodsAnnotations.name() );
+        }
+    },
+
+    BOOLEAN {
+        @Override
+        public Object getEmptyValue () {
+            return false;
+        }
+
+        @Override
+        public Object getCorrectValueFromRow (
+                final Row row,
+                final MethodsAnnotations methodsAnnotations
+        ) {
+            return row.getBool( methodsAnnotations.name() );
+        }
+
+        @Override
+        public Object getCorrectValueFromRow (
+                final UDTValue udtValue,
+                final MethodsAnnotations methodsAnnotations
+        ) {
+            return udtValue.getBool( methodsAnnotations.name() );
+        }
+    },
+
     /*
     A timestamp (date and time) with millisecond precision.
     */
-    TIMESTAMP,
+    TIMESTAMP {
+        @Override
+        public Object getEmptyValue () {
+            return TimeInspector.newDate( 0L );
+        }
+
+        @Override
+        public Object getCorrectValueFromRow (
+                final Row row,
+                final MethodsAnnotations methodsAnnotations
+        ) {
+            return row.getTimestamp( methodsAnnotations.name() );
+        }
+
+        @Override
+        public Object getCorrectValueFromRow (
+                final UDTValue udtValue,
+                final MethodsAnnotations methodsAnnotations
+        ) {
+            return udtValue.getTimestamp( methodsAnnotations.name() );
+        }
+    },
 
     /*
     Collections are meant for storing/denormalizing relatively small amount of data.
@@ -65,7 +287,12 @@ public enum CassandraDataTypes {
         Removing one or multiple elements (if an element doesn’t exist, removing it is a no-op but no error is thrown):
             UPDATE images SET tags = tags - { 'cat' } WHERE name = 'cat.jpg';
      */
-    SET,
+    SET {
+        @Override
+        public Object getEmptyValue () {
+            return "{}";
+        }
+    },
 
     /*
     A map is a (sorted) set of key-value pairs, where keys are unique and the map is sorted by its keys.
@@ -80,14 +307,24 @@ public enum CassandraDataTypes {
 
     Note that for removing multiple elements in a map, you remove from it a set of keys.
      */
-    MAP,
+    MAP {
+        @Override
+        public Object getEmptyValue () {
+            return "{}";
+        }
+    },
 
     /*
     The append and prepend operations are not idempotent by nature. So in particular,
     if one of these operation timeout, then retrying the operation is not safe,
     and it may (or may not) lead to appending/prepending the value twice.
      */
-    LIST,
+    LIST {
+        @Override
+        public Object getEmptyValue () {
+            return "[]";
+        }
+    },
 
     TUPLE,
 
@@ -104,8 +341,6 @@ public enum CassandraDataTypes {
     Example:
         INSERT INTO RiderResults (rider, race, result)
         VALUES ('Christopher Froome', 'Tour de France', 89h4m48s);
-
-
 
     Duration columns cannot be used in a table’s PRIMARY KEY.
     This limitation is due to the fact that durations cannot be ordered.
@@ -163,5 +398,68 @@ public enum CassandraDataTypes {
         An important consequence is that if a counter update fails unexpectedly (timeout or loss of connection to the coordinator node),
         the client has no way to know if the update has been applied or not. In particular, replaying the update may or may not lead to an over count.
     */
-    COUNTER,
+    COUNTER;
+
+    public synchronized Object getEmptyValue () {
+        return null;
+    }
+
+    /*
+    для экземпляра Java класса конвертирует каждый его параметр,
+    в Cassandra подобный тип данных
+    */
+    public synchronized CassandraDataTypes getCorrectDataType ( final Class<?> type ) {
+        if ( type.equals( String.class ) || type.isEnum() ) {
+            return TEXT;
+        }
+        else if ( type.equals( java.util.UUID.class ) ) {
+            return UUID;
+        }
+        else if ( type.equals( long.class ) ) {
+            return BIGINT;
+        }
+        else if ( type.equals( int.class ) ) {
+            return INT;
+        }
+        else if ( type.equals( double.class ) ) {
+            return DOUBLE;
+        }
+        else if ( type.equals( java.util.Date.class ) ) {
+            return TIMESTAMP;
+        }
+        else if ( type.equals( byte.class ) ) {
+            return TINYINT;
+        }
+        else {
+            return BOOLEAN;
+        }
+    }
+
+    @SuppressWarnings(
+            value = """
+                    Принимает метод и объект ROW из БД и вызывает нужную константу
+                    """
+    )
+    public synchronized Object getCorrectValueFromRow (
+            final Row row,
+            final MethodsAnnotations methodsAnnotations
+    ) {
+        throw new IllegalArgumentException(
+                Errors.WRONG_TYPE_IN_ANNOTATION.translate( methodsAnnotations.name() )
+        );
+    }
+
+    @SuppressWarnings(
+            value = """
+                    Принимает метод и объект UdtValue из БД и вызывает нужную константу
+                    """
+    )
+    public synchronized Object getCorrectValueFromRow (
+            final UDTValue udtValue,
+            final MethodsAnnotations methodsAnnotations
+    ) {
+        throw new IllegalArgumentException(
+                Errors.WRONG_TYPE_IN_ANNOTATION.translate( methodsAnnotations.name() )
+        );
+    }
 }

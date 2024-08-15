@@ -1,4 +1,4 @@
-package com.ssd.mvd.entity.patrulDataSet;
+package com.ssd.mvd.entity.patrulDataSet.patrulSubClasses;
 
 import com.ssd.mvd.inspectors.CollectionsInspector;
 import com.ssd.mvd.entity.ConsumptionData;

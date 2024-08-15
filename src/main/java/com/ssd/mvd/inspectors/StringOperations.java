@@ -1,6 +1,6 @@
 package com.ssd.mvd.inspectors;
 
-import com.ssd.mvd.entity.patrulDataSet.PatrulFIOData;
+import com.ssd.mvd.entity.patrulDataSet.patrulSubClasses.PatrulFIOData;
 import com.ssd.mvd.constants.CassandraDataTypes;
 import com.ssd.mvd.constants.CassandraCommands;
 
@@ -28,20 +28,12 @@ public class StringOperations {
     принимает параметр для Cassandra, который является типом TEXТ,
     и добавляет в начало и конец апострафы
     */
-    protected final synchronized String joinWithAstrix (
-            final Object value
-    ) {
-        return "$$" + value + "$$";
-    }
-
-    /*
-    принимает параметр для Cassandra, который является типом TIMESTAMP,
-    и добавляет в начало и конец апострафы
-    */
-    protected final synchronized String joinWithAstrix (
-            final Date date
-    ) {
-        return "'" + date.toInstant() + "'";
+    protected final synchronized String joinWithAstrix ( final Object value ) {
+        /*
+        принимает параметр для Cassandra, который является типом TIMESTAMP,
+        и добавляет в начало и конец апострафы
+        */
+        return value instanceof Date ? "'" + ( (Date) value ).toInstant() + "'" : "$$" + value + "$$";
     }
 
     /*

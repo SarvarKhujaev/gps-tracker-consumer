@@ -1,4 +1,4 @@
-package com.ssd.mvd.entity.patrulDataSet;
+package com.ssd.mvd.entity.patrulDataSet.patrulSubClasses;
 
 import java.util.UUID;
 

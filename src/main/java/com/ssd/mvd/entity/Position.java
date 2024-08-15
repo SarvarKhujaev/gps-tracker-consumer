@@ -178,16 +178,6 @@ public final class Position
     private double longitudeOfTask;
 
     @Override
-    public CassandraTables getEntityKeyspaceName() {
-        return CassandraTables.TRACKERS;
-    }
-
-    @Override
-    public CassandraTables getEntityTableName() {
-        return CassandraTables.TRACKERS_LOCATION_TABLE;
-    }
-
-    @Override
     public String getEntityUpdateCommand () {
         return MessageFormat.format(
                 """
@@ -244,7 +234,7 @@ public final class Position
     @Override
     public String getSuccessMessage() {
         return String.join(
-                " ",
+                SPACE,
                 (
                         Inspector.trackerInfoMap.containsKey( this.getDeviceId() )
                                 ? "Kafka got patrul car:"

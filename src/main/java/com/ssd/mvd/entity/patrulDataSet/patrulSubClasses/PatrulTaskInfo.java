@@ -1,33 +1,48 @@
-package com.ssd.mvd.entity.patrulDataSet;
+package com.ssd.mvd.entity.patrulDataSet.patrulSubClasses;
 
 import java.util.Map;
 
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.UDTValue;
 
+import com.ssd.mvd.annotations.EntityAnnotations;
+import com.ssd.mvd.annotations.MethodsAnnotations;
+import com.ssd.mvd.constants.CassandraDataTypes;
 import com.ssd.mvd.constants.Status;
 import com.ssd.mvd.interfaces.ObjectCommonMethods;
 import com.ssd.mvd.inspectors.DataValidateInspector;
 
+@EntityAnnotations( name = "PatrulTaskInfo", isSubClass = true )
 public final class PatrulTaskInfo extends DataValidateInspector implements ObjectCommonMethods< PatrulTaskInfo > {
     public String getTaskId() {
         return this.taskId;
-    }
-
-    public void setTaskId( final String taskId ) {
-        this.taskId = taskId;
     }
 
     public Status getStatus() {
         return this.status;
     }
 
-    public void setStatus( final Status status ) {
-        this.status = status;
-    }
-
     public Map< String, String > getListOfTasks() {
         return this.listOfTasks;
+    }
+
+    @MethodsAnnotations(
+            name = "taskId",
+            withoutParams = false,
+            isReturnEntity = false
+    )
+    public void setTaskId( final String taskId ) {
+        this.taskId = taskId;
+    }
+
+    @MethodsAnnotations(
+            name = "status",
+            withoutParams = false,
+            isReturnEntity = false,
+            acceptEntityType = CassandraDataTypes.STATUS
+    )
+    public void setStatus( final Status status ) {
+        this.status = status;
     }
 
     public void setListOfTasks( final Map< String, String > listOfTasks ) {

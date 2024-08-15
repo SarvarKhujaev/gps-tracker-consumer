@@ -2,7 +2,7 @@ package com.ssd.mvd.inspectors;
 
 import com.ssd.mvd.entity.*;
 import com.ssd.mvd.entity.patrulDataSet.Patrul;
-import com.ssd.mvd.entity.patrulDataSet.PatrulFuelStatistics;
+import com.ssd.mvd.entity.patrulDataSet.patrulSubClasses.PatrulFuelStatistics;
 
 /*
 хранит instance на все объекты
