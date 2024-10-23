@@ -1,22 +1,25 @@
 package com.ssd.mvd.entity;
 
-import com.ssd.mvd.database.cassandraRegistry.CassandraConverter;
 import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
 import com.ssd.mvd.interfaces.KafkaEntitiesCommonMethods;
+
+import com.ssd.mvd.database.cassandraRegistry.CassandraConverter;
 import com.ssd.mvd.kafka.kafkaConfigs.KafkaTopics;
+
+import com.ssd.mvd.inspectors.DataValidateInspector;
+import com.ssd.mvd.inspectors.StringOperations;
+
 import com.ssd.mvd.constants.CassandraFunctions;
 import com.ssd.mvd.constants.CassandraCommands;
 import com.ssd.mvd.constants.CassandraTables;
 
+import com.datastax.driver.core.GettableData;
 import com.google.gson.annotations.Expose;
-import com.datastax.driver.core.Row;
 
 import java.text.MessageFormat;
 import java.util.UUID;
 
-public final class ReqCar
-        extends CassandraConverter
-        implements ObjectFromRowConvertInterface< ReqCar >, KafkaEntitiesCommonMethods {
+public final class ReqCar implements ObjectFromRowConvertInterface< ReqCar >, KafkaEntitiesCommonMethods {
     public UUID getPatrulId() {
         return this.patrulId;
     }
@@ -164,13 +167,15 @@ public final class ReqCar
     public ReqCar () {}
 
     @Override
+    @lombok.NonNull
     public ReqCar generate() {
         return new ReqCar();
     }
 
     @Override
-    public ReqCar generate( final Row row ) {
-        super.checkAndSetParams(
+    @lombok.NonNull
+    public ReqCar generate( @lombok.NonNull final GettableData row ) {
+        DataValidateInspector.checkAndSetParams(
                 row,
                 row1 -> {
                     this.setUuid( row.getUUID( "uuid" ) );
@@ -197,16 +202,13 @@ public final class ReqCar
     }
 
     @Override
+    @lombok.NonNull
     public CassandraTables getEntityTableName() {
         return CassandraTables.CARS;
     }
 
     @Override
-    public CassandraTables getEntityKeyspaceName() {
-        return CassandraTables.TABLETS;
-    }
-
-    @Override
+    @lombok.NonNull
     public String getEntityInsertCommand() {
         return MessageFormat.format(
                 """
@@ -228,8 +230,8 @@ public final class ReqCar
                         this.getEntityKeyspaceName(),
                         CassandraTables.PATRULS,
 
-                        super.joinWithAstrix( this.getGosNumber() ),
-                        super.joinWithAstrix( this.getVehicleType() ),
+                        StringOperations.joinWithAstrix( this.getGosNumber() ),
+                        StringOperations.joinWithAstrix( this.getVehicleType() ),
 
                         this.getUuid(),
                         this.getPatrulId()
@@ -248,18 +250,18 @@ public final class ReqCar
                         this.getEntityKeyspaceName(),
                         this.getEntityTableName(),
 
-                        super.getAllParamsNamesForClass.apply( ReqCar.class ),
+                        CassandraConverter.getAllParamsNamesForClass( ReqCar.class ),
 
                         CassandraFunctions.UUID,
 
                         this.getLustraId(),
                         this.getPatrulId(),
 
-                        super.joinWithAstrix( this.getGosNumber() ),
-                        super.joinWithAstrix( this.getTrackerId() ),
-                        super.joinWithAstrix( this.getVehicleType() ),
-                        super.joinWithAstrix( this.getCarImageLink() ),
-                        super.joinWithAstrix( this.getPatrulPassportSeries() ),
+                        StringOperations.joinWithAstrix( this.getGosNumber() ),
+                        StringOperations.joinWithAstrix( this.getTrackerId() ),
+                        StringOperations.joinWithAstrix( this.getVehicleType() ),
+                        StringOperations.joinWithAstrix( this.getCarImageLink() ),
+                        StringOperations.joinWithAstrix( this.getPatrulPassportSeries() ),
 
                         this.getSideNumber(),
                         this.getSimCardNumber(),
@@ -274,6 +276,7 @@ public final class ReqCar
     }
 
     @Override
+    @lombok.NonNull
     public String getEntityDeleteCommand() {
         return MessageFormat.format(
                 """
@@ -302,7 +305,7 @@ public final class ReqCar
                         CassandraTables.TRACKERS,
                         CassandraTables.TRACKERSID,
 
-                        super.joinWithAstrix( this.getTrackerId() )
+                        StringOperations.joinWithAstrix( this.getTrackerId() )
                 ),
 
                 CassandraCommands.APPLY_BATCH
@@ -310,6 +313,7 @@ public final class ReqCar
     }
 
     @Override
+    @lombok.NonNull
     public String getEntityUpdateCommand() {
         return MessageFormat.format(
                 """
@@ -329,11 +333,13 @@ public final class ReqCar
     }
 
     @Override
+    @lombok.NonNull
     public KafkaTopics getTopicName() {
         return KafkaTopics.NEW_CAR_TOPIC;
     }
 
     @Override
+    @lombok.NonNull
     public String getSuccessMessage() {
         return "Kafka got ReqCar: " + this.getTrackerId();
     }

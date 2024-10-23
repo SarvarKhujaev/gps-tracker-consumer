@@ -2,12 +2,15 @@ package com.ssd.mvd.entity;
 
 import com.ssd.mvd.interfaces.EntityToCassandraConverter;
 import com.ssd.mvd.interfaces.KafkaEntitiesCommonMethods;
+
 import com.ssd.mvd.kafka.kafkaConfigs.KafkaTopics;
 import com.ssd.mvd.entity.patrulDataSet.Patrul;
+
 import com.ssd.mvd.inspectors.StringOperations;
+import com.ssd.mvd.inspectors.Inspector;
+
 import com.ssd.mvd.constants.CassandraCommands;
 import com.ssd.mvd.constants.CassandraTables;
-import com.ssd.mvd.inspectors.Inspector;
 import com.ssd.mvd.constants.Status;
 
 import com.google.gson.annotations.Expose;
@@ -178,6 +181,7 @@ public final class Position
     private double longitudeOfTask;
 
     @Override
+    @lombok.NonNull
     public String getEntityUpdateCommand () {
         return MessageFormat.format(
                 """
@@ -190,8 +194,8 @@ public final class Position
                 CassandraTables.ESCORT,
                 CassandraTables.ESCORT_LOCATION,
 
-                super.joinWithAstrix( this.getDeviceId() ),
-                super.joinWithAstrix( this.getDeviceTime() ),
+                joinWithAstrix( this.getDeviceId() ),
+                joinWithAstrix( this.getDeviceTime() ),
 
                 this.getSpeed(),
                 this.getLongitude(),
@@ -200,6 +204,7 @@ public final class Position
     }
 
     @Override
+    @lombok.NonNull
     public String getEntityInsertCommand() {
         return MessageFormat.format(
                 """
@@ -212,8 +217,8 @@ public final class Position
                 this.getEntityKeyspaceName(),
                 this.getEntityTableName(),
 
-                super.joinWithAstrix( this.getDeviceId() ),
-                super.joinWithAstrix( this.getDeviceTime() ),
+                joinWithAstrix( this.getDeviceId() ),
+                joinWithAstrix( this.getDeviceTime() ),
 
                 String.join(
                         ", ",
@@ -225,6 +230,7 @@ public final class Position
     }
 
     @Override
+    @lombok.NonNull
     public KafkaTopics getTopicName() {
         return Inspector.trackerInfoMap.containsKey( this.getDeviceId() )
                 ? KafkaTopics.WEBSOCKET_SERVICE_TOPIC_FOR_ONLINE
@@ -232,6 +238,7 @@ public final class Position
     }
 
     @Override
+    @lombok.NonNull
     public String getSuccessMessage() {
         return String.join(
                 SPACE,

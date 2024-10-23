@@ -1,19 +1,38 @@
 package com.ssd.mvd.inspectors;
 
+import com.ssd.mvd.annotations.EntityConstructorAnnotation;
+
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.Calendar;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Date;
 
+import java.time.Duration;
+import java.time.Instant;
+
+@com.ssd.mvd.annotations.ImmutableEntityAnnotation
 public class TimeInspector extends CollectionsInspector {
-    protected TimeInspector () {}
+    protected TimeInspector () {
+        super( TimeInspector.class );
+    }
+
+    @EntityConstructorAnnotation( permission = DataValidateInspector.class )
+    protected <T extends UuidInspector> TimeInspector ( @lombok.NonNull final Class<T> instance ) {
+        super( TimeInspector.class );
+
+        AnnotationInspector.checkCallerPermission( instance, TimeInspector.class );
+        AnnotationInspector.checkAnnotationIsImmutable( TimeInspector.class );
+    }
+
+    protected final static AtomicReference< Calendar > end = EntitiesInstances.generateAtomicEntity( Calendar.getInstance() );
+    protected final static AtomicReference< Calendar > start = EntitiesInstances.generateAtomicEntity( Calendar.getInstance() );
 
     public final static int DAY_IN_SECOND = 86400;
     public final static long FIVE_HOURS = 5L * 60 * 60 * 1000;
 
     protected final static Date date = new Date( 1605006666774L );
+    protected final static Duration DURATION = Duration.ofMillis( 100 );
 
-    protected final synchronized Date newDate () {
+    public static synchronized Date newDate () {
         return new Date();
     }
 
@@ -27,7 +46,7 @@ public class TimeInspector extends CollectionsInspector {
         return Calendar.getInstance();
     }
 
-    protected final synchronized long getTimeDifference (
+    public static synchronized long getTimeDifference (
             final long timestamp,
             final Instant instant
     ) {

@@ -18,9 +18,9 @@ public final class CassandraTableRegistration extends StringOperations implement
         this.createAllTables();
     }
 
-    /*
-    Хранит все данные для создания новой таблицы в БД
-    */
+    @SuppressWarnings(
+            value = "Хранит все данные для создания новой таблицы в БД"
+    )
     private static class TableRegistration extends CassandraConverter {
         public CassandraTables getTableName() {
             return this.tableName;
@@ -72,7 +72,7 @@ public final class CassandraTableRegistration extends StringOperations implement
                 final Class<? extends EntityToCassandraConverter> object,
                 final String prefix
         ) {
-            this.convertedValue = super.convertClassToCassandra.apply( object );
+            this.convertedValue = super.convertClassToCassandra( object );
             this.tableName = tableName;
             this.keyspace = keyspace;
             this.prefix = prefix;
@@ -119,7 +119,7 @@ public final class CassandraTableRegistration extends StringOperations implement
                                 ),
                                 CassandraCommands.WITH_COMPRESSION.formatted( CassandraCompressionTypes.LZ4, 64 ),
                                 CassandraCommands.WITH_TTL.formatted( TimeInspector.DAY_IN_SECOND * 7 ),
-                                super.generateID()
+                                generateID()
                         )
                 )
         );
@@ -158,7 +158,7 @@ public final class CassandraTableRegistration extends StringOperations implement
                                 ),
                                 CassandraCommands.WITH_COMPRESSION.formatted( CassandraCompressionTypes.LZ4, 64 ),
                                 CassandraCommands.WITH_TTL.formatted( TimeInspector.DAY_IN_SECOND * 60 ),
-                                super.generateID()
+                                generateID()
                         )
                 )
         );
@@ -193,7 +193,7 @@ public final class CassandraTableRegistration extends StringOperations implement
                                 ),
                                 CassandraCommands.WITH_COMPRESSION.formatted( CassandraCompressionTypes.LZ4, 64 ),
                                 CassandraCommands.WITH_TTL.formatted( TimeInspector.DAY_IN_SECOND * 70 ),
-                                super.generateID()
+                                generateID()
                         )
                 )
         );
@@ -215,7 +215,7 @@ public final class CassandraTableRegistration extends StringOperations implement
                                 ),
                                 CassandraCommands.WITH_COMPRESSION.formatted( CassandraCompressionTypes.LZ4, 64 ),
                                 CassandraCommands.WITH_TTL.formatted( TimeInspector.DAY_IN_SECOND * 70 ),
-                                super.generateID()
+                                generateID()
                         )
                 )
         );
@@ -272,7 +272,7 @@ public final class CassandraTableRegistration extends StringOperations implement
                                 ),
                                 CassandraCommands.WITH_COMPRESSION.formatted( CassandraCompressionTypes.LZ4, 64 ),
                                 CassandraCommands.WITH_TTL.formatted( TimeInspector.DAY_IN_SECOND * 70 ),
-                                super.generateID()
+                                generateID()
                         )
                 )
         );
@@ -311,15 +311,13 @@ public final class CassandraTableRegistration extends StringOperations implement
                                 ),
                                 CassandraCommands.WITH_COMPRESSION.formatted( CassandraCompressionTypes.LZ4, 64 ),
                                 CassandraCommands.WITH_TTL.formatted( TimeInspector.DAY_IN_SECOND * 7 ),
-                                super.generateID()
+                                generateID()
                         )
                 )
         );
     }
 
-    /*
-    функция создает новые таблицы в БД
-    */
+    @SuppressWarnings( value = "функция создает новые таблицы в БД" )
     private void createTable (
             final TableRegistration tableRegistration
     ) {

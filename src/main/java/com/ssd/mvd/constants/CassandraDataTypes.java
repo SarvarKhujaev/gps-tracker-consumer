@@ -1,13 +1,17 @@
 package com.ssd.mvd.constants;
 
+import com.ssd.mvd.annotations.EntityCollectionParam;
 import com.ssd.mvd.annotations.MethodsAnnotations;
 
 import com.ssd.mvd.inspectors.StringOperations;
-import com.ssd.mvd.inspectors.TimeInspector;
+import com.ssd.mvd.inspectors.UuidInspector;
+import com.ssd.mvd.functions.CustomFunction;
 
-import com.datastax.driver.core.utils.UUIDs;
-import com.datastax.driver.core.UDTValue;
-import com.datastax.driver.core.Row;
+import org.apache.commons.lang3.Validate;
+
+import java.text.MessageFormat;
+import java.util.Date;
+import java.util.Map;
 
 public enum CassandraDataTypes {
     ALL,
@@ -16,313 +20,392 @@ public enum CassandraDataTypes {
 
     BLOB,
 
-    /*
-    UTF8 encoded string
-    */
+    @SuppressWarnings( value = "UTF8 encoded string" )
     TEXT {
         @Override
-        public Object getEmptyValue () {
-            return "''";
+        @lombok.NonNull
+        @lombok.Synchronized
+        public String getEmptyValue () {
+            return StringOperations.EMPTY;
         }
 
         @Override
-        public Object getCorrectValueFromRow (
-                final Row row,
-                final MethodsAnnotations methodsAnnotations
+        @lombok.NonNull
+        public String getCorrectValueFromRow (
+                @lombok.NonNull final com.datastax.driver.core.GettableData gettableData,
+                @lombok.NonNull final MethodsAnnotations methodsAnnotations
         ) {
-            return row.getString( methodsAnnotations.name() );
-        }
-
-        @Override
-        public Object getCorrectValueFromRow (
-                final UDTValue udtValue,
-                final MethodsAnnotations methodsAnnotations
-        ) {
-            return udtValue.getString( methodsAnnotations.name() );
+            return gettableData.getString( methodsAnnotations.name() );
         }
     },
 
-    /*
-    An IP address, either IPv4 (4 bytes long) or IPv6 (16 bytes long).
-    Note that there is no inet constant, IP address should be input as strings.
-     */
-    INET,
+    @SuppressWarnings(
+            value = """
+                    An IP address, either IPv4 (4 bytes long) or IPv6 (16 bytes long).
+                    Note that there is no inet constant, IP address should be input as strings.
+                    """
+    )
+    INET {
+        @Override
+        @lombok.NonNull
+        @lombok.Synchronized
+        public String getEmptyValue () {
+            return "'192.168.1.100'";
+        }
 
-    /*
-    A blob (Binary Large OBject) data type represents a constant hexadecimal number defined as 0[xX](hex)+
-    where hex is a hexadecimal character, such as [0-9a-fA-F]. For example, 0xcafe.
-    The maximum theoretical size for a blob is 2 GB. The practical limit on blob size, however, is less than 1 MB.
-    A blob type is suitable for storing a small image or short string.
-    */
+        @Override
+        @lombok.NonNull
+        public String getCorrectValueFromRow (
+                @lombok.NonNull final com.datastax.driver.core.GettableData gettableData,
+                @lombok.NonNull final MethodsAnnotations methodsAnnotations
+        ) {
+            return gettableData.getInet( methodsAnnotations.name() ).toString();
+        }
+    },
+
+    @SuppressWarnings(
+            value = """
+                    A blob (Binary Large OBject) data type represents a constant hexadecimal number defined as 0[xX](hex)+
+                    where hex is a hexadecimal character, such as [0-9a-fA-F]. For example, 0xcafe.
+                    The maximum theoretical size for a blob is 2 GB. The practical limit on blob size, however, is less than 1 MB.
+                    A blob type is suitable for storing a small image or short string.
+                    """
+    )
     VARCHAR,
 
     STATUS {
         @Override
-        public Object getEmptyValue () {
+        @lombok.NonNull
+        @lombok.Synchronized
+        public Status getEmptyValue () {
             return Status.NOT_AVAILABLE;
         }
 
         @Override
-        public Object getCorrectValueFromRow (
-                final Row row,
-                final MethodsAnnotations methodsAnnotations
+        @lombok.NonNull
+        public Status getCorrectValueFromRow (
+                @lombok.NonNull final com.datastax.driver.core.GettableData gettableData,
+                @lombok.NonNull final MethodsAnnotations methodsAnnotations
         ) {
-            return Status.valueOf( row.getString( methodsAnnotations.name() ) );
+            return Status.valueOf( gettableData.getString( methodsAnnotations.name() ) );
         }
 
         @Override
-        public Object getCorrectValueFromRow (
-                final UDTValue udtValue,
-                final MethodsAnnotations methodsAnnotations
-        ) {
-            return Status.valueOf( udtValue.getString( methodsAnnotations.name() ) );
+        @lombok.NonNull
+        public synchronized CustomFunction< Status, Boolean > validateDataType () {
+            return value -> true;
         }
     },
 
-    TASK_TYPE {
-        @Override
-        public Object getEmptyValue () {
-            return StringOperations.EMPTY;
-        }
-    },
+    TASK_TYPE,
 
     INT {
         @Override
-        public Object getCorrectValueFromRow (
-                final Row row,
-                final MethodsAnnotations methodsAnnotations
+        @lombok.NonNull
+        public Integer getCorrectValueFromRow (
+                @lombok.NonNull final com.datastax.driver.core.GettableData gettableData,
+                @lombok.NonNull final MethodsAnnotations methodsAnnotations
         ) {
-            return row.getInt( methodsAnnotations.name() );
+            return gettableData.getInt( methodsAnnotations.name() );
         }
 
         @Override
-        public Object getEmptyValue () {
+        @lombok.NonNull
+        @lombok.Synchronized
+        public Integer getEmptyValue () {
             return 0;
         }
+
+        @Override
+        @lombok.NonNull
+        public synchronized CustomFunction< Integer, Boolean > validateDataType () {
+            return value -> value >= 0;
+        }
     },
 
-    /*
-    64-bit signed long
-    */
     BIGINT {
         @Override
-        public Object getCorrectValueFromRow(
-                final Row row,
-                final MethodsAnnotations methodsAnnotations
+        @lombok.NonNull
+        public Long getCorrectValueFromRow (
+                @lombok.NonNull final com.datastax.driver.core.GettableData gettableData,
+                @lombok.NonNull final MethodsAnnotations methodsAnnotations
         ) {
-            return row.getLong( methodsAnnotations.name() );
+            return gettableData.getLong( methodsAnnotations.name() );
         }
 
         @Override
-        public Object getCorrectValueFromRow(
-                final UDTValue udtValue,
-                final MethodsAnnotations methodsAnnotations
-        ) {
-            return udtValue.getLong( methodsAnnotations.name() );
-
-        }
-
-        @Override
-        public Object getEmptyValue () {
+        @lombok.NonNull
+        @lombok.Synchronized
+        public Long getEmptyValue () {
             return 0L;
         }
+
+        @Override
+        @lombok.NonNull
+        public synchronized CustomFunction< Long, Boolean > validateDataType () {
+            return value -> value >= 0L;
+        }
     },
 
-    /*
-    64-bit IEEE-754 floating point
-    */
+    @SuppressWarnings( value = "64-bit IEEE-754 floating point" )
     DOUBLE {
         @Override
-        public Object getCorrectValueFromRow (
-                final Row row,
-                final MethodsAnnotations methodsAnnotations
+        @lombok.NonNull
+        public Double getCorrectValueFromRow (
+                @lombok.NonNull final com.datastax.driver.core.GettableData gettableData,
+                @lombok.NonNull final MethodsAnnotations methodsAnnotations
         ) {
-            return row.getDouble( methodsAnnotations.name() );
+            return gettableData.getDouble( methodsAnnotations.name() );
         }
 
         @Override
-        public Object getCorrectValueFromRow (
-                final UDTValue udtValue,
-                final MethodsAnnotations methodsAnnotations
-        ) {
-            return udtValue.getDouble( methodsAnnotations.name() );
-        }
-
-        @Override
-        public Object getEmptyValue () {
+        @lombok.NonNull
+        @lombok.Synchronized
+        public Double getEmptyValue () {
             return 0.0;
+        }
+
+        @Override
+        @lombok.NonNull
+        public synchronized CustomFunction< Double, Boolean > validateDataType () {
+            return value -> value >= 0.0;
         }
     },
 
-    /*
-    8-bit signed int
-    */
+    @SuppressWarnings( value = "8-bit signed int" )
     TINYINT {
         @Override
-        public Object getCorrectValueFromRow (
-                final Row row,
-                final MethodsAnnotations methodsAnnotations
+        @lombok.NonNull
+        public Byte getCorrectValueFromRow (
+                @lombok.NonNull final com.datastax.driver.core.GettableData gettableData,
+                @lombok.NonNull final MethodsAnnotations methodsAnnotations
         ) {
-            return row.getByte( methodsAnnotations.name() );
+            return gettableData.getByte( methodsAnnotations.name() );
         }
 
         @Override
-        public Object getCorrectValueFromRow (
-                final UDTValue udtValue,
-                final MethodsAnnotations methodsAnnotations
-        ) {
-            return udtValue.getByte( methodsAnnotations.name() );
-        }
-
-        @Override
-        public Object getEmptyValue () {
+        @lombok.NonNull
+        @lombok.Synchronized
+        public Short getEmptyValue () {
             return Short.valueOf( "0" );
+        }
+
+        @Override
+        @lombok.NonNull
+        public synchronized CustomFunction< Short, Boolean > validateDataType () {
+            return value -> value >= (short) 0;
         }
     },
 
     UUID {
         @Override
-        public Object getEmptyValue () {
-            return UUIDs.timeBased();
+        @lombok.NonNull
+        @lombok.Synchronized
+        public java.util.UUID getEmptyValue () {
+            return UuidInspector.generateTimeBased();
         }
 
         @Override
-        public Object getCorrectValueFromRow (
-                final Row row,
-                final MethodsAnnotations methodsAnnotations
+        @lombok.NonNull
+        public java.util.UUID getCorrectValueFromRow (
+                @lombok.NonNull final com.datastax.driver.core.GettableData gettableData,
+                @lombok.NonNull final MethodsAnnotations methodsAnnotations
         ) {
-            return row.getUUID( methodsAnnotations.name() );
-        }
-
-        @Override
-        public Object getCorrectValueFromRow (
-                final UDTValue udtValue,
-                final MethodsAnnotations methodsAnnotations
-        ) {
-            return udtValue.getUUID( methodsAnnotations.name() );
+            return gettableData.getUUID( methodsAnnotations.name() );
         }
     },
 
     BOOLEAN {
         @Override
-        public Object getEmptyValue () {
+        @lombok.NonNull
+        @lombok.Synchronized
+        public Boolean getEmptyValue () {
             return false;
         }
 
         @Override
-        public Object getCorrectValueFromRow (
-                final Row row,
-                final MethodsAnnotations methodsAnnotations
+        @lombok.NonNull
+        public Boolean getCorrectValueFromRow (
+                @lombok.NonNull final com.datastax.driver.core.GettableData gettableData,
+                @lombok.NonNull final MethodsAnnotations methodsAnnotations
         ) {
-            return row.getBool( methodsAnnotations.name() );
-        }
-
-        @Override
-        public Object getCorrectValueFromRow (
-                final UDTValue udtValue,
-                final MethodsAnnotations methodsAnnotations
-        ) {
-            return udtValue.getBool( methodsAnnotations.name() );
+            return gettableData.getBool( methodsAnnotations.name() );
         }
     },
 
-    /*
-    A timestamp (date and time) with millisecond precision.
-    */
+    @SuppressWarnings(
+            value = "A timestamp (date and time) with millisecond precision."
+    )
     TIMESTAMP {
         @Override
-        public Object getEmptyValue () {
-            return TimeInspector.newDate( 0L );
+        @lombok.NonNull
+        @lombok.Synchronized
+        public Date getEmptyValue () {
+            return new Date( 0L );
         }
 
         @Override
-        public Object getCorrectValueFromRow (
-                final Row row,
-                final MethodsAnnotations methodsAnnotations
+        @lombok.NonNull
+        public Date getCorrectValueFromRow (
+                @lombok.NonNull final com.datastax.driver.core.GettableData gettableData,
+                @lombok.NonNull final MethodsAnnotations methodsAnnotations
         ) {
-            return row.getTimestamp( methodsAnnotations.name() );
-        }
-
-        @Override
-        public Object getCorrectValueFromRow (
-                final UDTValue udtValue,
-                final MethodsAnnotations methodsAnnotations
-        ) {
-            return udtValue.getTimestamp( methodsAnnotations.name() );
+            return gettableData.getTimestamp( methodsAnnotations.name() );
         }
     },
 
-    /*
-    Collections are meant for storing/denormalizing relatively small amount of data.
-    They work well for things like “the phone numbers of a given user”, “labels applied to an email”, etc.
-    But when items are expected to grow unbounded (“all messages sent by a user”, “events registered by a sensor”),
-    then collections are not appropriate and a specific table (with clustering columns) should be used.
-    Concretely, (non-frozen) collections have the following noteworthy characteristics and limitations:
+    @SuppressWarnings(
+            value = """
+                    Collections are meant for storing/denormalizing relatively small amount of data.
+                    They work well for things like “the phone numbers of a given user”, “labels applied to an email”, etc.
+                    But when items are expected to grow unbounded (“all messages sent by a user”, “events registered by a sensor”),
+                    then collections are not appropriate and a specific table (with clustering columns) should be used.
+                    Concretely, (non-frozen) collections have the following noteworthy characteristics and limitations:
+                                    
+                        Individual collections are not indexed internally.
+                        Which means that even to access a single element of a collection,
+                        the while collection has to be read (and reading one is not paged internally).
+                                    
+                        While insertion operations on sets and maps never incur a read-before-write internally, some operations on lists do.
+                        Further, some lists operations are not idempotent by nature (see the section on lists below for details),
+                        making their retry in case of timeout problematic. It is thus advised to prefer sets to lists when possible.
+                                    
+                    Please note that while some of those limitations may or may not be removed/improved upon in the future,
+                    it is an antipattern to use a (single) collection to store large amounts of data
 
-        Individual collections are not indexed internally.
-        Which means that even to access a single element of a collection,
-        the while collection has to be read (and reading one is not paged internally).
-
-        While insertion operations on sets and maps never incur a read-before-write internally, some operations on lists do.
-        Further, some lists operations are not idempotent by nature (see the section on lists below for details),
-        making their retry in case of timeout problematic. It is thus advised to prefer sets to lists when possible.
-
-    Please note that while some of those limitations may or may not be removed/improved upon in the future,
-    it is an antipattern to use a (single) collection to store large amounts of data
-    */
-
-    /*
-    A set is a (sorted) collection of unique values.
-
-    Examples:
-        INSERT INTO images (name, owner, tags)
-        VALUES ('cat.jpg', 'jsmith', { 'pet', 'cute' });
-
-        // Replace the existing set entirely
-        UPDATE images SET tags = { 'kitten', 'cat', 'lol' } WHERE name = 'cat.jpg';
-
-        Adding one or multiple elements (as this is a set, inserting an already existing element is a no-op):
-            UPDATE images SET tags = tags + { 'gray', 'cuddly' } WHERE name = 'cat.jpg';
-
-        Removing one or multiple elements (if an element doesn’t exist, removing it is a no-op but no error is thrown):
-            UPDATE images SET tags = tags - { 'cat' } WHERE name = 'cat.jpg';
-     */
+                    A set is a (sorted) collection of unique values.
+                                        
+                    Examples:
+                        INSERT INTO images (name, owner, tags)
+                        VALUES ('cat.jpg', 'jsmith', { 'pet', 'cute' });
+                                    
+                        // Replace the existing set entirely
+                        UPDATE images SET tags = { 'kitten', 'cat', 'lol' } WHERE name = 'cat.jpg';
+                                    
+                        Adding one or multiple elements (as this is a set, inserting an already existing element is a no-op):
+                            UPDATE images SET tags = tags + { 'gray', 'cuddly' } WHERE name = 'cat.jpg';
+                                    
+                        Removing one or multiple elements (if an element doesn’t exist, removing it is a no-op but no error is thrown):
+                            UPDATE images SET tags = tags - { 'cat' } WHERE name = 'cat.jpg';
+                    """
+    )
     SET {
         @Override
-        public Object getEmptyValue () {
+        @lombok.NonNull
+        @lombok.Synchronized
+        public String getEmptyValue () {
             return "{}";
+        }
+
+        @lombok.NonNull
+        @lombok.Synchronized
+        @SuppressWarnings(
+                value = """
+                    конвертирует коллекцию в String
+                    для создания таблицы с коллекцией
+                    Используется для колллекций List, Map, Set
+                    
+                    По дефолту берется MAP
+                    """
+        )
+        public synchronized String convertCollectionTypeToString (
+                @lombok.NonNull EntityCollectionParam entityCollectionParam
+        ) {
+            if ( entityCollectionParam.collectionContainingType().length != 1 ) {
+                throw new IllegalArgumentException(
+                        Errors.WRONG_COLLECTION_TYPES_NUMBER.translate(
+                                "ru",
+                                entityCollectionParam.name(),
+                                entityCollectionParam.collectionDataType().name(),
+                                entityCollectionParam.collectionContainingType().length,
+                                1
+                        )
+                );
+            }
+
+            return MessageFormat.format(
+                    "{0}< {1} >",
+                    SET,
+                    entityCollectionParam.collectionContainingType()[0]
+            );
         }
     },
 
-    /*
-    A map is a (sorted) set of key-value pairs, where keys are unique and the map is sorted by its keys.
-
-    Updating or inserting one or more elements:
-        UPDATE users SET favs['author'] = 'Ed Poe' WHERE id = 'jsmith';
-        UPDATE users SET favs = favs + { 'movie' : 'Cassablanca', 'band' : 'ZZ Top' } WHERE id = 'jsmith';
-
-    Removing one or more element (if an element doesn’t exist, removing it is a no-op but no error is thrown):
-        DELETE favs['author'] FROM users WHERE id = 'jsmith';
-        UPDATE users SET favs = favs - { 'movie', 'band'} WHERE id = 'jsmith';
-
-    Note that for removing multiple elements in a map, you remove from it a set of keys.
-     */
+    @SuppressWarnings(
+            value = """
+                    A map is a (sorted) set of key-value pairs, where keys are unique and the map is sorted by its keys.
+                                        
+                    Updating or inserting one or more elements:
+                        UPDATE users SET favs['author'] = 'Ed Poe' WHERE id = 'jsmith';
+                        UPDATE users SET favs = favs + { 'movie' : 'Cassablanca', 'band' : 'ZZ Top' } WHERE id = 'jsmith';
+                                    
+                    Removing one or more element (if an element doesn’t exist, removing it is a no-op but no error is thrown):
+                        DELETE favs['author'] FROM users WHERE id = 'jsmith';
+                        UPDATE users SET favs = favs - { 'movie', 'band'} WHERE id = 'jsmith';
+                                    
+                    Note that for removing multiple elements in a map, you remove from it a set of keys.
+                    """
+    )
     MAP {
         @Override
-        public Object getEmptyValue () {
+        @lombok.NonNull
+        @lombok.Synchronized
+        public String getEmptyValue () {
             return "{}";
         }
     },
 
-    /*
-    The append and prepend operations are not idempotent by nature. So in particular,
-    if one of these operation timeout, then retrying the operation is not safe,
-    and it may (or may not) lead to appending/prepending the value twice.
-     */
+    @SuppressWarnings(
+            value = """
+                    The append and prepend operations are not idempotent by nature. So in particular,
+                    if one of these operation timeout, then retrying the operation is not safe,
+                    and it may (or may not) lead to appending/prepending the value twice.
+                    """
+    )
     LIST {
         @Override
-        public Object getEmptyValue () {
+        @lombok.NonNull
+        @lombok.Synchronized
+        public String getEmptyValue () {
             return "[]";
+        }
+
+        @lombok.NonNull
+        @lombok.Synchronized
+        @SuppressWarnings(
+                value = """
+                    конвертирует коллекцию в String
+                    для создания таблицы с коллекцией
+                    Используется для колллекций List
+                    """
+        )
+        public synchronized String convertCollectionTypeToString (
+                @lombok.NonNull EntityCollectionParam entityCollectionParam
+        ) {
+            if ( entityCollectionParam.collectionContainingType().length != 1 ) {
+                throw new IllegalArgumentException(
+                        Errors.WRONG_COLLECTION_TYPES_NUMBER.translate(
+                                "ru",
+                                entityCollectionParam.name(),
+                                entityCollectionParam.collectionDataType().name(),
+                                entityCollectionParam.collectionContainingType().length,
+                                1
+                        )
+                );
+            }
+
+            return entityCollectionParam.isFrozen()
+                    ? MessageFormat.format(
+                    "{0} < {1}< {2} > >",
+                    FROZEN,
+                    LIST,
+                    entityCollectionParam.collectionContainingType()[0]
+            )
+                    : MessageFormat.format(
+                    "{0}< {1} >",
+                    LIST,
+                    entityCollectionParam.collectionContainingType()[0]
+            );
         }
     },
 
@@ -375,6 +458,11 @@ public enum CassandraDataTypes {
     */
     TIMEUUID,
 
+    CAMERA_LIST,
+    POINTS_ENTITY,
+    POSITION_INFO,
+    POLYGON_ENTITY,
+
     /*
     Counter column (64-bit signed value).
 
@@ -400,14 +488,21 @@ public enum CassandraDataTypes {
     */
     COUNTER;
 
-    public synchronized Object getEmptyValue () {
+    @lombok.NonNull
+    @lombok.Synchronized
+    public synchronized <R> R getEmptyValue () {
         return null;
     }
 
-    /*
-    для экземпляра Java класса конвертирует каждый его параметр,
-    в Cassandra подобный тип данных
-    */
+    @SuppressWarnings(
+            value = """
+                    для экземпляра Java класса конвертирует каждый его параметр,
+                    в Cassandra подобный тип данных
+                    """
+    )
+    @lombok.NonNull
+    @lombok.Synchronized
+    @org.jetbrains.annotations.Contract( value = "_ -> _" )
     public synchronized CassandraDataTypes getCorrectDataType ( final Class<?> type ) {
         if ( type.equals( String.class ) || type.isEnum() ) {
             return TEXT;
@@ -430,23 +525,18 @@ public enum CassandraDataTypes {
         else if ( type.equals( byte.class ) ) {
             return TINYINT;
         }
-        else {
+        else if ( type.equals( boolean.class ) ) {
             return BOOLEAN;
         }
-    }
-
-    @SuppressWarnings(
-            value = """
-                    Принимает метод и объект ROW из БД и вызывает нужную константу
-                    """
-    )
-    public synchronized Object getCorrectValueFromRow (
-            final Row row,
-            final MethodsAnnotations methodsAnnotations
-    ) {
-        throw new IllegalArgumentException(
-                Errors.WRONG_TYPE_IN_ANNOTATION.translate( methodsAnnotations.name() )
-        );
+        else if ( type.equals( short.class ) ) {
+            return TINYINT;
+        }
+        else if ( type.equals( Map.class ) ) {
+            return MAP;
+        }
+        else {
+            return LIST;
+        }
     }
 
     @SuppressWarnings(
@@ -454,12 +544,65 @@ public enum CassandraDataTypes {
                     Принимает метод и объект UdtValue из БД и вызывает нужную константу
                     """
     )
-    public synchronized Object getCorrectValueFromRow (
-            final UDTValue udtValue,
-            final MethodsAnnotations methodsAnnotations
+    @lombok.NonNull
+    @lombok.Synchronized
+    @org.jetbrains.annotations.Contract( value = "_, _ -> fail" )
+    public synchronized <R> R getCorrectValueFromRow (
+            @lombok.NonNull final com.datastax.driver.core.GettableData gettableData,
+            @lombok.NonNull final MethodsAnnotations methodsAnnotations
     ) {
         throw new IllegalArgumentException(
                 Errors.WRONG_TYPE_IN_ANNOTATION.translate( methodsAnnotations.name() )
         );
+    }
+
+    @lombok.NonNull
+    @lombok.Synchronized
+    public synchronized <R> CustomFunction< R, Boolean > validateDataType () {
+        return value -> !String.valueOf( value ).isBlank();
+    }
+
+    @lombok.NonNull
+    @lombok.Synchronized
+    @SuppressWarnings(
+            value = """
+                    конвертирует коллекцию в String
+                    для создания таблицы с коллекцией
+                    Используется для колллекций List, Map, Set
+                    
+                    По дефолту берется MAP
+                    """
+    )
+    @org.jetbrains.annotations.Contract( value = "_ -> _" )
+    public synchronized String convertCollectionTypeToString (
+            @lombok.NonNull EntityCollectionParam entityCollectionParam
+    ) {
+        Validate.isTrue(
+                entityCollectionParam.collectionContainingType().length == 2,
+                Errors.WRONG_COLLECTION_TYPES_NUMBER.translate(
+                        "ru",
+                        entityCollectionParam.name(),
+                        entityCollectionParam.collectionDataType().name(),
+                        entityCollectionParam.collectionContainingType().length,
+                        2
+                )
+        );
+
+        return entityCollectionParam.isFrozen()
+                ? MessageFormat.format(
+                "{0} < {1}< {2}, {3} > >",
+                        FROZEN,
+                        MAP,
+
+                        entityCollectionParam.collectionContainingType()[0],
+                        entityCollectionParam.collectionContainingType()[1]
+                )
+                : MessageFormat.format(
+                        "{0}< {1}, {2} >",
+                        MAP,
+
+                        entityCollectionParam.collectionContainingType()[0],
+                        entityCollectionParam.collectionContainingType()[1]
+                );
     }
 }

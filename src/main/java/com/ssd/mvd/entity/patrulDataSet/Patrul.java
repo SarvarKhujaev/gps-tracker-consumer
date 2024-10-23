@@ -2,14 +2,16 @@ package com.ssd.mvd.entity.patrulDataSet;
 
 import com.ssd.mvd.database.cassandraRegistry.CassandraConverter;
 import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
+import com.ssd.mvd.annotations.*;
+
 import com.ssd.mvd.entity.patrulDataSet.patrulSubClasses.*;
+import com.ssd.mvd.entity.TupleOfCar;
+
 import com.ssd.mvd.constants.CassandraDataTypes;
 import com.ssd.mvd.constants.CassandraCommands;
 import com.ssd.mvd.constants.CassandraTables;
-import com.ssd.mvd.entity.TupleOfCar;
-import com.ssd.mvd.annotations.*;
 
-import com.datastax.driver.core.Row;
+import com.datastax.driver.core.GettableData;
 
 import java.text.MessageFormat;
 import java.util.UUID;
@@ -183,7 +185,6 @@ public final class Patrul extends CassandraConverter implements ObjectFromRowCon
         return this.patrulUniqueValues;
     }
 
-    // уникальное ID патрульного
     @FieldAnnotation( name = "uuid", mightBeNull = false )
     private UUID uuid;
 
@@ -223,9 +224,6 @@ public final class Patrul extends CassandraConverter implements ObjectFromRowCon
     @FieldAnnotation( name = "patrulUniqueValues", mightBeNull = false, isInteriorObject = true )
     private PatrulUniqueValues patrulUniqueValues;
 
-    /*
-        соединяем патрульного с Эскортом
-    */
     public void linkWithTupleOfCar ( final TupleOfCar tupleOfCar ) {
         this.getPatrulUniqueValues().setUuidForEscortCar( tupleOfCar.getUuid() );
         this.getPatrulCarInfo().setCarNumber( tupleOfCar );
@@ -234,23 +232,21 @@ public final class Patrul extends CassandraConverter implements ObjectFromRowCon
     public Patrul () {}
 
     @Override
+    @lombok.NonNull
     public CassandraTables getEntityTableName () {
         return CassandraTables.PATRULS;
     }
 
     @Override
-    public CassandraTables getEntityKeyspaceName () {
-        return CassandraTables.TABLETS;
-    }
-
-    @Override
+    @lombok.NonNull
     public Patrul generate() {
         return new Patrul();
     }
 
     @Override
-    public Patrul generate( final Row row ) {
-        super.checkAndSetParams(
+    @lombok.NonNull
+    public Patrul generate( @lombok.NonNull final GettableData row ) {
+        checkAndSetParams(
                 row,
                 row1 -> {
                     this.setUuid( row.getUUID( "uuid" ) );
@@ -279,6 +275,7 @@ public final class Patrul extends CassandraConverter implements ObjectFromRowCon
     }
 
     @Override
+    @lombok.NonNull
     public String getEntityUpdateCommand() {
         return MessageFormat.format(
                 """
@@ -294,8 +291,8 @@ public final class Patrul extends CassandraConverter implements ObjectFromRowCon
                 this.getEntityTableName(),
 
                 this.getPatrulUniqueValues().getUuidForEscortCar(),
-                super.joinWithAstrix( this.getPatrulCarInfo().getCarType() ),
-                super.joinWithAstrix( this.getPatrulCarInfo().getCarNumber() ),
+                joinWithAstrix( this.getPatrulCarInfo().getCarType() ),
+                joinWithAstrix( this.getPatrulCarInfo().getCarNumber() ),
                 this.getUuid()
         );
     }

@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import com.ssd.mvd.annotations.EntityConstructorAnnotation;
 import com.ssd.mvd.entity.Point;
 import com.ssd.mvd.entity.ReqCar;
 import com.ssd.mvd.entity.Request;
@@ -18,8 +19,19 @@ import com.ssd.mvd.entity.patrulDataSet.Patrul;
 import com.ssd.mvd.database.CassandraDataControl;
 import com.ssd.mvd.database.CassandraDataControlForEscort;
 
+@com.ssd.mvd.annotations.ImmutableEntityAnnotation
 public class DataValidateInspector extends TimeInspector {
-    protected DataValidateInspector () {}
+    protected DataValidateInspector () {
+        super( DataValidateInspector.class );
+    }
+
+    @EntityConstructorAnnotation( permission = Inspector.class )
+    protected <T extends UuidInspector> DataValidateInspector ( @lombok.NonNull final Class<T> instance ) {
+        super( DataValidateInspector.class );
+
+        AnnotationInspector.checkCallerPermission( instance, DataValidateInspector.class );
+        AnnotationInspector.checkAnnotationIsImmutable( DataValidateInspector.class );
+    }
 
     private static final double P = PI / 180;
     private final static DataValidateInspector DATA_VALIDATE_INSPECTOR = new DataValidateInspector();
@@ -51,7 +63,7 @@ public class DataValidateInspector extends TimeInspector {
         return request.getStartTime() == null && request.getEndTime() == null;
     }
 
-    protected final synchronized boolean check (
+    public static synchronized boolean check (
             final Position position
     ) {
         return position.getLatitude() > 0
@@ -113,17 +125,17 @@ public class DataValidateInspector extends TimeInspector {
         return CassandraDataControlForEscort
                 .getInstance()
                 .getRowFromTabletsKeyspace(
-                        EntitiesInstances.TUPLE_OF_CAR,
+                        EntitiesInstances.TUPLE_OF_CAR.get(),
                         "gosnumber",
                         carNumber
-                ) == null
+                ).get() == null
                 && CassandraDataControl
                     .getInstance()
                     .getRowFromTabletsKeyspace(
-                            EntitiesInstances.REQ_CAR,
+                            EntitiesInstances.REQ_CAR.get(),
                             "gosnumber",
                             carNumber
-                    ) == null;
+                    ).get() == null;
     }
 
     protected final synchronized boolean checkParams (
@@ -152,29 +164,45 @@ public class DataValidateInspector extends TimeInspector {
         };
     }
 
-    /*
-    принимает запись из БД
-    проверяет что запись не пуста
-    и заполняет параметры объекта по заданной логике
-    */
-    protected final synchronized <T> void checkAndSetParams (
-            final T object,
-            final Consumer< T > customConsumer
+    @lombok.Synchronized
+    @org.jetbrains.annotations.Contract( value = "_ -> !null" )
+    public static synchronized <T> Optional<T> getOptional (
+            @com.typesafe.config.Optional final T object
     ) {
-        Optional.ofNullable( object ).ifPresent( customConsumer );
+        return Optional.ofNullable( object );
     }
 
-    /*
-    получает в параметрах название параметра из файла application.yaml
-    проверят что context внутри main класса GpsTabletsServiceApplication  инициализирован
-    и среди параметров сервиса сузествует переданный параметр
-    */
-    protected final synchronized int checkContextOrReturnDefaultValue (
-            final String paramName,
+    @SuppressWarnings(
+            value = """
+                    принимает запись из БД
+                    проверяет что запись не пуста
+                    и заполняет параметры объекта по заданной логике
+                    """
+    )
+    @lombok.Synchronized
+    @org.jetbrains.annotations.Contract( value = "_, _ -> _" )
+    public static synchronized <T> void checkAndSetParams (
+            final T object,
+            @lombok.NonNull final Consumer< T > customConsumer
+    ) {
+        getOptional( object ).ifPresent( customConsumer );
+    }
+
+    @SuppressWarnings(
+            value = """
+                    получает в параметрах название параметра из файла application.yaml
+                    проверят что context внутри main класса GpsTabletsServiceApplication  инициализирован
+                    и среди параметров сервиса существует переданный параметр
+                    """
+    )
+    @lombok.Synchronized
+    @org.jetbrains.annotations.Contract( value = "_, _ -> _" )
+    protected static synchronized int checkContextOrReturnDefaultValue (
+            @lombok.NonNull final String paramName,
             final int defaultValue
     ) {
-        return this.objectIsNotNull( GpsTrackerApplication.context )
-                && this.objectIsNotNull(
+        return Objects.nonNull( GpsTrackerApplication.context )
+                && Objects.nonNull(
                         GpsTrackerApplication
                                 .context
                                 .getEnvironment()
@@ -189,21 +217,23 @@ public class DataValidateInspector extends TimeInspector {
                 : defaultValue;
     }
 
-    public final synchronized String checkContextOrReturnDefaultValue (
-            final String paramName,
-            final String defaultValue
+    @lombok.Synchronized
+    @org.jetbrains.annotations.Contract( value = "_, _ -> _" )
+    public static synchronized String checkContextOrReturnDefaultValue (
+            @lombok.NonNull final String paramName,
+            @lombok.NonNull final String defaultValue
     ) {
-        return this.objectIsNotNull( GpsTrackerApplication.context )
-                && this.objectIsNotNull(
+        return Objects.nonNull( GpsTrackerApplication.context )
+                && Objects.nonNull(
                         GpsTrackerApplication
                                 .context
                                 .getEnvironment()
                                 .getProperty( paramName )
                 )
                 ? GpsTrackerApplication
-                        .context
-                        .getEnvironment()
-                        .getProperty( paramName )
+                .context
+                .getEnvironment()
+                .getProperty( paramName )
                 : defaultValue;
     }
 }

@@ -1,10 +1,12 @@
 package com.ssd.mvd.database;
 
 import java.util.Date;
-import java.util.Calendar;
-import java.text.MessageFormat;
-
 import java.util.Optional;
+import java.util.Calendar;
+
+import java.text.MessageFormat;
+import java.lang.ref.WeakReference;
+
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.BiConsumer;
@@ -12,49 +14,52 @@ import java.util.function.BiFunction;
 
 import com.datastax.driver.core.*;
 
-import com.ssd.mvd.inspectors.TimeInspector;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.core.publisher.ParallelFlux;
 
 import com.ssd.mvd.entity.*;
+import com.ssd.mvd.entity.patrulDataSet.Patrul;
+import com.ssd.mvd.entity.patrulDataSet.patrulSubClasses.PatrulFuelStatistics;
+
 import com.ssd.mvd.inspectors.Inspector;
-import com.ssd.mvd.kafka.KafkaDataControl;
+import com.ssd.mvd.inspectors.TimeInspector;
+import com.ssd.mvd.inspectors.EntitiesInstances;
+import com.ssd.mvd.inspectors.CustomServiceCleaner;
+
 import com.ssd.mvd.constants.CassandraTables;
 import com.ssd.mvd.constants.CassandraCommands;
-import com.ssd.mvd.entity.patrulDataSet.Patrul;
-import com.ssd.mvd.subscribers.CustomSubscriber;
-import com.ssd.mvd.inspectors.EntitiesInstances;
-import com.ssd.mvd.interfaces.ServiceCommonMethods;
+
 import com.ssd.mvd.interfaces.DatabaseCommonMethods;
 import com.ssd.mvd.interfaces.EntityToCassandraConverter;
 import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
-import com.ssd.mvd.entity.patrulDataSet.patrulSubClasses.PatrulFuelStatistics;
+
+import com.ssd.mvd.kafka.KafkaDataControl;
+import com.ssd.mvd.subscribers.CustomSubscriber;
+
 import com.ssd.mvd.database.cassandraConfigs.CassandraParamsAndOptionsStore;
 import com.ssd.mvd.database.cassandraRegistry.CassandraTablesAndTypesRegister;
 
-public final class CassandraDataControl
-        extends CassandraParamsAndOptionsStore
-        implements DatabaseCommonMethods, ServiceCommonMethods {
+public final class CassandraDataControl extends CassandraParamsAndOptionsStore implements DatabaseCommonMethods {
     private final Cluster cluster;
     private final Session session;
 
     private static CassandraDataControl INSTANCE = new CassandraDataControl();
 
     @Override
+    @lombok.NonNull
     public Cluster getCluster() {
         return this.cluster;
     }
 
     @Override
+    @lombok.NonNull
     public Session getSession() {
         return this.session;
     }
 
-    /*
-    создаем, регистрируем и сохраняем все таблицы, типы и кодеки
-    */
+    @SuppressWarnings( value = "создаем, регистрируем и сохраняем все таблицы, типы и кодеки" )
     public void setCassandraTablesAndTypesRegister () {
         /*
         создаем, регистрируем и сохраняем все таблицы, типы и кодеки
@@ -66,7 +71,7 @@ public final class CassandraDataControl
 
     private void register () {
         this.getAllEntities
-                .apply( EntitiesInstances.POLICE_TYPE )
+                .apply( EntitiesInstances.POLICE_TYPE.get() )
                 .sequential()
                 .publishOn( Schedulers.single() )
                 .subscribe( new CustomSubscriber<>( super::save ) );
@@ -131,7 +136,7 @@ public final class CassandraDataControl
                     .ifPresent(
                             position1 -> unregisteredTrackers.put(
                                     position.getDeviceId(),
-                                    super.newDate()
+                                    newDate()
                             )
                     );
 
@@ -143,10 +148,10 @@ public final class CassandraDataControl
                 System.out.println( "TupleCar: " + position.getDeviceId() );
                 super.convert(
                         this.findRowAndReturnEntity(
-                                EntitiesInstances.TUPLE_OF_CAR,
+                                EntitiesInstances.TUPLE_OF_CAR.get(),
                                 "trackerId",
-                                super.joinWithAstrix( position.getDeviceId() )
-                        )
+                                joinWithAstrix( position.getDeviceId() )
+                        ).get()
                 // проверяем что такая машина существует
                 ).filter(
                         tupleOfCar -> super.objectIsNotNull( tupleOfCar.getUuid() )
@@ -164,10 +169,9 @@ public final class CassandraDataControl
                                                     position,
                                                     tupleOfCar,
                                                     this.findRowAndReturnEntity(
-                                                            EntitiesInstances.PATRUL,
-                                                            tupleOfCar.getUuidOfPatrul().toString(),
-                                                            "uuid"
-                                                    )
+                                                            EntitiesInstances.PATRUL.get(),
+                                                            tupleOfCar.getUuidOfPatrul().toString()
+                                                    ).get()
                                             )
                                             : tupleOfCarMap
                                             .get( position.getDeviceId() )
@@ -195,10 +199,10 @@ public final class CassandraDataControl
             else {
                 super.convert(
                         this.findRowAndReturnEntity(
-                                EntitiesInstances.REQ_CAR,
+                                EntitiesInstances.REQ_CAR.get(),
                                 "trackerId",
-                                super.joinWithAstrix( position.getDeviceId() )
-                        )
+                                joinWithAstrix( position.getDeviceId() )
+                        ).get()
                 ).filter( super::check )
                 .subscribe(
                         new CustomSubscriber<>(
@@ -208,7 +212,7 @@ public final class CassandraDataControl
 
                                     optional.map( position1 -> {
                                                 // сохраняем в базу только если машина двигается
-                                                if ( super.check( optional.get() ) ) {
+                                                if ( check( optional.get() ) ) {
                                                     position.save();
                                                 }
 
@@ -222,10 +226,10 @@ public final class CassandraDataControl
                                                                                 optional.get(),
                                                                                 reqCar,
                                                                                 this.findRowAndReturnEntity(
-                                                                                        EntitiesInstances.PATRUL,
+                                                                                        EntitiesInstances.PATRUL.get(),
                                                                                         reqCar.getPatrulPassportSeries(),
                                                                                         "passportNumber"
-                                                                                )
+                                                                                ).get()
                                                                         )
                                                         );
 
@@ -235,10 +239,10 @@ public final class CassandraDataControl
                                             .orElseGet( () -> {
                                                 final TrackerInfo trackerInfo = new TrackerInfo(
                                                         this.findRowAndReturnEntity(
-                                                                EntitiesInstances.PATRUL,
+                                                                EntitiesInstances.PATRUL.get(),
                                                                 reqCar.getPatrulPassportSeries(),
                                                                 "passportNumber"
-                                                        ),
+                                                        ).get(),
                                                         reqCar
                                                 );
 
@@ -276,13 +280,13 @@ public final class CassandraDataControl
                                 """,
                                 CassandraCommands.SELECT_ALL,
 
-                                EntitiesInstances.POSITION_INFO.getEntityKeyspaceName(),
-                                EntitiesInstances.POSITION_INFO.getEntityTableName(),
+                                EntitiesInstances.POSITION_INFO.get().getEntityKeyspaceName(),
+                                EntitiesInstances.POSITION_INFO.get().getEntityTableName(),
 
-                                super.joinWithAstrix( request.getTrackerId() ),
+                                joinWithAstrix( request.getTrackerId() ),
 
-                                super.joinWithAstrix(TimeInspector.newDate( request.getStartTime().getTime() - FIVE_HOURS ) ),
-                                super.joinWithAstrix( TimeInspector.newDate( request.getEndTime().getTime() - FIVE_HOURS ) )
+                                joinWithAstrix( TimeInspector.newDate( request.getStartTime().getTime() - FIVE_HOURS ) ),
+                                joinWithAstrix( TimeInspector.newDate( request.getEndTime().getTime() - FIVE_HOURS ) )
                         )
                 ),
                 super.getTimeDifference(
@@ -294,22 +298,22 @@ public final class CassandraDataControl
         .publishOn( Schedulers.single() );
 
     public final Function< Boolean, Flux< TrackerInfo > > getAllTrackers = aBoolean -> this.getAllEntities
-            .apply( EntitiesInstances.TRACKER_INFO )
+            .apply( EntitiesInstances.TRACKER_INFO.get() )
             .filter( row -> !aBoolean || super.check( row ) )
             .map( row -> {
-                final ReqCar reqCar = this.findRowAndReturnEntity(
-                        EntitiesInstances.REQ_CAR,
+                final WeakReference< ReqCar > reqCar = this.findRowAndReturnEntity(
+                        EntitiesInstances.REQ_CAR.get(),
                         "gosnumber",
                         row.getString( "gosnumber" )
                 );
 
                 return new TrackerInfo(
                         this.findRowAndReturnEntity(
-                                EntitiesInstances.PATRUL,
-                                reqCar.getPatrulPassportSeries(),
+                                EntitiesInstances.PATRUL.get(),
+                                reqCar.get().getPatrulPassportSeries(),
                                 "passportNumber"
-                        ),
-                        reqCar,
+                        ).get(),
+                        reqCar.get(),
                         row
                 );
             } )
@@ -317,14 +321,13 @@ public final class CassandraDataControl
             .publishOn( Schedulers.single() );
 
     public final Function< String, Mono< Date > > getLastActiveDate = s -> {
-        final Patrul patrul = this.findRowAndReturnEntity(
-                EntitiesInstances.PATRUL,
-                s,
-                "uuid"
+        final WeakReference< Patrul > patrul = this.findRowAndReturnEntity(
+                EntitiesInstances.PATRUL.get(),
+                s
         );
 
-        return super.objectIsNotNull( patrul.getUuid() )
-                    && patrul.getPatrulCarInfo().getCarNumber().compareTo( "null" ) != 0
+        return super.objectIsNotNull( patrul.get().getUuid() )
+                    && patrul.get().getPatrulCarInfo().getCarNumber().compareTo( "null" ) != 0
                 ? super.convert(
                         this.completeCommand(
                                 MessageFormat.format(
@@ -333,15 +336,15 @@ public final class CassandraDataControl
                                         """,
                                         CassandraCommands.SELECT_ALL.replaceAll( "[*]", "lastActiveDate" ),
 
-                                        EntitiesInstances.TRACKER_INFO.getEntityKeyspaceName(),
-                                        EntitiesInstances.TRACKER_INFO.getEntityTableName(),
+                                        EntitiesInstances.TRACKER_INFO.get().getEntityKeyspaceName(),
+                                        EntitiesInstances.TRACKER_INFO.get().getEntityTableName(),
 
-                                        super.joinWithAstrix(
+                                        joinWithAstrix(
                                                 this.findRowAndReturnEntity(
-                                                        EntitiesInstances.REQ_CAR,
-                                                        patrul.getPatrulCarInfo().getCarNumber(),
+                                                        EntitiesInstances.REQ_CAR.get(),
+                                                        patrul.get().getPatrulCarInfo().getCarNumber(),
                                                         "gosnumber"
-                                                ).getTrackerId()
+                                                ).get().getTrackerId()
                                         )
                                 )
                         ).one().getTimestamp( "lastactivedate" )
@@ -355,45 +358,46 @@ public final class CassandraDataControl
     public final Function< Request, Mono< PatrulFuelStatistics > > calculateAverageFuelConsumption = request ->
             super.convert( new PatrulFuelStatistics() )
                     .map( patrulFuelStatistics -> {
-                        final Patrul patrul = this.findRowAndReturnEntity(
-                                EntitiesInstances.PATRUL,
-                                request.getTrackerId(),
-                                "uuid"
+                        final WeakReference< Patrul > patrul = this.findRowAndReturnEntity(
+                                EntitiesInstances.PATRUL.get(),
+                                request.getTrackerId()
                         );
 
-                        if ( !patrul.getPatrulCarInfo().getCarNumber().equals( "null" ) ) {
-                            final ReqCar reqCar = this.findRowAndReturnEntity(
-                                    EntitiesInstances.REQ_CAR,
-                                    patrul.getPatrulCarInfo().getCarNumber(),
+                        if ( !patrul.get().getPatrulCarInfo().getCarNumber().equals( "null" ) ) {
+                            final WeakReference< ReqCar > reqCar = this.findRowAndReturnEntity(
+                                    EntitiesInstances.REQ_CAR.get(),
+                                    patrul.get().getPatrulCarInfo().getCarNumber(),
                                     "gosnumber"
                             );
 
                             this.start = super.calendarInstance();
 
-                            final Row row = this.completeCommand(
-                                    MessageFormat.format(
-                                            """
-                                            {0} {1}.{2}
-                                            WHERE imei = {3} {4};
-                                            """,
-                                            CassandraCommands.SELECT_ALL.replaceAll( "[*]", "min(date) AS min_date, max(date) AS max_date" ),
+                            final WeakReference< Row > row = EntitiesInstances.generateWeakEntity(
+                                    this.completeCommand(
+                                            MessageFormat.format(
+                                                    """
+                                                    {0} {1}.{2}
+                                                    WHERE imei = {3} {4};
+                                                    """,
+                                                    CassandraCommands.SELECT_ALL.replaceAll( "[*]", "min(date) AS min_date, max(date) AS max_date" ),
 
-                                            CassandraTables.TRACKERS,
-                                            CassandraTables.TRACKER_FUEL_CONSUMPTION,
+                                                    CassandraTables.TRACKERS,
+                                                    CassandraTables.TRACKER_FUEL_CONSUMPTION,
 
-                                            super.joinWithAstrix( reqCar.getTrackerId() ),
-                                            super.check( request )
-                                                    ? EMPTY
-                                                    : " AND date >= " + super.joinWithAstrix( request.getStartTime() )
-                                                    + " AND date <= " + super.joinWithAstrix( request.getEndTime() )
-                                    )
-                            ).one();
+                                                    joinWithAstrix( reqCar.get().getTrackerId() ),
+                                                    super.check( request )
+                                                            ? EMPTY
+                                                            : " AND date >= " + joinWithAstrix( request.getStartTime() )
+                                                            + " AND date <= " + joinWithAstrix( request.getEndTime() )
+                                            )
+                                    ).one()
+                            );
 
-                            this.start.setTime( row.getTimestamp( "min_date" ) );
+                            this.start.setTime( row.get().getTimestamp( "min_date" ) );
 
                             this.end = super.calendarInstance();
 
-                            this.end.setTime( row.getTimestamp( "max_date" ) );
+                            this.end.setTime( row.get().getTimestamp( "max_date" ) );
 
                             Date date;
                             while ( this.start.before( this.end ) ) {
@@ -414,10 +418,10 @@ public final class CassandraDataControl
                                                         CassandraTables.TRACKERS,
                                                         CassandraTables.TRACKER_FUEL_CONSUMPTION,
 
-                                                        super.joinWithAstrix( reqCar.getTrackerId() ),
-                                                        super.joinWithAstrix( date ),
+                                                        joinWithAstrix( reqCar.get().getTrackerId() ),
+                                                        joinWithAstrix( date ),
 
-                                                        super.joinWithAstrix( this.start )
+                                                        joinWithAstrix( this.start )
                                                 )
                                         ).one().getDouble( "distance_summary" ) / 1000
                                 );
@@ -425,7 +429,7 @@ public final class CassandraDataControl
                                 // переведем метры в километры
                                 consumptionData.setFuelLevel(
                                         ( consumptionData.getDistance() / 1000 ) /
-                                        ( reqCar.getAverageFuelSize() > 0 ? reqCar.getAverageFuelSize() : 10 )
+                                        ( reqCar.get().getAverageFuelSize() > 0 ? reqCar.get().getAverageFuelSize() : 10 )
                                 );
 
                                 patrulFuelStatistics.getMap().put( date, consumptionData );
@@ -446,42 +450,51 @@ public final class CassandraDataControl
                                     patrulFuelStatistics.getAverageDistance() / patrulFuelStatistics.getMap().size()
                             );
 
-                            patrulFuelStatistics.setUuid( patrul.getUuid() );
+                            patrulFuelStatistics.setUuid( patrul.get().getUuid() );
+
+                            CustomServiceCleaner.clearReference( reqCar );
+                            CustomServiceCleaner.clearReference( row );
                         }
+
+                        CustomServiceCleaner.clearReference( patrul );
 
                         return patrulFuelStatistics;
                     } )
-                    .onErrorReturn( EntitiesInstances.PATRUL_FUEL_STATISTICS );
+                    .onErrorReturn( EntitiesInstances.PATRUL_FUEL_STATISTICS.get() );
 
     public final Function< EntityToCassandraConverter, ParallelFlux< Row > > getAllEntities =
             entityToCassandraConverter -> super.convertValuesToParallelFlux(
                     this.completeCommand(
-                            entityToCassandraConverter.getSelectAllCommand()
+                            entityToCassandraConverter.getEntitySelect()
                     ),
                     entityToCassandraConverter.getParallelNumber()
             );
 
     private <T> T convert (
-            final Row row,
-            final ObjectFromRowConvertInterface<T> objectFromRowConvertInterface
+            @lombok.NonNull final Row row,
+            @lombok.NonNull final ObjectFromRowConvertInterface<T> objectFromRowConvertInterface
     ) {
         return new ObjectFromRowConvertInterface<T>() {
             @Override
+            @lombok.NonNull
             public CassandraTables getEntityTableName() {
                 return objectFromRowConvertInterface.getEntityTableName();
             }
 
             @Override
+            @lombok.NonNull
             public CassandraTables getEntityKeyspaceName() {
                 return objectFromRowConvertInterface.getEntityKeyspaceName();
             }
 
             @Override
-            public T generate( final Row row ) {
+            @lombok.NonNull
+            public T generate( @lombok.NonNull final GettableData row ) {
                 return objectFromRowConvertInterface.generate( row );
             }
 
             @Override
+            @lombok.NonNull
             public ObjectFromRowConvertInterface<T> generate() {
                 return objectFromRowConvertInterface.generate();
             }
@@ -489,7 +502,7 @@ public final class CassandraDataControl
     }
 
     public <T> Flux< T > getConvertedEntities (
-            final ObjectFromRowConvertInterface<T> objectFromRowConvertInterface
+            @lombok.NonNull final ObjectFromRowConvertInterface<T> objectFromRowConvertInterface
     ) {
         return this.getAllEntities
                 .apply( objectFromRowConvertInterface )
@@ -499,8 +512,8 @@ public final class CassandraDataControl
     }
 
     public <T> Flux< T > getConvertedEntities (
-            final ObjectFromRowConvertInterface<T> objectFromRowConvertInterface,
-            final Predicate< Row > checker
+            @lombok.NonNull final ObjectFromRowConvertInterface<T> objectFromRowConvertInterface,
+            @lombok.NonNull final Predicate< Row > checker
     ) {
         return this.getAllEntities
                 .apply( objectFromRowConvertInterface )
@@ -511,7 +524,7 @@ public final class CassandraDataControl
     }
 
     @Override
-    public void close( final Throwable throwable ) {
+    public void close( @lombok.NonNull final Throwable throwable ) {
         super.logging( this );
         this.close();
     }

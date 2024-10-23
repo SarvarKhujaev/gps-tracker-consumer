@@ -1,12 +1,12 @@
 package com.ssd.mvd.interfaces;
 
-import com.datastax.driver.core.Row;
+import com.datastax.driver.core.GettableData;
 
-/*
-хранит методы для конвертации объекта при помощи ROW из БД
-*/
+@SuppressWarnings( value = "хранит методы для конвертации объекта при помощи ROW из БД" )
 public interface ObjectFromRowConvertInterface<T> extends EntityToCassandraConverter {
-    T generate ( final Row row );
+    @lombok.NonNull
+    T generate ( @lombok.NonNull final GettableData row );
 
+    @lombok.NonNull
     ObjectFromRowConvertInterface<T> generate ();
 }

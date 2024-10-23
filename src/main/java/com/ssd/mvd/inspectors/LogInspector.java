@@ -1,49 +1,82 @@
 package com.ssd.mvd.inspectors;
 
-import com.ssd.mvd.interfaces.ServiceCommonMethods;
+import com.ssd.mvd.kafka.kafkaConfigs.KafkaProducerInterceptor;
+import com.ssd.mvd.annotations.EntityConstructorAnnotation;
 import com.ssd.mvd.entity.ApiResponseModel;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import org.springframework.scheduling.annotation.Async;
 import reactor.core.publisher.Mono;
 
+@com.ssd.mvd.annotations.ImmutableEntityAnnotation
+@com.ssd.mvd.annotations.ServiceParametrAnnotation( propertyGroupName = "LOGGER_WITH_JSON_LAYOUT" )
 public class LogInspector extends WebFluxInspector {
-    protected LogInspector() {}
+    protected LogInspector () {
+        super( LogInspector.class );
+    }
 
-    private static final Logger LOGGER = LogManager.getLogger();
+    @EntityConstructorAnnotation(
+            permission = {
+                    AnnotationInspector.class,
+                    KafkaProducerInterceptor.class
+            }
+    )
+    protected <T extends UuidInspector> LogInspector ( @lombok.NonNull final Class<T> instance ) {
+        super( LogInspector.class );
 
-    protected final synchronized Mono< ApiResponseModel > logging (
-            final Throwable error
-    ) {
-        LOGGER.error("Error: {}", error.getMessage() );
+        AnnotationInspector.checkCallerPermission( instance, LogInspector.class );
+        AnnotationInspector.checkAnnotationIsImmutable( LogInspector.class );
+    }
+
+    private final static Logger LOGGER = LogManager.getLogger( "LOGGER_WITH_JSON_LAYOUT" );
+
+    @Async( value = "LogInspector" )
+    protected void logging ( @lombok.NonNull @com.typesafe.config.Optional final Object o ) {
+        LOGGER.info(
+                String.join(
+                        SPACE_WITH_DOUBLE_DOTS,
+                        o.getClass().getName(),
+                        "was closed successfully at",
+                        newDate().toString()
+                )
+        );
+    }
+
+    @Async( value = "LogInspector" )
+    protected void logging ( @lombok.NonNull @com.typesafe.config.Optional final String message ) {
+        LOGGER.info( message );
+    }
+
+    protected Mono< ApiResponseModel > logging ( @lombok.NonNull @com.typesafe.config.Optional final Throwable error ) {
+        LOGGER.error(
+                String.join(
+                        SPACE_WITH_DOUBLE_DOTS,
+                        "Error",
+                        error.getMessage()
+                )
+        );
+
         return super.getErrorResponse();
     }
 
-    protected final synchronized void logging (
-            final Throwable error,
-            final Object o
+    @Async( value = "LogInspector" )
+    protected void logging (
+            @lombok.NonNull @com.typesafe.config.Optional final Throwable error,
+            @lombok.NonNull @com.typesafe.config.Optional final Object o
     ) {
         LOGGER.error("Error: {} and reason: {}: ", error.getMessage(), o );
     }
 
-    protected final synchronized void logging (
-            final String message
-    ) {
-        LOGGER.info( message );
-    }
-
-    protected final synchronized void logging ( final Object o ) {
-        LOGGER.info( o.getClass().getName() + " was closed successfully at: " + super.newDate() );
-    }
-
-    protected final synchronized void logging ( final Class<? extends ServiceCommonMethods> clazz ) {
+    @Async( value = "LogInspector" )
+    protected void logging ( @lombok.NonNull @com.typesafe.config.Optional final Class<? extends CollectionsInspector> clazz ) {
         LOGGER.info(
                 String.join(
-                        "",
+                        SPACE_WITH_DOUBLE_DOTS,
                         clazz.getName(),
-                        " was created at: ",
-                        super.newDate().toString()
+                        "was created at",
+                        newDate().toString()
                 )
         );
     }

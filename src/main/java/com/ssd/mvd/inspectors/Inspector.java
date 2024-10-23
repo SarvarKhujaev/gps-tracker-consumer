@@ -1,16 +1,19 @@
 package com.ssd.mvd.inspectors;
 
+import com.ssd.mvd.annotations.EntityConstructorAnnotation;
 import com.ssd.mvd.entity.ApiResponseModel;
 import com.ssd.mvd.entity.TrackerInfo;
 import com.ssd.mvd.entity.Status;
 import com.ssd.mvd.entity.Icons;
 
-import com.datastax.driver.core.Row;
+import com.datastax.driver.core.GettableData;
 import reactor.core.publisher.Mono;
 
+import java.util.WeakHashMap;
 import java.util.Date;
 import java.util.Map;
 
+@com.ssd.mvd.annotations.ImmutableEntityAnnotation
 public class Inspector extends DataValidateInspector {
     protected Inspector () {
         icons = super.newMap();
@@ -19,30 +22,40 @@ public class Inspector extends DataValidateInspector {
         unregisteredTrackers = super.newMap();
     }
 
-    // содержит все типы полицейских
-    public static Map< String, Icons > icons;
-    // хранит все не зарегистрированные трекеры
-    public static Map< String, Date > unregisteredTrackers;
-    public static Map< String, TrackerInfo > tupleOfCarMap;
-    public static Map< String, TrackerInfo > trackerInfoMap;
+    @EntityConstructorAnnotation( permission = WebFluxInspector.class )
+    protected <T extends UuidInspector> Inspector ( @lombok.NonNull final Class<T> instance ) {
+        super( Inspector.class );
 
+        AnnotationInspector.checkCallerPermission( instance, Inspector.class );
+        AnnotationInspector.checkAnnotationIsImmutable( Inspector.class );
+    }
+
+    // содержит все типы полицейских
+    public static WeakHashMap< String, Icons > icons;
+    // хранит все не зарегистрированные трекеры
+    public static WeakHashMap< String, Date > unregisteredTrackers;
+    public static WeakHashMap< String, TrackerInfo > tupleOfCarMap;
+    public static WeakHashMap< String, TrackerInfo > trackerInfoMap;
+
+    @lombok.Synchronized
     protected final synchronized void save (
-            final Row row
+            @lombok.NonNull final GettableData row
     ) {
         icons.put(
                 row.getString( "policeType" ),
-                EntitiesInstances.ICONS.generate().generate( row )
+                EntitiesInstances.ICONS.get().generate().generate( row )
         );
     }
 
+    @lombok.Synchronized
     protected final synchronized void save (
-            final TrackerInfo trackerInfo
+            @lombok.NonNull final TrackerInfo trackerInfo
     ) {
         trackerInfoMap.putIfAbsent( trackerInfo.getTrackerId(), trackerInfo );
     }
 
     protected final synchronized void saveTuple (
-            final TrackerInfo trackerInfo
+            @lombok.NonNull final TrackerInfo trackerInfo
     ) {
         tupleOfCarMap.putIfAbsent( trackerInfo.getTrackerId(), trackerInfo );
     }
@@ -52,11 +65,11 @@ public class Inspector extends DataValidateInspector {
     }
 
     protected final synchronized Mono< ApiResponseModel > getResponse (
-            final Map< String, ? > map
+            @lombok.NonNull final Map< String, ? > map
     ) {
         return this.convert(
                 ApiResponseModel
-                        .builder() // in case of wrong login
+                        .builder()
                         .status(
                                 Status
                                     .builder()

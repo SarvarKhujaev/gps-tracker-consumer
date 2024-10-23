@@ -103,17 +103,17 @@ public final class LastPosition extends DataValidateInspector {
                 }
         );
 
-        super.checkAndSetParams(
+        checkAndSetParams(
                 Inspector.icons.getOrDefault(
                         trackerInfo.getPatrul().getPoliceType(),
-                        EntitiesInstances.ICONS.generate().generate(
+                        EntitiesInstances.ICONS.get().generate().generate(
                                 CassandraDataControl
                                         .getInstance()
                                         .getRowFromTabletsKeyspace(
-                                                EntitiesInstances.ICONS,
+                                                EntitiesInstances.ICONS.get(),
                                                 "policeType",
                                                 trackerInfo.getPatrul().getPoliceType()
-                                        )
+                                        ).get()
                         )
                 ),
                 icons -> {

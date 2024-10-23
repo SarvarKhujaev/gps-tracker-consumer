@@ -1,5 +1,6 @@
 package com.ssd.mvd.entity;
 
+import com.datastax.driver.core.GettableData;
 import com.datastax.driver.core.Row;
 import com.ssd.mvd.inspectors.DataValidateInspector;
 import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
@@ -29,8 +30,8 @@ public final class Icons
     public Icons () {}
 
     @Override
-    public Icons generate( final Row row ) {
-        super.checkAndSetParams(
+    public Icons generate( final GettableData row ) {
+        checkAndSetParams(
                 row,
                 row1 -> {
                     this.setIcon1( row.getString( "icon" ) );

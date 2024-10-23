@@ -1,21 +1,25 @@
 package com.ssd.mvd.entity;
 
-import com.ssd.mvd.database.cassandraRegistry.CassandraConverter;
 import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
 import com.ssd.mvd.interfaces.KafkaEntitiesCommonMethods;
+
+import com.ssd.mvd.database.cassandraRegistry.CassandraConverter;
+import com.ssd.mvd.inspectors.DataValidateInspector;
+import com.ssd.mvd.inspectors.StringOperations;
+
 import com.ssd.mvd.kafka.kafkaConfigs.KafkaTopics;
+
 import com.ssd.mvd.constants.CassandraFunctions;
 import com.ssd.mvd.constants.CassandraCommands;
 import com.ssd.mvd.constants.CassandraTables;
 
+import com.datastax.driver.core.GettableData;
 import com.google.gson.annotations.Expose;
-import com.datastax.driver.core.Row;
 
 import java.text.MessageFormat;
 import java.util.UUID;
 
 public final class TupleOfCar
-        extends CassandraConverter
         implements ObjectFromRowConvertInterface< TupleOfCar >, KafkaEntitiesCommonMethods {
     public UUID getUuid() {
         return this.uuid;
@@ -133,6 +137,7 @@ public final class TupleOfCar
     public TupleOfCar () {}
 
     @Override
+    @lombok.NonNull
     public String getEntityUpdateCommand () {
         return MessageFormat.format(
                 """
@@ -148,11 +153,12 @@ public final class TupleOfCar
                 this.getLongitude(),
                 this.getLatitude(),
                 this.getUuid(),
-                super.joinWithAstrix( this.getTrackerId() )
+                StringOperations.joinWithAstrix( this.getTrackerId() )
         );
     }
 
     @Override
+    @lombok.NonNull
     public String getEntityInsertCommand () {
         return MessageFormat.format(
                 """
@@ -164,18 +170,18 @@ public final class TupleOfCar
                 this.getEntityKeyspaceName(),
                 this.getEntityTableName(),
 
-                super.getALlParamsNamesForClass.apply( this.getClass() ),
+                CassandraConverter.getALlParamsNamesForClass( this.getClass() ),
 
                 CassandraFunctions.UUID,
 
                 this.getUuidOfEscort(),
                 this.getUuidOfPatrul(),
 
-                super.joinWithAstrix( this.getCarModel() ),
-                super.joinWithAstrix( this.getGosNumber() ),
-                super.joinWithAstrix( this.getTrackerId() ),
-                super.joinWithAstrix( this.getNsfOfPatrul() ),
-                super.joinWithAstrix( this.getSimCardNumber() ),
+                StringOperations.joinWithAstrix( this.getCarModel() ),
+                StringOperations.joinWithAstrix( this.getGosNumber() ),
+                StringOperations.joinWithAstrix( this.getTrackerId() ),
+                StringOperations.joinWithAstrix( this.getNsfOfPatrul() ),
+                StringOperations.joinWithAstrix( this.getSimCardNumber() ),
 
                 this.getLatitude(),
                 this.getLongitude(),
@@ -184,6 +190,7 @@ public final class TupleOfCar
     }
 
     @Override
+    @lombok.NonNull
     public String getEntityDeleteCommand () {
         return MessageFormat.format(
                 """
@@ -222,18 +229,21 @@ public final class TupleOfCar
     }
 
     @Override
+    @lombok.NonNull
     public CassandraTables getEntityTableName() {
         return CassandraTables.TUPLE_OF_CAR;
     }
 
     @Override
+    @lombok.NonNull
     public CassandraTables getEntityKeyspaceName() {
         return CassandraTables.ESCORT;
     }
 
     @Override
-    public TupleOfCar generate( final Row row ) {
-        super.checkAndSetParams(
+    @lombok.NonNull
+    public TupleOfCar generate( @lombok.NonNull final GettableData row ) {
+        DataValidateInspector.checkAndSetParams(
                 row,
                 row1 -> {
                     this.setUuid( row.getUUID( "uuid" ) );
@@ -256,19 +266,22 @@ public final class TupleOfCar
     }
 
     @Override
+    @lombok.NonNull
     public TupleOfCar generate() {
         return new TupleOfCar();
     }
 
     @Override
+    @lombok.NonNull
     public KafkaTopics getTopicName() {
         return KafkaTopics.NEW_TUPLE_OF_CAR_TOPIC;
     }
 
     @Override
+    @lombok.NonNull
     public String getSuccessMessage() {
         return String.join(
-                " ",
+                StringOperations.SPACE,
                 "Kafka got",
                 this.getClass().getName(),
                 "with id:",

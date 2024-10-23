@@ -1,26 +1,42 @@
 package com.ssd.mvd.database.cassandraRegistry;
 
+import com.ssd.mvd.annotations.EntityConstructorAnnotation;
 import com.ssd.mvd.interfaces.EntityToCassandraConverter;
 import com.ssd.mvd.constants.CassandraDataTypes;
+
+import com.ssd.mvd.inspectors.AnnotationInspector;
+import com.ssd.mvd.inspectors.UuidInspector;
 import com.ssd.mvd.inspectors.LogInspector;
 
-import java.lang.reflect.Field;
-
-import java.util.function.Function;
-import java.util.stream.Stream;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 
-public class CassandraConverter extends LogInspector {
+public class CassandraConverter extends AnnotationInspector {
     protected CassandraConverter () {}
 
-    /*
-    для экземпляра Java класса конвертирует каждый его параметр,
-    в Cassandra подобный тип данных
-    */
-    private final Function< Class<?>, CassandraDataTypes > getCorrectDataType = type -> {
+    @EntityConstructorAnnotation(
+            permission = {
+                    LogInspector.class
+            }
+    )
+    protected <T extends UuidInspector> CassandraConverter (@lombok.NonNull final Class<T> instance ) {
+        super( CassandraConverter.class );
+
+        AnnotationInspector.checkCallerPermission( instance, CassandraConverter.class );
+        AnnotationInspector.checkAnnotationIsImmutable( CassandraConverter.class );
+    }
+
+    @SuppressWarnings(
+            value = """
+                    для экземпляра Java класса конвертирует каждый его параметр,
+                    в Cassandra подобный тип данных
+                    """
+    )
+    @lombok.NonNull
+    @lombok.Synchronized
+    private synchronized CassandraDataTypes getCorrectDataType (
+            @lombok.NonNull final Class<?> type
+    ) {
         if ( type.equals( String.class ) || type.isEnum() ) {
             return CassandraDataTypes.TEXT;
         }
@@ -45,16 +61,22 @@ public class CassandraConverter extends LogInspector {
         else {
             return CassandraDataTypes.BOOLEAN;
         }
-    };
+    }
 
-    /*
-    для экземпляра Java класса конвертирует каждый его параметр,
-    в Cassandra подобный тип данных
-    */
-    protected final Function< Class<? extends EntityToCassandraConverter>, String > convertClassToCassandra = object -> {
-        final StringBuilder result = super.newStringBuilder( "( " );
+    @SuppressWarnings(
+            value = """
+                    для экземпляра Java класса конвертирует каждый его параметр,
+                    в Cassandra подобный тип данных
+                    """
+    )
+    @lombok.NonNull
+    @lombok.Synchronized
+    protected final synchronized String convertClassToCassandra (
+            @lombok.NonNull final Class<? extends EntityToCassandraConverter> object
+    ) {
+        final StringBuilder result = newStringBuilder( "( " );
 
-        this.getFields.apply( object )
+        getFields( object )
                 .filter( field -> field.getType().equals( String.class )
                         ^ field.getType().equals( int.class )
                         ^ field.getType().equals( double.class )
@@ -67,52 +89,40 @@ public class CassandraConverter extends LogInspector {
                 .forEach( field -> result
                         .append( field.getName() )
                         .append( SPACE )
-                        .append( this.getCorrectDataType.apply( field.getType() ) )
+                        .append( this.getCorrectDataType( field.getType() ) )
                         .append( SPACE_WITH_COMMA ) );
 
         return result.substring( 0, result.toString().length() - 2 );
-    };
+    }
 
-    protected final Function< Class<? extends EntityToCassandraConverter>, String > getALlParamsNamesForClass = object -> {
-        final StringBuilder result = super.newStringBuilder( EMPTY );
-        this.getFields.apply( object ).forEach( field -> result.append( field.getName() ).append( SPACE_WITH_COMMA ) );
-        return super.joinTextWithCorrectCollectionEnding(
+    @lombok.NonNull
+    @lombok.Synchronized
+    public static synchronized String getALlParamsNamesForClass (
+            @lombok.NonNull final Class< ? extends EntityToCassandraConverter > object
+    ) {
+        final StringBuilder result = newStringBuilder( EMPTY );
+        getFields( object ).forEach( field -> result.append( field.getName() ).append( SPACE_WITH_COMMA ) );
+        return joinTextWithCorrectCollectionEnding(
                 result.substring( 0, result.length() - 2 ),
                 CassandraDataTypes.BOOLEAN
         );
-    };
+    }
 
-    private final Function< Class<? extends EntityToCassandraConverter>, Stream< Field > > getFields = object -> Arrays.stream( object.getDeclaredFields() ).toList().stream();
+    @SuppressWarnings(
+            value = "принимает экземпляра Class и возвращает список названий всех его параметров"
+    )
+    @lombok.NonNull
+    @lombok.Synchronized
+    public static synchronized String getAllParamsNamesForClass (
+            @lombok.NonNull final Class<? extends EntityToCassandraConverter> object
+    ) {
+        final StringBuilder result = newStringBuilder( EMPTY );
 
-    /*
-    принимает список объектов и конвертирует в понятную для Cassandra команду
-    Например:
-        [ 'asd', 'asd', 'asd', 'asd' ]
-    */
-    protected final Function< List< ? >, String > convertListToCassandra = list -> {
-        final StringBuilder stringBuilder = super.newStringBuilder( EMPTY );
+        getFields( object ).forEach( field -> result.append( field.getName() ).append( SPACE_WITH_COMMA ) );
 
-        super.analyze( list, s -> stringBuilder.append( s ).append( SPACE_WITH_COMMA ) );
-
-        return stringBuilder.length() == 1
-                ? super.joinTextWithCorrectCollectionEnding( stringBuilder.toString(), CassandraDataTypes.LIST )
-                : super.joinTextWithCorrectCollectionEnding(
-                stringBuilder.substring( 0, stringBuilder.length() - 2 ),
-                CassandraDataTypes.LIST
-        );
-    };
-
-    /*
-    принимает экземпляра Class и возвращает список названий всех его параметров
-    */
-    protected final Function< Class<? extends EntityToCassandraConverter>, String > getAllParamsNamesForClass = object -> {
-        final StringBuilder result = super.newStringBuilder( EMPTY );
-
-        this.getFields.apply( object ).forEach( field -> result.append( field.getName() ).append( SPACE_WITH_COMMA ) );
-
-        return super.joinTextWithCorrectCollectionEnding(
+        return joinTextWithCorrectCollectionEnding(
                 result.substring( 0, result.length() - 2 ),
                 CassandraDataTypes.BOOLEAN
         );
-    };
+    }
 }

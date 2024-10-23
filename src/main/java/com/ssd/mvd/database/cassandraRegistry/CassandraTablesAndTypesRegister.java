@@ -8,8 +8,7 @@ import com.ssd.mvd.constants.CassandraTables;
 создает все таблицыб типыб кодеки и пространство ключей
 */
 public final class CassandraTablesAndTypesRegister extends CassandraConverter implements DatabaseCommonMethods {
-    public static CassandraTablesAndTypesRegister generate (
-    ) {
+    public static CassandraTablesAndTypesRegister generate() {
         return new CassandraTablesAndTypesRegister();
     }
 
@@ -20,9 +19,9 @@ public final class CassandraTablesAndTypesRegister extends CassandraConverter im
         super.logging( "All tables, keyspace and types were created" );
     }
 
-    /*
-    Хранит все данные для создания нового пространства в БД
-    */
+    @SuppressWarnings(
+            value = "Хранит все данные для создания нового пространства в БД"
+    )
     private static class KeyspaceRegistration {
         public String getPrefix() {
             return this.prefix;

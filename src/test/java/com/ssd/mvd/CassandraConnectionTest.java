@@ -2,11 +2,10 @@ package com.ssd.mvd;
 
 import com.ssd.mvd.database.CassandraDataControl;
 import com.ssd.mvd.inspectors.EntitiesInstances;
-import com.ssd.mvd.entity.patrulDataSet.Patrul;
 import com.ssd.mvd.constants.CassandraTables;
 
+import com.datastax.driver.core.GettableData;
 import com.datastax.driver.core.utils.UUIDs;
-import com.datastax.driver.core.Row;
 
 import org.junit.jupiter.api.DisplayName;
 import junit.framework.TestCase;
@@ -14,9 +13,6 @@ import junit.framework.TestCase;
 import java.text.MessageFormat;
 import java.util.UUID;
 
-/*
-проверяем соединение с БД Cassandra
-*/
 public final class CassandraConnectionTest extends TestCase {
     private final UUID uuid = UUIDs.timeBased();
 
@@ -47,11 +43,12 @@ public final class CassandraConnectionTest extends TestCase {
         assertFalse( CassandraDataControl.getInstance().getCluster().isClosed() );
         assertFalse( CassandraDataControl.getInstance().getSession().isClosed() );
 
-        Row row = CassandraDataControl.getInstance().getRowFromTabletsKeyspace(
-                EntitiesInstances.PATRUL,
-                "uuid",
-                this.uuid.toString()
-        );
+        GettableData row = CassandraDataControl
+                .getInstance()
+                .getRowFromTabletsKeyspace(
+                        EntitiesInstances.PATRUL.get(),
+                        this.uuid.toString()
+                ).get();
 
         assertNotNull( row );
         assertFalse( row.getString( "passportNumber" ).isBlank() );
@@ -73,20 +70,17 @@ public final class CassandraConnectionTest extends TestCase {
 
     @DisplayName( value = "testPatrulInsert method" )
     public void testPatrulInsert () {
-        final Patrul patrul = EntitiesInstances.PATRUL;
-
-        assertTrue( patrul.save() );
+        assertTrue( EntitiesInstances.PATRUL.get().save() );
     }
 
     @DisplayName( value = "testPatrulUpdate method" )
     public void testPatrulUpdate () {
         assertTrue(
-                EntitiesInstances.PATRUL.generate(
+                EntitiesInstances.PATRUL.get().generate(
                         CassandraDataControl.getInstance().getRowFromTabletsKeyspace(
-                                EntitiesInstances.PATRUL,
-                                "uuid",
+                                EntitiesInstances.PATRUL.get(),
                                 this.uuid.toString()
-                        )
+                        ).get()
                 ).updateEntity()
         );
     }
@@ -94,12 +88,13 @@ public final class CassandraConnectionTest extends TestCase {
     @DisplayName( value = "testPatrulDelete method" )
     public void testPatrulDelete () {
         assertTrue(
-                EntitiesInstances.PATRUL.generate(
-                        CassandraDataControl.getInstance().getRowFromTabletsKeyspace(
-                                EntitiesInstances.PATRUL,
-                                "uuid",
-                                this.uuid.toString()
-                        )
+                EntitiesInstances.PATRUL.get().generate(
+                        CassandraDataControl
+                                .getInstance()
+                                .getRowFromTabletsKeyspace(
+                                        EntitiesInstances.PATRUL.get(),
+                                        this.uuid.toString()
+                                ).get()
                 ).delete()
         );
     }

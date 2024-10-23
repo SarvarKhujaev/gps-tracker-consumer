@@ -1,11 +1,11 @@
 package com.ssd.mvd.interfaces;
 
 public interface ServiceCommonMethods {
-    default void close( final Throwable throwable ) {}
+    default void close() {}
 
-    void close();
-
-    default void clean () {
+    default void clean() {
         System.gc();
     }
+
+    default void close( @lombok.NonNull final Throwable throwable ) {}
 }

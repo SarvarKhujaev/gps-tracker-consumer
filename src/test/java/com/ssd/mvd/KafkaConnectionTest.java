@@ -32,42 +32,33 @@ public final class KafkaConnectionTest extends TestCase {
     public void testSendMessagesToKafka () {
         KafkaDataControl
                 .getInstance()
-                .writeToKafka
-                .accept(
-                        EntitiesInstances.REQ_CAR.generate(
+                .sendMessageToKafka(
+                        EntitiesInstances.REQ_CAR.get().generate(
                                 CassandraDataControl
                                         .getInstance()
                                         .getRowFromTabletsKeyspace(
-                                                EntitiesInstances.REQ_CAR,
-                                                this.uuid.toString(),
-                                                "uuid"
-                                        )
+                                                EntitiesInstances.REQ_CAR.get(),
+                                                this.uuid.toString()
+                                        ).get()
                         )
                 );
 
         KafkaDataControl
                 .getInstance()
-                .writeToKafkaTupleOfCar
-                .accept(
-                        EntitiesInstances.TUPLE_OF_CAR.generate(
+                .sendMessageToKafka(
+                        EntitiesInstances.TUPLE_OF_CAR.get().generate(
                                 CassandraDataControl
                                         .getInstance()
                                         .getRowFromTabletsKeyspace(
-                                                EntitiesInstances.TUPLE_OF_CAR,
+                                                EntitiesInstances.TUPLE_OF_CAR.get(),
                                                 this.uuid.toString(),
                                                 "uuid"
-                                        )
+                                        ).get()
                         )
                 );
 
         KafkaDataControl
                 .getInstance()
-                .writeToKafkaPosition
-                .accept( new Position() );
-
-        KafkaDataControl
-                .getInstance()
-                .writeToKafkaEscort
-                .accept( new Position() );
+                .sendMessageToKafka( new Position() );
     }
 }

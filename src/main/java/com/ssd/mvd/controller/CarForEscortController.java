@@ -21,7 +21,7 @@ public final class CarForEscortController extends LogInspector {
     public Flux< TupleOfCar > getAllCarsForEscort() {
         return CassandraDataControl
                 .getInstance()
-                .getConvertedEntities( EntitiesInstances.TUPLE_OF_CAR )
+                .getConvertedEntities( EntitiesInstances.TUPLE_OF_CAR.get() )
                 .onErrorContinue( super::logging );
     }
 
@@ -46,14 +46,14 @@ public final class CarForEscortController extends LogInspector {
     @MessageMapping ( value = "getCurrentForEscort" )
     public Mono< TupleOfCar > getCurrentForEscort ( final String gosNumber ) {
         return super.convert(
-                EntitiesInstances.TUPLE_OF_CAR.generate().generate(
+                EntitiesInstances.TUPLE_OF_CAR.get().generate().generate(
                         CassandraDataControlForEscort
                                 .getInstance()
                                 .getRowFromTabletsKeyspace(
-                                        EntitiesInstances.TUPLE_OF_CAR,
+                                        EntitiesInstances.TUPLE_OF_CAR.get(),
                                         "uuid",
                                         gosNumber
-                                )
+                                ).get()
                 )
         ).onErrorContinue( super::logging );
     }
