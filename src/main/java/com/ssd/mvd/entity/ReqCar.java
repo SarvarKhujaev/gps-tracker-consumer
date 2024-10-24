@@ -3,7 +3,7 @@ package com.ssd.mvd.entity;
 import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
 import com.ssd.mvd.interfaces.KafkaEntitiesCommonMethods;
 
-import com.ssd.mvd.database.cassandraRegistry.CassandraConverter;
+import com.ssd.mvd.inspectors.CassandraConverter;
 import com.ssd.mvd.kafka.kafkaConfigs.KafkaTopics;
 
 import com.ssd.mvd.inspectors.DataValidateInspector;

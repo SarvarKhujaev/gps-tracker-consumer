@@ -38,9 +38,10 @@ import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
 import com.ssd.mvd.kafka.KafkaDataControl;
 import com.ssd.mvd.subscribers.CustomSubscriber;
 
+import com.ssd.mvd.database.cassandraRegistry.CassandraTableRegistration;
 import com.ssd.mvd.database.cassandraConfigs.CassandraParamsAndOptionsStore;
-import com.ssd.mvd.database.cassandraRegistry.CassandraTablesAndTypesRegister;
 
+@com.ssd.mvd.annotations.ImmutableEntityAnnotation
 public final class CassandraDataControl extends CassandraParamsAndOptionsStore implements DatabaseCommonMethods {
     private final Cluster cluster;
     private final Session session;
@@ -49,13 +50,15 @@ public final class CassandraDataControl extends CassandraParamsAndOptionsStore i
 
     @Override
     @lombok.NonNull
-    public Cluster getCluster() {
+    @lombok.Synchronized
+    public synchronized Cluster getCluster() {
         return this.cluster;
     }
 
     @Override
     @lombok.NonNull
-    public Session getSession() {
+    @lombok.Synchronized
+    public synchronized Session getSession() {
         return this.session;
     }
 
@@ -64,7 +67,7 @@ public final class CassandraDataControl extends CassandraParamsAndOptionsStore i
         /*
         создаем, регистрируем и сохраняем все таблицы, типы и кодеки
         */
-        CassandraTablesAndTypesRegister.generate();
+        CassandraTableRegistration.generate();
 
         this.register();
     }
@@ -90,18 +93,23 @@ public final class CassandraDataControl extends CassandraParamsAndOptionsStore i
     }
 
     private CassandraDataControl () {
+        super( CassandraDataControl.class );
+
         this.session = (
                 this.cluster = Cluster
                         .builder()
-                        .withPort( super.getPort() )
-                        .addContactPoint( super.HOST )
-                        .withClusterName( super.CLUSTER_NAME )
-                        .withProtocolVersion( ProtocolVersion.V4 )
-                        .withRetryPolicy( super.getCustomRetryPolicy() )
-                        .withQueryOptions( super.getQueryOptions() )
-                        .withSocketOptions( super.getSocketOptions() )
-                        .withPoolingOptions( super.getPoolingOptions() )
+                        .withPort( CASSANDRA_PORT )
+                        .addContactPoint( CASSANDRA_HOST )
+                        .withRetryPolicy( CUSTOM_RETRY_POLICY )
+                        .withClusterName( CASSANDRA_CLUSTER_NAME )
                         .withCompression( ProtocolOptions.Compression.LZ4 )
+                        .withQueryOptions( QUERY_OPTIONS.get() )
+//                        .withAuthProvider( AUTH_PROVIDER )
+                        .withSocketOptions( SOCKET_OPTIONS.get() )
+                        .withCodecRegistry( this.getCodecRegistry() )
+                        .withPoolingOptions( super.getPoolingOptions().get() )
+                        .withProtocolVersion( ProtocolVersion.V4 )
+//                        .withLoadBalancingPolicy( CUSTOM_LOAD_BALANCING )
                         .build()
         ).connect();
 
@@ -125,7 +133,7 @@ public final class CassandraDataControl extends CassandraParamsAndOptionsStore i
                         .append( trackerInfo.getEntityDeleteCommand() )
                         /*
                         завершаем BATCH
-                         */
+                        */
                         .append( CassandraCommands.APPLY_BATCH )
                         .toString()
         );
@@ -145,7 +153,6 @@ public final class CassandraDataControl extends CassandraParamsAndOptionsStore i
             Эскорт или Патрулю
             */
             if ( optional.filter( position1 -> super.check( position.getDeviceId() ) ).isPresent() ) {
-                System.out.println( "TupleCar: " + position.getDeviceId() );
                 super.convert(
                         this.findRowAndReturnEntity(
                                 EntitiesInstances.TUPLE_OF_CAR.get(),
@@ -154,8 +161,7 @@ public final class CassandraDataControl extends CassandraParamsAndOptionsStore i
                         ).get()
                 // проверяем что такая машина существует
                 ).filter(
-                        tupleOfCar -> super.objectIsNotNull( tupleOfCar.getUuid() )
-                                && super.objectIsNotNull( tupleOfCar.getGosNumber() )
+                        tupleOfCar -> super.objectIsNotNull( tupleOfCar.getUuid(), tupleOfCar.getGosNumber() )
                 ).subscribe(
                         new CustomSubscriber<>(
                                 tupleOfCar -> {
@@ -352,9 +358,6 @@ public final class CassandraDataControl extends CassandraParamsAndOptionsStore i
                 : Mono.empty();
     };
 
-    private Calendar end;
-    private Calendar start;
-
     public final Function< Request, Mono< PatrulFuelStatistics > > calculateAverageFuelConsumption = request ->
             super.convert( new PatrulFuelStatistics() )
                     .map( patrulFuelStatistics -> {
@@ -370,7 +373,7 @@ public final class CassandraDataControl extends CassandraParamsAndOptionsStore i
                                     "gosnumber"
                             );
 
-                            this.start = super.calendarInstance();
+                            TimeInspector.start.getAndSet( super.calendarInstance() );
 
                             final WeakReference< Row > row = EntitiesInstances.generateWeakEntity(
                                     this.completeCommand(
@@ -393,19 +396,28 @@ public final class CassandraDataControl extends CassandraParamsAndOptionsStore i
                                     ).one()
                             );
 
-                            this.start.setTime( row.get().getTimestamp( "min_date" ) );
+                            TimeInspector.start.getAndUpdate( value -> {
+                                value.setTime( row.get().getTimestamp( "min_date" ) );
+                                return value;
+                            } );
 
-                            this.end = super.calendarInstance();
+                            TimeInspector.end.getAndSet( super.calendarInstance() );
 
-                            this.end.setTime( row.get().getTimestamp( "max_date" ) );
+                            TimeInspector.end.getAndUpdate( value -> {
+                                value.setTime( row.get().getTimestamp( "max_date" ) );
+                                return value;
+                            } );
 
                             Date date;
-                            while ( this.start.before( this.end ) ) {
-                                date = this.start.getTime();
-                                this.start.add( Calendar.DATE, 1 );
-                                final ConsumptionData consumptionData = new ConsumptionData();
+                            while ( TimeInspector.start.get().before( TimeInspector.end.get() ) ) {
+                                date = TimeInspector.start.get().getTime();
+                                TimeInspector.start.get().add( Calendar.DATE, 1 );
 
-                                consumptionData.setDistance(
+                                final WeakReference< ConsumptionData > consumptionData = EntitiesInstances.generateWeakEntity(
+                                        new ConsumptionData()
+                                );
+
+                                consumptionData.get().setDistance(
                                         this.completeCommand(
                                                 MessageFormat.format(
                                                         """
@@ -421,25 +433,28 @@ public final class CassandraDataControl extends CassandraParamsAndOptionsStore i
                                                         joinWithAstrix( reqCar.get().getTrackerId() ),
                                                         joinWithAstrix( date ),
 
-                                                        joinWithAstrix( this.start )
+                                                        joinWithAstrix( TimeInspector.start.get() )
                                                 )
                                         ).one().getDouble( "distance_summary" ) / 1000
                                 );
 
                                 // переведем метры в километры
-                                consumptionData.setFuelLevel(
-                                        ( consumptionData.getDistance() / 1000 ) /
+                                consumptionData.get().setFuelLevel(
+                                        ( consumptionData.get().getDistance() / 1000 ) /
                                         ( reqCar.get().getAverageFuelSize() > 0 ? reqCar.get().getAverageFuelSize() : 10 )
                                 );
 
-                                patrulFuelStatistics.getMap().put( date, consumptionData );
+                                patrulFuelStatistics.getMap().put( date, consumptionData.get() );
 
                                 patrulFuelStatistics.setAverageFuelConsumption(
-                                        patrulFuelStatistics.getAverageFuelConsumption() + consumptionData.getFuelLevel()
+                                        patrulFuelStatistics.getAverageFuelConsumption() + consumptionData.get().getFuelLevel()
                                 );
 
                                 patrulFuelStatistics.setAverageDistance(
-                                        patrulFuelStatistics.getAverageDistance() + consumptionData.getDistance() );
+                                        patrulFuelStatistics.getAverageDistance() + consumptionData.get().getDistance()
+                                );
+
+                                clearReference( consumptionData );
                             }
 
                             patrulFuelStatistics.setAverageFuelConsumption(
@@ -464,9 +479,7 @@ public final class CassandraDataControl extends CassandraParamsAndOptionsStore i
 
     public final Function< EntityToCassandraConverter, ParallelFlux< Row > > getAllEntities =
             entityToCassandraConverter -> super.convertValuesToParallelFlux(
-                    this.completeCommand(
-                            entityToCassandraConverter.getEntitySelect()
-                    ),
+                    this.completeCommand( entityToCassandraConverter.getEntitySelect() ),
                     entityToCassandraConverter.getParallelNumber()
             );
 
@@ -534,8 +547,11 @@ public final class CassandraDataControl extends CassandraParamsAndOptionsStore i
         KafkaDataControl.getInstance().close();
         this.getCluster().close();
         this.getSession().close();
-        super.logging( this );
-        INSTANCE = null;
+
         this.clean();
+        super.close();
+
+        INSTANCE = null;
+        super.logging( this );
     }
 }

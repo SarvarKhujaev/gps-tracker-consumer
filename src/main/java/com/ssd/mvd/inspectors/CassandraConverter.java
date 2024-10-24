@@ -1,12 +1,11 @@
-package com.ssd.mvd.database.cassandraRegistry;
+package com.ssd.mvd.inspectors;
 
+import com.ssd.mvd.database.cassandraConfigs.CassandraParamsAndOptionsStore;
 import com.ssd.mvd.annotations.EntityConstructorAnnotation;
+import com.ssd.mvd.database.cassandraRegistry.CassandraTableRegistration;
+import com.ssd.mvd.database.cassandraRegistry.CassandraTablesAndTypesRegister;
 import com.ssd.mvd.interfaces.EntityToCassandraConverter;
 import com.ssd.mvd.constants.CassandraDataTypes;
-
-import com.ssd.mvd.inspectors.AnnotationInspector;
-import com.ssd.mvd.inspectors.UuidInspector;
-import com.ssd.mvd.inspectors.LogInspector;
 
 import java.util.Date;
 import java.util.UUID;
@@ -16,7 +15,9 @@ public class CassandraConverter extends AnnotationInspector {
 
     @EntityConstructorAnnotation(
             permission = {
-                    LogInspector.class
+                    CassandraTableRegistration.TableRegistration.class,
+                    CassandraParamsAndOptionsStore.class,
+                    CassandraTablesAndTypesRegister.class
             }
     )
     protected <T extends UuidInspector> CassandraConverter (@lombok.NonNull final Class<T> instance ) {

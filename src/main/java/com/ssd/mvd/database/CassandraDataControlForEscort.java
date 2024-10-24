@@ -1,6 +1,6 @@
 package com.ssd.mvd.database;
 
-import com.ssd.mvd.database.cassandraRegistry.CassandraConverter;
+import com.ssd.mvd.inspectors.CassandraConverter;
 import com.ssd.mvd.inspectors.EntitiesInstances;
 import com.ssd.mvd.kafka.KafkaDataControl;
 import com.ssd.mvd.entity.*;
@@ -66,17 +66,17 @@ public final class CassandraDataControlForEscort extends CassandraConverter impl
                         CassandraTables.ESCORT,
                         CassandraTables.TRACKERSID,
 
-                        super.joinWithAstrix( trackerInfo.getTrackerId() ),
-                        super.joinWithAstrix( trackerInfo.getPatrulPassportSeries() ),
-                        super.joinWithAstrix( trackerInfo.getGosNumber() ),
-                        super.joinWithAstrix( trackerInfo.getStatus() ),
+                        joinWithAstrix( trackerInfo.getTrackerId() ),
+                        joinWithAstrix( trackerInfo.getPatrulPassportSeries() ),
+                        joinWithAstrix( trackerInfo.getGosNumber() ),
+                        joinWithAstrix( trackerInfo.getStatus() ),
 
                         trackerInfo.getLatitude(),
                         trackerInfo.getLongitude(),
 
                         trackerInfo.getTotalActivityTime(),
                         CassandraFunctions.TO_TIMESTAMP.formatted( CassandraFunctions.NOW ),
-                        super.joinWithAstrix( trackerInfo.getDateOfRegistration() )
+                        joinWithAstrix( trackerInfo.getDateOfRegistration() )
                 )
         );
 
@@ -246,7 +246,7 @@ public final class CassandraDataControlForEscort extends CassandraConverter impl
             this.getRowFromTabletsKeyspace(
                     EntitiesInstances.TRACKER_INFO.get(),
                     "trackersId",
-                    super.joinWithAstrix( trackerId )
+                    joinWithAstrix( trackerId )
             )
     ).map( row -> {
             final WeakReference< TupleOfCar > tupleOfCar = this.findRowAndReturnEntity(
@@ -287,7 +287,7 @@ public final class CassandraDataControlForEscort extends CassandraConverter impl
                 final WeakReference< TupleOfCar > tupleOfCar = this.findRowAndReturnEntity(
                         EntitiesInstances.TUPLE_OF_CAR.get(),
                         "gosNumber",
-                        super.joinWithAstrix( row.getString( "gosnumber" ) )
+                        joinWithAstrix( row.getString( "gosnumber" ) )
                 );
 
                 return super.objectIsNotNull( tupleOfCar.get().getUuidOfPatrul() )

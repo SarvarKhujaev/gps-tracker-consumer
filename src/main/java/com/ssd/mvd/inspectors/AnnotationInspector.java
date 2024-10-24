@@ -547,9 +547,9 @@ public class AnnotationInspector extends LogInspector {
                     """
     )
     protected void clearAllEntities () {
-        super.analyze(
+        analyze(
                 EntitiesInstances.instancesList,
-                atomicReference -> super.analyze(
+                atomicReference -> analyze(
                         getFields( atomicReference.get().getClass() )
                                 .filter( field -> field.isAnnotationPresent( WeakReferenceAnnotation.class ) )
                                 .toList(),
@@ -603,7 +603,7 @@ public class AnnotationInspector extends LogInspector {
                     """
     )
     protected <T extends ServiceCommonMethods> void clearEntity ( @lombok.NonNull final T entity ) {
-        super.analyze(
+        analyze(
                 getFields( entity.getClass() )
                         .filter( field -> field.isAnnotationPresent( WeakReferenceAnnotation.class ) )
                         .toList(),

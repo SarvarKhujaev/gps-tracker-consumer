@@ -1,6 +1,6 @@
 package com.ssd.mvd.entity.patrulDataSet;
 
-import com.ssd.mvd.database.cassandraRegistry.CassandraConverter;
+import com.ssd.mvd.inspectors.CassandraConverter;
 import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
 import com.ssd.mvd.annotations.*;
 

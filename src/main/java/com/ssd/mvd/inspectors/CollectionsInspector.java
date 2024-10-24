@@ -53,7 +53,7 @@ public class CollectionsInspector extends StringOperations {
     @lombok.NonNull
     @lombok.Synchronized
     @org.jetbrains.annotations.Contract( value = "_ -> !null" )
-    protected final synchronized <T> List<T> newList (
+    public static synchronized <T> List<T> newList (
             @lombok.NonNull @com.typesafe.config.Optional final T ... objects
     ) {
         return UnmodifiableList.unmodifiableList( List.of( objects ) );
@@ -79,7 +79,7 @@ public class CollectionsInspector extends StringOperations {
     }
 
     @lombok.Synchronized
-    protected final synchronized <T> void analyze (
+    public static synchronized <T> void analyze (
             final Collection< T > someList,
             final Consumer< T > someConsumer
     ) {
