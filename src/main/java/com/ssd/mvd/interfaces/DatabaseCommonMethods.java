@@ -8,11 +8,12 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.driver.core.*;
 
 import com.ssd.mvd.inspectors.AnnotationInspector;
-import com.ssd.mvd.database.CassandraDataControl;
 import com.ssd.mvd.inspectors.EntitiesInstances;
 import com.ssd.mvd.inspectors.StringOperations;
-import org.apache.commons.lang3.Validate;
 
+import com.ssd.mvd.database.CassandraDataControl;
+
+import org.apache.commons.lang3.Validate;
 import java.lang.ref.WeakReference;
 import java.util.List;
 

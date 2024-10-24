@@ -1,16 +1,17 @@
 package com.ssd.mvd.database;
 
+import com.ssd.mvd.interfaces.EntityToCassandraConverter;
+import com.ssd.mvd.interfaces.DatabaseCommonMethods;
+
 import com.ssd.mvd.inspectors.CassandraConverter;
 import com.ssd.mvd.inspectors.EntitiesInstances;
+
 import com.ssd.mvd.kafka.KafkaDataControl;
 import com.ssd.mvd.entity.*;
 
 import com.ssd.mvd.constants.CassandraFunctions;
 import com.ssd.mvd.constants.CassandraCommands;
 import com.ssd.mvd.constants.CassandraTables;
-
-import com.ssd.mvd.interfaces.EntityToCassandraConverter;
-import com.ssd.mvd.interfaces.DatabaseCommonMethods;
 
 import reactor.core.scheduler.Schedulers;
 import reactor.core.publisher.Flux;
@@ -90,11 +91,13 @@ public final class CassandraDataControlForEscort extends CassandraConverter impl
                             tupleOfCar.getUuid().toString()
                     )
             ).flatMap( tupleOfCar1 -> {
-                    final Optional< TupleOfCar > optional = Optional.of( tupleOfCar );
+                    final Optional< TupleOfCar > optional = getOptional( tupleOfCar );
 
                     if (
-                            optional.filter( tupleOfCar2 -> !tupleOfCar1.get().getTrackerId().equals( tupleOfCar.getTrackerId() )
-                                    && !super.check( tupleOfCar.getTrackerId() ) ).isPresent()
+                            optional.filter(
+                                    tupleOfCar2 -> !tupleOfCar1.get().getTrackerId().equals( tupleOfCar.getTrackerId() )
+                                            && !super.check( tupleOfCar.getTrackerId() )
+                            ).isPresent()
                     ) {
                         return super.getResponse( super.getMap( "Wrong TrackerId" ) );
                     }
@@ -185,11 +188,11 @@ public final class CassandraDataControlForEscort extends CassandraConverter impl
                     ? tupleOfCar.save()
                     /*
                     проверяем что Эскорт сявзан с каким-либо патрульным
-                     */
+                    */
                     ? super.objectIsNotNull( tupleOfCar.getUuidOfPatrul() )
                             /*
                             если да, то находим патрульного и связываем его с эскортом
-                             */
+                            */
                             ? super.convert(
                                     this.findRowAndReturnEntity(
                                             EntitiesInstances.PATRUL.get(),
