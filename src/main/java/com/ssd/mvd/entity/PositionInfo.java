@@ -4,14 +4,11 @@ import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
 import com.ssd.mvd.inspectors.DataValidateInspector;
 import com.ssd.mvd.controller.UnirestController;
 
-import com.datastax.driver.core.Row;
-
+import com.datastax.driver.core.GettableData;
 import java.util.Date;
 
 // хранит исторические данные о передвижениях машины
-public final class PositionInfo
-        extends DataValidateInspector
-        implements ObjectFromRowConvertInterface< PositionInfo > {
+public final class PositionInfo implements ObjectFromRowConvertInterface< PositionInfo > {
     public double getLat() {
         return this.lat;
     }
@@ -62,7 +59,7 @@ public final class PositionInfo
     public PositionInfo () {}
 
     public PositionInfo (
-            final Row row,
+            @lombok.NonNull final GettableData row,
             final boolean flag
     ) {
         this.generate( row );
@@ -78,13 +75,15 @@ public final class PositionInfo
     }
 
     @Override
+    @lombok.NonNull
     public PositionInfo generate() {
         return new PositionInfo();
     }
 
     @Override
-    public PositionInfo generate( final Row row ) {
-        super.checkAndSetParams(
+    @lombok.NonNull
+    public PositionInfo generate( @lombok.NonNull final GettableData row ) {
+        DataValidateInspector.checkAndSetParams(
                 row,
                 row1 -> {
                     this.setSpeed( row.getDouble( "speed" ) );

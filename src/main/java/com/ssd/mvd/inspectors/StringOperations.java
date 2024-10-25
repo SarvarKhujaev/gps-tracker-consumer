@@ -25,7 +25,7 @@ public class StringOperations extends UuidInspector {
     public final static String DOT = ".";
     public final static String EMPTY = "";
     public final static String SPACE = " ";
-    protected final static String SPACE_WITH_COMMA = ", ";
+    public final static String SPACE_WITH_COMMA = ", ";
     protected final static String TASK_DETAILS_MESSAGE = "Your task details";
     protected final static String SPACE_WITH_DOUBLE_DOTS = " : ";
 

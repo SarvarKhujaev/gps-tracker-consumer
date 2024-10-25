@@ -1,15 +1,14 @@
 package com.ssd.mvd.entity.patrulDataSet.patrulSubClasses;
 
+import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
 import com.ssd.mvd.inspectors.DataValidateInspector;
-import com.ssd.mvd.interfaces.ObjectCommonMethods;
 import com.ssd.mvd.entity.TupleOfCar;
 import com.ssd.mvd.annotations.*;
 
-import com.datastax.driver.core.UDTValue;
-import com.datastax.driver.core.Row;
+import com.datastax.driver.core.GettableData;
 
 @EntityAnnotations( name = "PatrulCarInfo", isSubClass = true )
-public final class PatrulCarInfo extends DataValidateInspector implements ObjectCommonMethods< PatrulCarInfo > {
+public final class PatrulCarInfo implements ObjectFromRowConvertInterface< PatrulCarInfo > {
     public String getCarType() {
         return this.carType;
     }
@@ -49,21 +48,9 @@ public final class PatrulCarInfo extends DataValidateInspector implements Object
     public PatrulCarInfo () {}
 
     @Override
-    public PatrulCarInfo generate( final UDTValue udtValue ) {
-        super.checkAndSetParams(
-                udtValue,
-                udtValue1 -> {
-                    this.setCarType( udtValue.getString( "carType" ) );
-                    this.setCarNumber( udtValue.getString( "carNumber" ) );
-                }
-        );
-
-        return this;
-    }
-
-    @Override
-    public PatrulCarInfo generate( final Row row ) {
-        super.checkAndSetParams(
+    @lombok.NonNull
+    public PatrulCarInfo generate( @lombok.NonNull final GettableData row ) {
+        DataValidateInspector.checkAndSetParams(
                 row,
                 row1 -> {
                     this.setCarType( row.getString( "carType" ) );
@@ -75,6 +62,7 @@ public final class PatrulCarInfo extends DataValidateInspector implements Object
     }
 
     @Override
+    @lombok.NonNull
     public PatrulCarInfo generate() {
         return new PatrulCarInfo();
     }

@@ -14,7 +14,7 @@ public final class KafkaConnectionTest extends TestCase {
 
     @Override
     public void setUp () {
-        super.setName( KafkaDataControl.getInstance().getClass().getName() );
+        super.setName( KafkaDataControl.getKafkaDataControl().getClass().getName() );
     }
 
     @Override
@@ -22,16 +22,16 @@ public final class KafkaConnectionTest extends TestCase {
         /*
         closing connection to Kafka
         */
-        KafkaDataControl.getInstance().close();
+        KafkaDataControl.getKafkaDataControl().close();
     }
 
     public void testKafkaConnection () {
-        assertNotNull( KafkaDataControl.getInstance() );
+        assertNotNull( KafkaDataControl.getKafkaDataControl() );
     }
 
     public void testSendMessagesToKafka () {
         KafkaDataControl
-                .getInstance()
+                .getKafkaDataControl()
                 .sendMessageToKafka(
                         EntitiesInstances.REQ_CAR.get().generate(
                                 CassandraDataControl
@@ -44,7 +44,7 @@ public final class KafkaConnectionTest extends TestCase {
                 );
 
         KafkaDataControl
-                .getInstance()
+                .getKafkaDataControl()
                 .sendMessageToKafka(
                         EntitiesInstances.TUPLE_OF_CAR.get().generate(
                                 CassandraDataControl
@@ -58,7 +58,7 @@ public final class KafkaConnectionTest extends TestCase {
                 );
 
         KafkaDataControl
-                .getInstance()
+                .getKafkaDataControl()
                 .sendMessageToKafka( new Position() );
     }
 }

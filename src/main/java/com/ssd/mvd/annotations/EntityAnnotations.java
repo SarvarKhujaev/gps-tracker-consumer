@@ -1,18 +1,20 @@
 package com.ssd.mvd.annotations;
 
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import com.ssd.mvd.inspectors.StringOperations;
+import java.lang.annotation.*;
 
 @Target( value = ElementType.TYPE )
 @Retention( value = RetentionPolicy.RUNTIME )
+@Documented
 public @interface EntityAnnotations {
     String name();
+    String comment() default StringOperations.EMPTY;
 
-    boolean canTouch() default true;
-    boolean isReadable() default true;
-    boolean isSubClass() default false;
+    boolean canTouch () default true;
+    boolean isReadable () default true;
+    boolean isSubClass () default false;
+    boolean checkExistence() default false;
 
-    String[] primaryKeys() default { "uuid" };
+    String[] primaryKeys () default { "uuid" };
+    String[] clusteringKeys () default {};
 }

@@ -1,7 +1,6 @@
 package com.ssd.mvd.annotations;
 
-import com.ssd.mvd.gpstabletsservice.inspectors.EntitiesInstances;
-
+import com.ssd.mvd.inspectors.EntitiesInstances;
 import java.lang.annotation.*;
 
 @Target( value = ElementType.CONSTRUCTOR )

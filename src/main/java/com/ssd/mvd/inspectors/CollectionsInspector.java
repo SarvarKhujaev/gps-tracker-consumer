@@ -74,7 +74,7 @@ public class CollectionsInspector extends StringOperations {
 
     @lombok.NonNull
     @lombok.Synchronized
-    protected final synchronized <T, V> TreeMap<T, V> newTreeMap () {
+    public static synchronized <T, V> TreeMap<T, V> newTreeMap () {
         return new TreeMap<>( Comparator.comparing( Objects::nonNull ) );
     }
 

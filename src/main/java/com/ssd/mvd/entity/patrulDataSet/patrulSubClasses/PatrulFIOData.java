@@ -1,18 +1,17 @@
 package com.ssd.mvd.entity.patrulDataSet.patrulSubClasses;
 
-import com.ssd.mvd.annotations.EntityAnnotations;
-import com.ssd.mvd.annotations.FieldAnnotation;
-import com.ssd.mvd.annotations.MethodsAnnotations;
-import com.ssd.mvd.inspectors.DataValidateInspector;
-import com.ssd.mvd.interfaces.ObjectCommonMethods;
-
-import com.datastax.driver.core.UDTValue;
-import com.datastax.driver.core.Row;
-
 import java.util.Optional;
+import com.datastax.driver.core.GettableData;
+
+import com.ssd.mvd.annotations.FieldAnnotation;
+import com.ssd.mvd.annotations.EntityAnnotations;
+import com.ssd.mvd.annotations.MethodsAnnotations;
+
+import com.ssd.mvd.inspectors.DataValidateInspector;
+import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
 
 @EntityAnnotations( name = "PatrulFIOData", isSubClass = true )
-public final class PatrulFIOData extends DataValidateInspector implements ObjectCommonMethods< PatrulFIOData > {
+public final class PatrulFIOData extends DataValidateInspector implements ObjectFromRowConvertInterface< PatrulFIOData > {
     public String getName() {
         return this.name;
     }
@@ -81,14 +80,15 @@ public final class PatrulFIOData extends DataValidateInspector implements Object
     public PatrulFIOData () {}
 
     @Override
-    public PatrulFIOData generate( final Row row ) {
-        super.checkAndSetParams(
-                row,
+    @lombok.NonNull
+    public PatrulFIOData generate( @lombok.NonNull final GettableData gettableData ) {
+        checkAndSetParams(
+                gettableData,
                 row1 -> {
-                    this.setSurnameNameFatherName( row.getString( "surnameNameFatherName" ) );
-                    this.setFatherName( row.getString( "fatherName" ) );
-                    this.setSurname( row.getString( "surname" ) );
-                    this.setName( row.getString( "name" ) );
+                    this.setSurnameNameFatherName( gettableData.getString( "surnameNameFatherName" ) );
+                    this.setFatherName( gettableData.getString( "fatherName" ) );
+                    this.setSurname( gettableData.getString( "surname" ) );
+                    this.setName( gettableData.getString( "name" ) );
                 }
         );
 
@@ -96,22 +96,8 @@ public final class PatrulFIOData extends DataValidateInspector implements Object
     }
 
     @Override
+    @lombok.NonNull
     public PatrulFIOData generate() {
         return new PatrulFIOData();
-    }
-
-    @Override
-    public PatrulFIOData generate( final UDTValue udtValue ) {
-        super.checkAndSetParams(
-                udtValue,
-                udtValue1 -> {
-                    this.setSurnameNameFatherName( udtValue.getString( "surnameNameFatherName" ) );
-                    this.setFatherName( udtValue.getString( "fatherName" ) );
-                    this.setSurname( udtValue.getString( "surname" ) );
-                    this.setName( udtValue.getString( "name" ) );
-                }
-        );
-
-        return this;
     }
 }

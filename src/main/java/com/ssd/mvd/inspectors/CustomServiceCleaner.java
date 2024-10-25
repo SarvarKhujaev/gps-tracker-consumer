@@ -9,7 +9,7 @@ import java.util.List;
 
 @com.ssd.mvd.annotations.ImmutableEntityAnnotation
 public class CustomServiceCleaner {
-    @EntityConstructorAnnotation( permission = AnnotationInspector.class )
+    @EntityConstructorAnnotation( permission = UuidInspector.class )
     protected <T extends UuidInspector> CustomServiceCleaner ( @lombok.NonNull final Class<T> instance ) {
         AnnotationInspector.checkCallerPermission( instance, CustomServiceCleaner.class );
         AnnotationInspector.checkAnnotationIsImmutable( CustomServiceCleaner.class );

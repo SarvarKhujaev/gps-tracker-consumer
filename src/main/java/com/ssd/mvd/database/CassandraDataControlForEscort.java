@@ -211,7 +211,7 @@ public final class CassandraDataControlForEscort extends CassandraConverter impl
                                 о том что новый эскорт был добален в БД
                                 */
                                 KafkaDataControl
-                                        .getInstance()
+                                        .getKafkaDataControl()
                                         .sendMessageToKafka( tupleOfCar );
 
                                 /*

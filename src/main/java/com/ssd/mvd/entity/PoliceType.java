@@ -13,12 +13,8 @@ public final class PoliceType implements EntityToCassandraConverter {
     public PoliceType() {}
 
     @Override
+    @lombok.NonNull
     public CassandraTables getEntityTableName () {
         return CassandraTables.POLICE_TYPE;
-    }
-
-    @Override
-    public CassandraTables getEntityKeyspaceName () {
-        return CassandraTables.TABLETS;
     }
 }

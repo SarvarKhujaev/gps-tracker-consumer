@@ -1,14 +1,10 @@
 package com.ssd.mvd.entity.patrulDataSet.patrulSubClasses;
 
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.UDTValue;
-
-import com.ssd.mvd.interfaces.ObjectCommonMethods;
+import com.datastax.driver.core.GettableData;
 import com.ssd.mvd.inspectors.DataValidateInspector;
+import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
 
-public final class PatrulRegionData
-        extends DataValidateInspector
-        implements ObjectCommonMethods< PatrulRegionData > {
+public final class PatrulRegionData implements ObjectFromRowConvertInterface< PatrulRegionData > {
     public long getRegionId() {
         return this.regionId;
     }
@@ -59,13 +55,15 @@ public final class PatrulRegionData
     public PatrulRegionData () {}
 
     @Override
+    @lombok.NonNull
     public PatrulRegionData generate() {
         return new PatrulRegionData();
     }
 
     @Override
-    public PatrulRegionData generate( final UDTValue udtValue ) {
-        super.checkAndSetParams(
+    @lombok.NonNull
+    public PatrulRegionData generate( @lombok.NonNull final GettableData udtValue ) {
+        DataValidateInspector.checkAndSetParams(
                 udtValue,
                 udtValue1 -> {
                     this.setRegionId( udtValue.getLong( "regionId" ) );
@@ -74,23 +72,6 @@ public final class PatrulRegionData
 
                     this.setRegionName( udtValue.getString( "regionName" ) );
                     this.setDistrictName( udtValue.getString( "districtName" ) );
-                }
-        );
-
-        return this;
-    }
-
-    @Override
-    public PatrulRegionData generate( final Row row ) {
-        super.checkAndSetParams(
-                row,
-                row1 -> {
-                    this.setRegionId( row.getLong( "regionId" ) );
-                    this.setMahallaId( row.getLong( "mahallaId" ) );
-                    this.setDistrictId( row.getLong( "districtId" ) );
-
-                    this.setRegionName( row.getString( "regionName" ) );
-                    this.setDistrictName( row.getString( "districtName" ) );
                 }
         );
 

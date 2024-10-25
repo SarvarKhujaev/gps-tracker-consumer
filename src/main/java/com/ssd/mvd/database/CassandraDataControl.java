@@ -195,7 +195,7 @@ public final class CassandraDataControl extends CassandraParamsAndOptionsStore i
                                         отправляем обновленные данные о позиции машины в Кафку
                                     */
                                     KafkaDataControl
-                                            .getInstance()
+                                            .getKafkaDataControl()
                                             .sendMessageToKafka( updatedPosition );
                                 }
                         )
@@ -223,7 +223,7 @@ public final class CassandraDataControl extends CassandraParamsAndOptionsStore i
                                                 }
 
                                                 KafkaDataControl
-                                                        .getInstance()
+                                                        .getKafkaDataControl()
                                                         .sendMessageToKafka(
                                                                 Inspector
                                                                         .trackerInfoMap
@@ -253,7 +253,7 @@ public final class CassandraDataControl extends CassandraParamsAndOptionsStore i
                                                 );
 
                                                 KafkaDataControl
-                                                        .getInstance()
+                                                        .getKafkaDataControl()
                                                         .sendMessageToKafka( reqCar );
 
                                                 /*
@@ -544,7 +544,7 @@ public final class CassandraDataControl extends CassandraParamsAndOptionsStore i
 
     @Override
     public void close() {
-        KafkaDataControl.getInstance().close();
+        KafkaDataControl.getKafkaDataControl().close();
         this.getCluster().close();
         this.getSession().close();
 

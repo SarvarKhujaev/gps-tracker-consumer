@@ -106,4 +106,12 @@ public class KafkaOptionsAndParams extends AnnotationInspector {
             ),
             DAY_IN_SECOND
     );
+
+    protected final static String KAFKA_MAX_BLOCK_MS_CONFIG = checkContextOrReturnDefaultValue(
+            AnnotationInspector.getVariable(
+                    KafkaOptionsAndParams.class,
+                    KafkaOptionsAndParams.class.getDeclaredFields()[11].getName()
+            ),
+            "33554432 * 20"
+    );
 }

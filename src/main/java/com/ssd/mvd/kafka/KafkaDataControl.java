@@ -3,17 +3,23 @@ package com.ssd.mvd.kafka;
 import java.util.*;
 import java.util.function.Supplier;
 
+import reactor.core.scheduler.Schedulers;
+
 import reactor.kafka.sender.KafkaSender;
 import reactor.kafka.sender.SenderOptions;
 
 import com.ssd.mvd.entity.Position;
-import com.ssd.mvd.inspectors.SerDes;
 import com.ssd.mvd.publisher.CustomPublisher;
+import com.ssd.mvd.inspectors.EntitiesInstances;
 import com.ssd.mvd.subscribers.CustomSubscriber;
 import com.ssd.mvd.database.CassandraDataControl;
-import com.ssd.mvd.kafka.kafkaConfigs.KafkaTopics;
+
 import com.ssd.mvd.interfaces.ServiceCommonMethods;
 import com.ssd.mvd.interfaces.KafkaEntitiesCommonMethods;
+
+import com.ssd.mvd.kafka.kafkaConfigs.KafkaTopics;
+import com.ssd.mvd.kafka.kafkaConfigs.KafkaOptionsAndParams;
+import com.ssd.mvd.kafka.kafkaConfigs.KafkaProducerInterceptor;
 
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
@@ -21,81 +27,111 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Consumed;
 
-import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.record.CompressionType;
 import org.apache.kafka.clients.producer.ProducerConfig;
 
-public final class KafkaDataControl extends SerDes implements ServiceCommonMethods {
-    private final static Serde<String> stringserdes = Serdes.String();
-
-    private final String KAFKA_BROKER = super.checkContextOrReturnDefaultValue(
-            "variables.KAFKA_VARIABLES.KAFKA_BROKER",
-            "localhost:9092"
-    );
-
-    private final String GROUP_ID_FOR_KAFKA = super.checkContextOrReturnDefaultValue(
-            "variables.KAFKA_VARIABLES.GROUP_ID_FOR_KAFKA",
-            this.getClass().getName()
-    );
-
+public final class KafkaDataControl extends KafkaOptionsAndParams implements ServiceCommonMethods {
     private KafkaStreams kafkaStreams;
     private final Properties properties = new Properties();
     private final StreamsBuilder builder = new StreamsBuilder();
     private static KafkaDataControl INSTANCE = new KafkaDataControl();
 
-    private final Supplier< Map< String, Object > > getKafkaSenderOptions = () -> Map.of(
-            ProducerConfig.ACKS_CONFIG, super.checkContextOrReturnDefaultValue(
-                    "variables.KAFKA_VARIABLES.KAFKA_ACKS_CONFIG",
-                    "-1"
-            ),
-            ProducerConfig.MAX_BLOCK_MS_CONFIG, super.checkContextOrReturnDefaultValue(
-                    "variables.KAFKA_VARIABLES.KAFKA_MAX_BLOCK_MS_CONFIG",
-                    33554432 * 20
-            ),
-            ProducerConfig.CLIENT_ID_CONFIG, this.GROUP_ID_FOR_KAFKA,
-            ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, this.KAFKA_BROKER,
-            ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, org.apache.kafka.common.serialization.StringSerializer.class,
-            ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, org.apache.kafka.common.serialization.StringSerializer.class
+    private final Supplier< WeakHashMap< String, Object > > getKafkaSenderOptions = () -> {
+        final WeakHashMap< String, Object > options = super.newMap();
+
+        options.put( ProducerConfig.ACKS_CONFIG, KAFKA_ACKS_CONFIG );
+
+        // The number of times to retry sending a message if it fails.
+        options.put( ProducerConfig.RETRIES_CONFIG, RETRIES_CONFIG );
+
+        // The maximum time to wait before sending a batch to the broker
+        options.put( ProducerConfig.LINGER_MS_CONFIG, LINGER_MS_CONFIG );
+
+        // The maximum size of the batch to send to the broker
+        options.put( ProducerConfig.BATCH_SIZE_CONFIG, BATCH_SIZE_CONFIG );
+
+        options.put( ProducerConfig.CLIENT_ID_CONFIG, GROUP_ID_FOR_KAFKA );
+
+        // The maximum amount of memory to use for buffering messages
+        options.put( ProducerConfig.BUFFER_MEMORY_CONFIG, BUFFER_MEMORY_CONFIG );
+
+        // The maximum time to wait for a response from the broker
+        options.put( ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, REQUEST_TIMEOUT_MS_CONFIG );
+
+        // The maximum number of outstanding requests to send to the broker
+        options.put( ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION );
+
+        // The compression algorithm to use for messages
+        options.put(
+                ProducerConfig.COMPRESSION_TYPE_CONFIG,
+                checkContextOrReturnDefaultValue(
+                        "variables.KAFKA_VARIABLES.COMPRESSION_TYPE_CONFIG",
+                        CompressionType.LZ4.name
+                )
+        );
+
+        options.put( ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA_BROKER );
+
+        // The maximum age of metadata in milliseconds
+        options.put( ProducerConfig.METADATA_MAX_AGE_CONFIG, METADATA_MAX_AGE_CONFIG );
+
+        options.put( ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, KafkaProducerInterceptor.class.getName() );
+
+        options.put( ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, EntitiesInstances.KAFKA_STRING_SERIALIZER.get().getClass().getName() );
+        options.put( ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, EntitiesInstances.KAFKA_BYTE_SERIALIZER.get().getClass().getName() );
+
+        return options;
+    };
+
+    private final KafkaSender< String, byte[] > kafkaSender = KafkaSender.create(
+            SenderOptions.< String, byte[] >create( this.getKafkaSenderOptions.get() )
+                    .scheduler( Schedulers.parallel() )
+                    .maxInFlight( KAFKA_SENDER_MAX_IN_FLIGHT )
+                    .withKeySerializer( EntitiesInstances.KAFKA_STRING_SERIALIZER.get() )
+                    .withValueSerializer( EntitiesInstances.KAFKA_BYTE_SERIALIZER.get() )
     );
 
-    private final KafkaSender< String, String > kafkaSender = KafkaSender.create(
-            SenderOptions.< String, String >create( this.getKafkaSenderOptions.get() )
-                    .maxInFlight(
-                            super.checkContextOrReturnDefaultValue(
-                                    "variables.KAFKA_VARIABLES.KAFKA_SENDER_MAX_IN_FLIGHT",
-                                    1024
-                            )
-                    )
-    );
-
-    public static KafkaDataControl getInstance () {
+    public static KafkaDataControl getKafkaDataControl () {
         return INSTANCE != null ? INSTANCE : ( INSTANCE = new KafkaDataControl() );
     }
 
     private KafkaDataControl () {
+        super( KafkaDataControl.class );
         super.logging( this.getClass() );
     }
 
     private final Supplier< Properties > setStreamProperties = () -> {
-            this.properties.clear();
-            this.properties.put( StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, this.KAFKA_BROKER );
-            this.properties.put( StreamsConfig.APPLICATION_ID_CONFIG, this.GROUP_ID_FOR_KAFKA );
-            this.properties.put( StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, stringserdes.getClass().getName() );
-            this.properties.put( StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, stringserdes.getClass().getName() );
-            return this.properties;
+        this.properties.clear();
+
+        // The number of times to retry sending a message if it fails.
+        this.properties.put( StreamsConfig.CLIENT_ID_CONFIG, GROUP_ID_FOR_KAFKA );
+
+        // The maximum time to wait for a response from the broker
+        this.properties.put( StreamsConfig.REQUEST_TIMEOUT_MS_CONFIG, REQUEST_TIMEOUT_MS_CONFIG );
+        this.properties.put( StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA_BROKER );
+
+        // The maximum age of metadata in milliseconds
+        this.properties.put( StreamsConfig.METADATA_MAX_AGE_CONFIG, METADATA_MAX_AGE_CONFIG );
+
+        this.properties.put( StreamsConfig.APPLICATION_ID_CONFIG, GROUP_ID_FOR_KAFKA );
+        this.properties.put( StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, EntitiesInstances.KAFKA_STRING_SERIALIZER.getClass().getName() );
+        this.properties.put( StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, EntitiesInstances.KAFKA_BYTE_SERIALIZER.getClass().getName() );
+
+        return this.properties;
     };
 
     public void start () {
-        final KStream< String, String > kStream = this.builder.stream(
+        final KStream< String, byte[] > kStream = this.builder.stream(
                 KafkaTopics.RAW_GPS_LOCATION_TOPIC.getTopicName(),
-                Consumed.with( Serdes.String(), Serdes.String() )
+                Consumed.with( EntitiesInstances.STRING_SERDE.get(), Serdes.ByteArray() )
         );
 
         kStream.mapValues(
                 values -> CassandraDataControl
                         .getInstance()
                         .saveCarLocation
-                        .apply( super.deserialize( values, Position.class ) )
+                        .apply( new Position() )
         );
 
         this.kafkaStreams = new KafkaStreams( this.builder.build(), this.setStreamProperties.get() );
@@ -107,12 +143,8 @@ public final class KafkaDataControl extends SerDes implements ServiceCommonMetho
     ) {
         this.kafkaSender
                 .createOutbound()
-                .send(
-                        CustomPublisher.generate(
-                                kafkaEntitiesCommonMethods.getTopicName(),
-                                super.serialize( kafkaEntitiesCommonMethods )
-                        )
-                ).then()
+                .send( CustomPublisher.from( kafkaEntitiesCommonMethods ) )
+                .then()
                 .doOnError( this::close )
                 .doOnSuccess( success -> super.logging( kafkaEntitiesCommonMethods.getSuccessMessage() ) )
                 .subscribe(
@@ -125,7 +157,7 @@ public final class KafkaDataControl extends SerDes implements ServiceCommonMetho
     @Override
     public void close() {
         INSTANCE = null;
-        stringserdes.close();
+        this.properties.clear();
         super.logging( this );
         this.kafkaSender.close();
         this.kafkaStreams.close();

@@ -13,7 +13,7 @@ public class UuidInspector extends CustomServiceCleaner {
     protected final static WeakReference< UUID > uuid = new WeakReference<>( generateTimeBased() );
     private final static String UUID_PATTERN = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$";
 
-    @EntityConstructorAnnotation( permission = CollectionsInspector.class )
+    @EntityConstructorAnnotation( permission = StringOperations.class )
     protected <T extends UuidInspector> UuidInspector(@lombok.NonNull final Class<T> instance ) {
         super( UuidInspector.class );
 

@@ -1,12 +1,10 @@
 package com.ssd.mvd.entity.patrulDataSet.patrulSubClasses;
 
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.UDTValue;
-
-import com.ssd.mvd.interfaces.ObjectCommonMethods;
+import com.datastax.driver.core.GettableData;
 import com.ssd.mvd.inspectors.DataValidateInspector;
+import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
 
-public final class PatrulLocationData extends DataValidateInspector implements ObjectCommonMethods< PatrulLocationData > {
+public final class PatrulLocationData implements ObjectFromRowConvertInterface< PatrulLocationData > {
     public double getDistance() {
         return this.distance;
     }
@@ -60,8 +58,9 @@ public final class PatrulLocationData extends DataValidateInspector implements O
     public PatrulLocationData () {}
 
     @Override
-    public PatrulLocationData generate( final Row row ) {
-        super.checkAndSetParams(
+    @lombok.NonNull
+    public PatrulLocationData generate( @lombok.NonNull final GettableData row ) {
+        DataValidateInspector.checkAndSetParams(
                 row,
                 row1 -> {
                     this.setLongitudeOfTask( row.getDouble( "longitudeOfTask" ) );
@@ -76,23 +75,8 @@ public final class PatrulLocationData extends DataValidateInspector implements O
     }
 
     @Override
+    @lombok.NonNull
     public PatrulLocationData generate() {
         return new PatrulLocationData();
-    }
-
-    @Override
-    public PatrulLocationData generate( final UDTValue udtValue ) {
-        super.checkAndSetParams(
-                udtValue,
-                udtValue1 -> {
-                    this.setDistance( udtValue.getDouble( "distance" ) );
-                    this.setLatitude( udtValue.getDouble( "latitude" ) );
-                    this.setLongitude( udtValue.getDouble( "longitude" ) );
-                    this.setLatitudeOfTask( udtValue.getDouble( "latitudeOfTask" ) );
-                    this.setLongitudeOfTask( udtValue.getDouble( "longitudeOfTask" ) );
-                }
-        );
-
-        return this;
     }
 }

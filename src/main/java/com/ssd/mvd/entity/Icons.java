@@ -1,13 +1,10 @@
 package com.ssd.mvd.entity;
 
 import com.datastax.driver.core.GettableData;
-import com.datastax.driver.core.Row;
 import com.ssd.mvd.inspectors.DataValidateInspector;
 import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
 
-public final class Icons
-        extends DataValidateInspector
-        implements ObjectFromRowConvertInterface< Icons > {
+public final class Icons implements ObjectFromRowConvertInterface< Icons > {
     public String getIcon1() {
         return this.icon1;
     }
@@ -30,8 +27,9 @@ public final class Icons
     public Icons () {}
 
     @Override
-    public Icons generate( final GettableData row ) {
-        checkAndSetParams(
+    @lombok.NonNull
+    public Icons generate( @lombok.NonNull final GettableData row ) {
+        DataValidateInspector.checkAndSetParams(
                 row,
                 row1 -> {
                     this.setIcon1( row.getString( "icon" ) );
@@ -43,6 +41,7 @@ public final class Icons
     }
 
     @Override
+    @lombok.NonNull
     public Icons generate() {
         return new Icons();
     }

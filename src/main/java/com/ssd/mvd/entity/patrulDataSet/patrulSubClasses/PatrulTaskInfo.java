@@ -1,19 +1,19 @@
 package com.ssd.mvd.entity.patrulDataSet.patrulSubClasses;
 
 import java.util.Map;
-
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.UDTValue;
+import com.datastax.driver.core.GettableData;
 
 import com.ssd.mvd.annotations.EntityAnnotations;
 import com.ssd.mvd.annotations.MethodsAnnotations;
-import com.ssd.mvd.constants.CassandraDataTypes;
+
 import com.ssd.mvd.constants.Status;
-import com.ssd.mvd.interfaces.ObjectCommonMethods;
+import com.ssd.mvd.constants.CassandraDataTypes;
+
 import com.ssd.mvd.inspectors.DataValidateInspector;
+import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
 
 @EntityAnnotations( name = "PatrulTaskInfo", isSubClass = true )
-public final class PatrulTaskInfo extends DataValidateInspector implements ObjectCommonMethods< PatrulTaskInfo > {
+public final class PatrulTaskInfo extends DataValidateInspector implements ObjectFromRowConvertInterface< PatrulTaskInfo > {
     public String getTaskId() {
         return this.taskId;
     }
@@ -58,30 +58,19 @@ public final class PatrulTaskInfo extends DataValidateInspector implements Objec
     public PatrulTaskInfo () {}
 
     @Override
+    @lombok.NonNull
     public PatrulTaskInfo generate() {
         return new PatrulTaskInfo();
     }
 
     @Override
-    public PatrulTaskInfo generate( final Row row ) {
-        super.checkAndSetParams(
-                row,
+    @lombok.NonNull
+    public PatrulTaskInfo generate( @lombok.NonNull final GettableData gettableData ) {
+        checkAndSetParams(
+                gettableData,
                 row1 -> {
-                    this.setListOfTasks( row.getMap( "listOfTasks", String.class, String.class ) );
-                    this.setStatus( Status.valueOf( row.getString( "status" ) ) );
-                }
-        );
-
-        return this;
-    }
-
-    @Override
-    public PatrulTaskInfo generate( final UDTValue udtValue ) {
-        super.checkAndSetParams(
-                udtValue,
-                udtValue1 -> {
-                    this.setListOfTasks( udtValue.getMap( "listOfTasks", String.class, String.class ) );
-                    this.setStatus( Status.valueOf( udtValue.getString( "status" ) ) );
+                    this.setListOfTasks( gettableData.getMap( "listOfTasks", String.class, String.class ) );
+                    this.setStatus( Status.valueOf( gettableData.getString( "status" ) ) );
                 }
         );
 

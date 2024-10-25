@@ -7,7 +7,7 @@ import java.util.SortedMap;
 import java.util.Date;
 import java.util.UUID;
 
-public final class PatrulFuelStatistics extends CollectionsInspector {
+public final class PatrulFuelStatistics {
     public UUID getUuid() {
         return this.uuid;
     }
@@ -43,7 +43,7 @@ public final class PatrulFuelStatistics extends CollectionsInspector {
     private UUID uuid;
     private double averageDistance = 0.0;
     private double averageFuelConsumption = 0.0;
-    private SortedMap< Date, ConsumptionData > map = super.newTreeMap();
+    private SortedMap< Date, ConsumptionData > map = CollectionsInspector.newTreeMap();
 
     public PatrulFuelStatistics () {}
 }

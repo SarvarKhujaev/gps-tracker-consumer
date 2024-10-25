@@ -6,9 +6,12 @@ import com.ssd.mvd.entity.*;
 
 import org.apache.commons.collections4.list.UnmodifiableList;
 import org.apache.commons.lang3.Validate;
-import java.lang.ref.WeakReference;
+
+import org.apache.kafka.common.serialization.Serde;
+import org.apache.kafka.common.serialization.Serdes;
 
 import java.util.concurrent.atomic.AtomicReference;
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 @SuppressWarnings( value = "хранит instance на все объекты" )
@@ -58,6 +61,16 @@ public final class EntitiesInstances {
             new PatrulFuelStatistics()
     );
 
+    public static final WeakReference< org.apache.kafka.common.serialization.StringSerializer > KAFKA_STRING_SERIALIZER = generateWeakEntity(
+            new org.apache.kafka.common.serialization.StringSerializer()
+    );
+
+    public static final WeakReference< org.apache.kafka.common.serialization.ByteArraySerializer > KAFKA_BYTE_SERIALIZER = generateWeakEntity(
+            new org.apache.kafka.common.serialization.ByteArraySerializer()
+    );
+
+    public final static WeakReference< Serde< String > > STRING_SERDE = generateWeakEntity( Serdes.String() );
+
     public static final UnmodifiableList< AtomicReference< ? > > instancesList = new UnmodifiableList<>(
             List.of(
                     ICONS,
@@ -70,4 +83,13 @@ public final class EntitiesInstances {
                     PATRUL_FUEL_STATISTICS
             )
     );
+
+    public static void clear() {
+        STRING_SERDE.get().close();
+        KAFKA_BYTE_SERIALIZER.get().close();
+        KAFKA_STRING_SERIALIZER.get().close();
+
+        CustomServiceCleaner.clearReference( KAFKA_BYTE_SERIALIZER );
+        CustomServiceCleaner.clearReference( KAFKA_STRING_SERIALIZER );
+    }
 }

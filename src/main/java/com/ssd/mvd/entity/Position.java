@@ -1,7 +1,17 @@
 package com.ssd.mvd.entity;
 
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
+import com.datastax.oss.driver.api.querybuilder.insert.Insert;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
+
+import com.ssd.mvd.annotations.AvroFieldAnnotation;
+import com.ssd.mvd.annotations.AvroMethodAnnotation;
 import com.ssd.mvd.interfaces.EntityToCassandraConverter;
 import com.ssd.mvd.interfaces.KafkaEntitiesCommonMethods;
+
+import com.ssd.mvd.annotations.EntityAnnotations;
+import com.ssd.mvd.annotations.FieldAnnotation;
 
 import com.ssd.mvd.kafka.kafkaConfigs.KafkaTopics;
 import com.ssd.mvd.entity.patrulDataSet.Patrul;
@@ -12,34 +22,107 @@ import com.ssd.mvd.inspectors.Inspector;
 import com.ssd.mvd.constants.CassandraCommands;
 import com.ssd.mvd.constants.CassandraTables;
 import com.ssd.mvd.constants.Status;
+import org.apache.avro.Schema;
 
-import com.google.gson.annotations.Expose;
 import java.text.MessageFormat;
-
 import java.util.Date;
 import java.util.UUID;
 
-public final class Position
-        extends StringOperations
-        implements EntityToCassandraConverter, KafkaEntitiesCommonMethods {
+@EntityAnnotations( name = "Position", comment = "Данные о позиции патрульной машины" )
+public final class Position implements EntityToCassandraConverter, KafkaEntitiesCommonMethods {
+    @AvroMethodAnnotation( name = "speed" )
     public double getSpeed() {
         return this.speed;
     }
 
+    @AvroMethodAnnotation( name = "deviceId" )
     public String getDeviceId() {
         return this.deviceId;
     }
 
+    @AvroMethodAnnotation( name = "deviceTime" )
     public Date getDeviceTime() {
         return this.deviceTime;
     }
 
+    @AvroMethodAnnotation( name = "latitude" )
     public double getLatitude() {
         return this.latitude;
     }
 
+    @AvroMethodAnnotation( name = "longitude" )
     public double getLongitude() {
         return this.longitude;
+    }
+
+    @AvroMethodAnnotation( name = "icon" )
+    public String getIcon() {
+        return this.icon;
+    }
+
+    @AvroMethodAnnotation( name = "icon2" )
+    public String getIcon2() {
+        return this.icon2;
+    }
+
+    @AvroMethodAnnotation( name = "carType" )
+    public String getCarType() {
+        return this.carType;
+    }
+
+    @AvroMethodAnnotation( name = "carGosNumber" )
+    public String getCarGosNumber() {
+        return this.carGosNumber;
+    }
+
+    @AvroMethodAnnotation( name = "taskId" )
+    public String getTaskId() {
+        return this.taskId;
+    }
+
+    @AvroMethodAnnotation( name = "patrulName" )
+    public String getPatrulName() {
+        return this.patrulName;
+    }
+
+    @AvroMethodAnnotation( name = "policeType" )
+    public String getPoliceType() {
+        return this.policeType;
+    }
+
+    @AvroMethodAnnotation( name = "status" )
+    public Status getStatus() {
+        return this.status;
+    }
+
+    @AvroMethodAnnotation( name = "patrulUUID" )
+    public UUID getPatrulUUID() {
+        return this.patrulUUID;
+    }
+
+    @AvroMethodAnnotation( name = "regionId" )
+    public long getRegionId() {
+        return this.regionId;
+    }
+
+    @AvroMethodAnnotation( name = "mahallaId" )
+    public long getMahallaId() {
+        return this.mahallaId;
+    }
+
+    @AvroMethodAnnotation( name = "districtId" )
+    public long getDistrictId() {
+        return this.districtId;
+    }
+
+    @AvroMethodAnnotation( name = "latitudeOfTask" )
+    public double getLatitudeOfTask() {
+        return this.latitudeOfTask;
+    }
+
+    @AvroMethodAnnotation( name = "longitudeOfTask" )
+    public double getLongitudeOfTask() {
+        return this.longitudeOfTask;
     }
 
     public void setIcon( final String icon ) {
@@ -107,7 +190,7 @@ public final class Position
     }
 
     public void update (
-            final Patrul patrul
+            @lombok.NonNull final Patrul patrul
     ) {
         this.setLongitudeOfTask( patrul.getPatrulLocationData().getLongitudeOfTask() );
         this.setLatitudeOfTask( patrul.getPatrulLocationData().getLatitudeOfTask() );
@@ -126,58 +209,97 @@ public final class Position
     }
 
     public void update (
-            final Icons icons
+            @lombok.NonNull final Icons icons
     ) {
         this.setIcon( icons.getIcon1() );
         this.setIcon2( icons.getIcon2() );
     }
 
-    // only for Car
-    @Expose
-    private String icon; // иконка патрульного выбирается исходя из типа патрульного
-    @Expose
-    private String icon2; // иконка патрульного выбирается исходя из типа патрульного
-    @Expose
+    @FieldAnnotation(
+            name = "icon",
+            comment = "иконка патрульного выбирается исходя из типа патрульного",
+            hasToBeJoinedWithAstrix = true
+    )
+    @AvroFieldAnnotation( name = "icon" )
+    private String icon;
+
+    @FieldAnnotation(
+            name = "icon2",
+            comment = "иконка патрульного выбирается исходя из типа патрульного",
+            hasToBeJoinedWithAstrix = true
+    )
+    @AvroFieldAnnotation( name = "icon2" )
+    private String icon2;
+
+    @FieldAnnotation( name = "carType", hasToBeJoinedWithAstrix = true )
+    @AvroFieldAnnotation( name = "carType" )
     private String carType;
-    @Expose
+
+    @FieldAnnotation( name = "carGosNumber", hasToBeJoinedWithAstrix = true )
+    @AvroFieldAnnotation( name = "carGosNumber" )
     private String carGosNumber;
 
-    // only for Patrul
-    @Expose
+    @FieldAnnotation( name = "taskId", hasToBeJoinedWithAstrix = true )
+    @AvroFieldAnnotation( name = "taskId" )
     private String taskId;
-    @Expose
+
+    @FieldAnnotation( name = "patrulName", hasToBeJoinedWithAstrix = true )
+    @AvroFieldAnnotation( name = "patrulName" )
     private String patrulName;
-    @Expose
+
+    @FieldAnnotation( name = "policeType", hasToBeJoinedWithAstrix = true )
+    @AvroFieldAnnotation( name = "policeType" )
     private String policeType;
 
-    @Expose
+    @FieldAnnotation( name = "deviceId", hasToBeJoinedWithAstrix = true, mightBeNull = false )
+    @AvroFieldAnnotation( name = "deviceId" )
+    private String deviceId;
+
+    @FieldAnnotation( name = "status", hasToBeJoinedWithAstrix = true, mightBeNull = false )
+    @AvroFieldAnnotation(
+            name = "status",
+            isEnum = true,
+            chosenEnum = 2,
+            schemaType = Schema.Type.ENUM
+    )
     private Status status;
-    @Expose
+
+    @FieldAnnotation( name = "patrulUUID", mightBeNull = false )
+    @AvroFieldAnnotation( name = "patrulUUID", schemaType = Schema.Type.STRING )
     private UUID patrulUUID;
 
-    @Expose
+    @FieldAnnotation( name = "regionId" )
+    @AvroFieldAnnotation( name = "regionId", schemaType = Schema.Type.LONG )
     private long regionId;
-    @Expose
+    @FieldAnnotation( name = "mahallaId" )
+    @AvroFieldAnnotation( name = "mahallaId", schemaType = Schema.Type.LONG )
     private long mahallaId;
-    @Expose
+    @FieldAnnotation( name = "districtId" )
+    @AvroFieldAnnotation( name = "districtId", schemaType = Schema.Type.LONG )
     private long districtId;
 
-    // Tracker data
-    @Expose
-    private String deviceId;
-    @Expose
+    @FieldAnnotation( name = "deviceTime", hasToBeJoinedWithAstrix = true, mightBeNull = false )
+    @AvroFieldAnnotation( name = "deviceTime", isDate = true )
     private Date deviceTime;
 
-    @Expose
+    @FieldAnnotation( name = "speed", mightBeNull = false )
+    @AvroFieldAnnotation( name = "speed", schemaType = Schema.Type.DOUBLE )
     private double speed;
-    @Expose
+
+    @FieldAnnotation( name = "latitude" )
+    @AvroFieldAnnotation( name = "latitude", schemaType = Schema.Type.DOUBLE )
     private double latitude;
-    @Expose
+
+    @FieldAnnotation( name = "longitude" )
+    @AvroFieldAnnotation( name = "longitude", schemaType = Schema.Type.DOUBLE )
     private double longitude;
 
-    @Expose
+    @FieldAnnotation( name = "latitudeOfTask" )
+    @AvroFieldAnnotation( name = "latitudeOfTask", schemaType = Schema.Type.DOUBLE )
     private double latitudeOfTask;
-    @Expose
+
+    @FieldAnnotation( name = "longitudeOfTask" )
+    @AvroFieldAnnotation( name = "longitudeOfTask", schemaType = Schema.Type.DOUBLE )
     private double longitudeOfTask;
 
     @Override
@@ -187,61 +309,48 @@ public final class Position
                 """
                 {0} {1}.{2}
                 ( imei, date, speed, altitude, longitude, address )
-                VALUES ( {3}, {4}, {5}, {6}, {7}, '' );
+                VALUES ( {3}, {4}, {5}, {6}, {7}, {8} );
                 """,
                 CassandraCommands.INSERT_INTO,
 
                 CassandraTables.ESCORT,
                 CassandraTables.ESCORT_LOCATION,
 
-                joinWithAstrix( this.getDeviceId() ),
-                joinWithAstrix( this.getDeviceTime() ),
+                StringOperations.joinWithAstrix( this.getDeviceId() ),
+                StringOperations.joinWithAstrix( this.getDeviceTime() ),
 
                 this.getSpeed(),
                 this.getLongitude(),
-                this.getLatitude()
+                this.getLatitude(),
+
+                StringOperations.EMPTY
         );
     }
 
     @Override
     @lombok.NonNull
-    public String getEntityInsertCommand() {
-        return MessageFormat.format(
-                """
-                {0} {1}.{2}
-                ( imei, date, speed, latitude, longitude )
-                VALUES ( {3}, {4}, {5} );
-                """,
-                CassandraCommands.INSERT_INTO,
-
-                this.getEntityKeyspaceName(),
-                this.getEntityTableName(),
-
-                joinWithAstrix( this.getDeviceId() ),
-                joinWithAstrix( this.getDeviceTime() ),
-
-                String.join(
-                        ", ",
-                        String.valueOf( this.getSpeed() ),
-                        String.valueOf( this.getLatitude() ),
-                        String.valueOf( this.getLongitude() )
-                )
-        );
+    public Insert getEntityInsert() {
+        return QueryBuilder.insertInto(
+                this.getEntityKeyspaceName().name(),
+                this.getEntityTableName().name()
+        ).value( CqlIdentifier.fromCql( "imei" ), literal( this.getDeviceId() ) )
+                .value( CqlIdentifier.fromCql( "date" ), literal( this.getDeviceTime() ) )
+                .value( CqlIdentifier.fromCql( "speed" ), literal( this.getSpeed() ) )
+                .value( CqlIdentifier.fromCql( "latitude" ), literal( this.getLatitude() ) )
+                .value( CqlIdentifier.fromCql( "longitude" ), literal( this.getLongitude() ) );
     }
 
     @Override
     @lombok.NonNull
     public KafkaTopics getTopicName() {
-        return Inspector.trackerInfoMap.containsKey( this.getDeviceId() )
-                ? KafkaTopics.WEBSOCKET_SERVICE_TOPIC_FOR_ONLINE
-                : KafkaTopics.TUPLE_OF_CAR_LOCATION_TOPIC;
+        return KafkaTopics.TUPLE_OF_CAR_LOCATION_TOPIC;
     }
 
     @Override
     @lombok.NonNull
     public String getSuccessMessage() {
         return String.join(
-                SPACE,
+                StringOperations.SPACE,
                 (
                         Inspector.trackerInfoMap.containsKey( this.getDeviceId() )
                                 ? "Kafka got patrul car:"

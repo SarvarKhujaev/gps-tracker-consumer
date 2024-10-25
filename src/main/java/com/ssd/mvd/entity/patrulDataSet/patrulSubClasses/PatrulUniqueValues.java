@@ -1,16 +1,12 @@
 package com.ssd.mvd.entity.patrulDataSet.patrulSubClasses;
 
 import java.util.UUID;
+import com.datastax.driver.core.GettableData;
 
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.UDTValue;
-
-import com.ssd.mvd.interfaces.ObjectCommonMethods;
 import com.ssd.mvd.inspectors.DataValidateInspector;
+import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
 
-public final class PatrulUniqueValues
-        extends DataValidateInspector
-        implements ObjectCommonMethods< PatrulUniqueValues > {
+public final class PatrulUniqueValues implements ObjectFromRowConvertInterface< PatrulUniqueValues > {
     public void setOrgan( final UUID organ ) {
         this.organ = organ;
     }
@@ -53,24 +49,9 @@ public final class PatrulUniqueValues
     }
 
     @Override
-    public PatrulUniqueValues generate( final Row row ) {
-        super.checkAndSetParams(
-                row,
-                row1 -> {
-                    this.setUuidForEscortCar( row.getUUID( "uuidForEscortCar" ) );
-                    this.setUuidForPatrulCar( row.getUUID( "uuidForPatrulCar" ) );
-                    this.setUuidOfEscort( row.getUUID( "uuidOfEscort" ) );
-                    this.setSos_id( row.getUUID( "sos_id" ) );
-                    this.setOrgan( row.getUUID( "organ" ) );
-                }
-        );
-
-        return this;
-    }
-
-    @Override
-    public PatrulUniqueValues generate( final UDTValue udtValue ) {
-        super.checkAndSetParams(
+    @lombok.NonNull
+    public PatrulUniqueValues generate( @lombok.NonNull final GettableData udtValue ) {
+        DataValidateInspector.checkAndSetParams(
                 udtValue,
                 udtValue1 -> {
                     this.setOrgan( udtValue.getUUID( "organ" ) );

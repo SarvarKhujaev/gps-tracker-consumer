@@ -19,8 +19,7 @@ import com.google.gson.annotations.Expose;
 import java.text.MessageFormat;
 import java.util.UUID;
 
-public final class TupleOfCar
-        implements ObjectFromRowConvertInterface< TupleOfCar >, KafkaEntitiesCommonMethods {
+public final class TupleOfCar implements ObjectFromRowConvertInterface< TupleOfCar >, KafkaEntitiesCommonMethods {
     public UUID getUuid() {
         return this.uuid;
     }

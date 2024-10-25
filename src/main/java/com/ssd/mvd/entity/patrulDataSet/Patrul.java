@@ -1,8 +1,10 @@
 package com.ssd.mvd.entity.patrulDataSet;
 
-import com.ssd.mvd.inspectors.CassandraConverter;
 import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
 import com.ssd.mvd.annotations.*;
+
+import com.ssd.mvd.inspectors.DataValidateInspector;
+import com.ssd.mvd.inspectors.StringOperations;
 
 import com.ssd.mvd.entity.patrulDataSet.patrulSubClasses.*;
 import com.ssd.mvd.entity.TupleOfCar;
@@ -17,7 +19,7 @@ import java.text.MessageFormat;
 import java.util.UUID;
 
 @EntityAnnotations( name = "Patrul" )
-public final class Patrul extends CassandraConverter implements ObjectFromRowConvertInterface< Patrul > {
+public final class Patrul implements ObjectFromRowConvertInterface< Patrul > {
     @MethodsAnnotations(
             name = "uuid",
             isPrimaryKey = true
@@ -246,7 +248,7 @@ public final class Patrul extends CassandraConverter implements ObjectFromRowCon
     @Override
     @lombok.NonNull
     public Patrul generate( @lombok.NonNull final GettableData row ) {
-        checkAndSetParams(
+        DataValidateInspector.checkAndSetParams(
                 row,
                 row1 -> {
                     this.setUuid( row.getUUID( "uuid" ) );
@@ -291,8 +293,8 @@ public final class Patrul extends CassandraConverter implements ObjectFromRowCon
                 this.getEntityTableName(),
 
                 this.getPatrulUniqueValues().getUuidForEscortCar(),
-                joinWithAstrix( this.getPatrulCarInfo().getCarType() ),
-                joinWithAstrix( this.getPatrulCarInfo().getCarNumber() ),
+                StringOperations.joinWithAstrix( this.getPatrulCarInfo().getCarType() ),
+                StringOperations.joinWithAstrix( this.getPatrulCarInfo().getCarNumber() ),
                 this.getUuid()
         );
     }
