@@ -1,14 +1,17 @@
-package com.ssd.mvd.inspectors;
+package com.ssd.mvd.inspectors.dataTypesInpectors;
 
-import com.datastax.driver.core.utils.UUIDs;
+import com.ssd.mvd.annotations.entity.object.EntityConstructorAnnotation;
 
-import com.ssd.mvd.annotations.EntityConstructorAnnotation;
+import com.ssd.mvd.inspectors.CustomServiceCleaner;
+import com.ssd.mvd.inspectors.AnnotationInspector;
+
 import com.ssd.mvd.constants.Errors;
 
+import com.datastax.driver.core.utils.UUIDs;
 import java.lang.ref.WeakReference;
 import java.util.UUID;
 
-@com.ssd.mvd.annotations.ImmutableEntityAnnotation
+@com.ssd.mvd.annotations.services.ImmutableEntityAnnotation
 public class UuidInspector extends CustomServiceCleaner {
     protected final static WeakReference< UUID > uuid = new WeakReference<>( generateTimeBased() );
     private final static String UUID_PATTERN = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$";

@@ -1,6 +1,10 @@
 package com.ssd.mvd.inspectors;
 
-import com.ssd.mvd.annotations.EntityConstructorAnnotation;
+import com.ssd.mvd.annotations.entity.object.EntityConstructorAnnotation;
+import com.ssd.mvd.annotations.services.ServiceParametrAnnotation;
+
+import com.ssd.mvd.inspectors.dataTypesInpectors.TimeInspector;
+import com.ssd.mvd.inspectors.dataTypesInpectors.UuidInspector;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -17,8 +21,8 @@ import java.util.Collection;
 @SuppressWarnings(
         value = "хранит все функции для более компактного и удобного хранения всех основных функции WebFlux"
 )
-@com.ssd.mvd.annotations.ImmutableEntityAnnotation
-@com.ssd.mvd.annotations.ServiceParametrAnnotation( propertyGroupName = "WEB_FLUX_PARAMS" )
+@com.ssd.mvd.annotations.services.ImmutableEntityAnnotation
+@ServiceParametrAnnotation( propertyGroupName = "WEB_FLUX_PARAMS" )
 public class WebFluxInspector extends Inspector {
     protected static final int RESULT_COUNT = checkContextOrReturnDefaultValue(
             "variables.WEB_FLUX_PARAMS.RESULT_COUNT",
@@ -35,7 +39,7 @@ public class WebFluxInspector extends Inspector {
     }
 
     @EntityConstructorAnnotation( permission = LogInspector.class )
-    protected <T extends UuidInspector> WebFluxInspector ( @lombok.NonNull final Class<T> instance ) {
+    protected <T extends UuidInspector> WebFluxInspector (@lombok.NonNull final Class<T> instance ) {
         super( WebFluxInspector.class );
 
         AnnotationInspector.checkCallerPermission( instance, WebFluxInspector.class );

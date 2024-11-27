@@ -2,17 +2,17 @@ package com.ssd.mvd.database.cassandraRegistry;
 
 import java.text.MessageFormat;
 
-import com.ssd.mvd.constants.*;
 import com.ssd.mvd.entity.TupleOfCar;
+import com.ssd.mvd.constants.cassandra.*;
 
-import com.ssd.mvd.inspectors.TimeInspector;
-import com.ssd.mvd.inspectors.StringOperations;
 import com.ssd.mvd.inspectors.CassandraConverter;
+import com.ssd.mvd.inspectors.dataTypesInpectors.TimeInspector;
+import com.ssd.mvd.inspectors.dataTypesInpectors.StringOperations;
 
 import com.ssd.mvd.interfaces.DatabaseCommonMethods;
-import com.ssd.mvd.interfaces.EntityToCassandraConverter;
+import com.ssd.mvd.interfaces.entity.EntityToCassandraConverter;
 
-@com.ssd.mvd.annotations.ImmutableEntityAnnotation
+@com.ssd.mvd.annotations.services.ImmutableEntityAnnotation
 public final class CassandraTableRegistration extends CassandraTablesAndTypesRegister implements DatabaseCommonMethods {
     public static void generate () {
         new CassandraTableRegistration();
@@ -26,7 +26,7 @@ public final class CassandraTableRegistration extends CassandraTablesAndTypesReg
     @SuppressWarnings(
             value = "Хранит все данные для создания новой таблицы в БД"
     )
-    @com.ssd.mvd.annotations.ImmutableEntityAnnotation
+    @com.ssd.mvd.annotations.services.ImmutableEntityAnnotation
     public static class TableRegistration extends CassandraConverter {
         public CassandraTables getTableName() {
             return this.tableName;

@@ -1,7 +1,11 @@
 package com.ssd.mvd.inspectors;
 
+import com.ssd.mvd.annotations.entity.object.EntityConstructorAnnotation;
+import com.ssd.mvd.annotations.services.ServiceParametrAnnotation;
+
+import com.ssd.mvd.inspectors.dataTypesInpectors.UuidInspector;
+
 import com.ssd.mvd.kafka.kafkaConfigs.KafkaProducerInterceptor;
-import com.ssd.mvd.annotations.EntityConstructorAnnotation;
 import com.ssd.mvd.entity.ApiResponseModel;
 
 import org.apache.logging.log4j.LogManager;
@@ -10,8 +14,8 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.scheduling.annotation.Async;
 import reactor.core.publisher.Mono;
 
-@com.ssd.mvd.annotations.ImmutableEntityAnnotation
-@com.ssd.mvd.annotations.ServiceParametrAnnotation( propertyGroupName = "LOGGER_WITH_JSON_LAYOUT" )
+@com.ssd.mvd.annotations.services.ImmutableEntityAnnotation
+@ServiceParametrAnnotation( propertyGroupName = "LOGGER_WITH_JSON_LAYOUT" )
 public class LogInspector extends WebFluxInspector {
     protected LogInspector () {
         super( LogInspector.class );
@@ -23,7 +27,7 @@ public class LogInspector extends WebFluxInspector {
                     KafkaProducerInterceptor.class
             }
     )
-    protected <T extends UuidInspector> LogInspector ( @lombok.NonNull final Class<T> instance ) {
+    protected <T extends UuidInspector> LogInspector (@lombok.NonNull final Class<T> instance ) {
         super( LogInspector.class );
 
         AnnotationInspector.checkCallerPermission( instance, LogInspector.class );

@@ -24,16 +24,16 @@ import com.ssd.mvd.entity.patrulDataSet.Patrul;
 import com.ssd.mvd.entity.patrulDataSet.patrulSubClasses.PatrulFuelStatistics;
 
 import com.ssd.mvd.inspectors.Inspector;
-import com.ssd.mvd.inspectors.TimeInspector;
 import com.ssd.mvd.inspectors.EntitiesInstances;
 import com.ssd.mvd.inspectors.CustomServiceCleaner;
+import com.ssd.mvd.inspectors.dataTypesInpectors.TimeInspector;
 
-import com.ssd.mvd.constants.CassandraTables;
-import com.ssd.mvd.constants.CassandraCommands;
+import com.ssd.mvd.constants.cassandra.CassandraTables;
+import com.ssd.mvd.constants.cassandra.CassandraCommands;
 
 import com.ssd.mvd.interfaces.DatabaseCommonMethods;
-import com.ssd.mvd.interfaces.EntityToCassandraConverter;
-import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
+import com.ssd.mvd.interfaces.entity.EntityToCassandraConverter;
+import com.ssd.mvd.interfaces.entity.ObjectFromRowConvertInterface;
 
 import com.ssd.mvd.kafka.KafkaDataControl;
 import com.ssd.mvd.subscribers.CustomSubscriber;
@@ -41,7 +41,7 @@ import com.ssd.mvd.subscribers.CustomSubscriber;
 import com.ssd.mvd.database.cassandraRegistry.CassandraTableRegistration;
 import com.ssd.mvd.database.cassandraConfigs.CassandraParamsAndOptionsStore;
 
-@com.ssd.mvd.annotations.ImmutableEntityAnnotation
+@com.ssd.mvd.annotations.services.ImmutableEntityAnnotation
 public final class CassandraDataControl extends CassandraParamsAndOptionsStore implements DatabaseCommonMethods {
     private final Cluster cluster;
     private final Session session;

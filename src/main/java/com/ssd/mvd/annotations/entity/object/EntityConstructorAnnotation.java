@@ -1,4 +1,4 @@
-package com.ssd.mvd.annotations;
+package com.ssd.mvd.annotations.entity.object;
 
 import com.ssd.mvd.inspectors.EntitiesInstances;
 import java.lang.annotation.*;

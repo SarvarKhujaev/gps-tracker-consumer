@@ -1,13 +1,14 @@
 package com.ssd.mvd.database.cassandraRegistry;
 
-import com.ssd.mvd.interfaces.DatabaseCommonMethods;
 import com.ssd.mvd.inspectors.CollectionsInspector;
-import com.ssd.mvd.constants.CassandraTables;
+import com.ssd.mvd.interfaces.DatabaseCommonMethods;
+import com.ssd.mvd.constants.cassandra.CassandraTables;
+import com.ssd.mvd.annotations.services.ImmutableEntityAnnotation;
 
 @SuppressWarnings(
         value = "создает все таблицы, типы, кодеки и пространство ключей"
 )
-@com.ssd.mvd.annotations.ImmutableEntityAnnotation
+@ImmutableEntityAnnotation
 public sealed class CassandraTablesAndTypesRegister implements DatabaseCommonMethods permits CassandraTableRegistration {
     protected CassandraTablesAndTypesRegister() {
         this.createAllKeyspace();

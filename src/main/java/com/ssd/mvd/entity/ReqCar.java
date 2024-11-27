@@ -1,210 +1,282 @@
 package com.ssd.mvd.entity;
 
-import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
+import com.ssd.mvd.annotations.entity.object.EntityConstructorAnnotation;
+import com.ssd.mvd.annotations.entity.object.EntityAnnotations;
+
+import com.ssd.mvd.annotations.entity.field.ChildEntityAnnotation;
+import com.ssd.mvd.annotations.entity.field.FieldAnnotation;
+import com.ssd.mvd.annotations.entity.field.EntityIndex;
+
+import com.ssd.mvd.annotations.entity.method.MethodsAnnotations;
+
+import com.ssd.mvd.interfaces.entity.ObjectFromRowConvertInterface;
 import com.ssd.mvd.interfaces.KafkaEntitiesCommonMethods;
 
+import com.ssd.mvd.inspectors.dataTypesInpectors.StringOperations;
+import com.ssd.mvd.inspectors.AnnotationInspector;
 import com.ssd.mvd.inspectors.CassandraConverter;
+
 import com.ssd.mvd.kafka.kafkaConfigs.KafkaTopics;
+import com.ssd.mvd.entity.patrulDataSet.Patrul;
 
-import com.ssd.mvd.inspectors.DataValidateInspector;
-import com.ssd.mvd.inspectors.StringOperations;
-
-import com.ssd.mvd.constants.CassandraFunctions;
-import com.ssd.mvd.constants.CassandraCommands;
-import com.ssd.mvd.constants.CassandraTables;
-
-import com.datastax.driver.core.GettableData;
-import com.google.gson.annotations.Expose;
+import com.ssd.mvd.constants.cassandra.CassandraDataTypes;
+import com.ssd.mvd.constants.cassandra.CassandraFunctions;
+import com.ssd.mvd.constants.cassandra.CassandraCommands;
+import com.ssd.mvd.constants.cassandra.CassandraTables;
 
 import java.text.MessageFormat;
 import java.util.UUID;
 
-public final class ReqCar implements ObjectFromRowConvertInterface< ReqCar >, KafkaEntitiesCommonMethods {
-    public UUID getPatrulId() {
-        return this.patrulId;
-    }
-
-    public void setPatrulId( final UUID uuid ) {
-        this.patrulId = uuid;
-    }
-
+@EntityAnnotations(
+        name = "ReqCar",
+        comment = "Данные о патрульных машинах",
+        tableName = CassandraTables.CARS
+)
+public final class ReqCar
+        extends CassandraConverter
+        implements ObjectFromRowConvertInterface< ReqCar >, KafkaEntitiesCommonMethods {
+    @MethodsAnnotations(
+            name = "uuid",
+            isPrimaryKey = true
+    )
+    @lombok.NonNull
     public UUID getUuid() {
         return this.uuid;
     }
 
-    public void setUuid ( final UUID uuid ) {
-        this.uuid = uuid;
+    @lombok.NonNull
+    public UUID getPatrulId() {
+        return this.patrulId;
     }
 
+    @lombok.NonNull
     public UUID getLustraId() {
         return this.lustraId;
-    }
-
-    public void setLustraId ( final UUID lustraId ) {
-        this.lustraId = lustraId;
-    }
-
-    public String getGosNumber() {
-        return this.gosNumber;
-    }
-
-    public void setGosNumber ( final String gosNumber ) {
-        this.gosNumber = gosNumber;
-    }
-
-    public String getTrackerId() {
-        return this.trackerId;
-    }
-
-    public void setTrackerId ( final String trackerId ) {
-        this.trackerId = trackerId;
-    }
-
-    public String getVehicleType() {
-        return this.vehicleType;
-    }
-
-    public void setVehicleType ( final String vehicleType ) {
-        this.vehicleType = vehicleType;
-    }
-
-    public String getCarImageLink() {
-        return this.carImageLink;
-    }
-
-    public void setCarImageLink ( final String carImageLink ) {
-        this.carImageLink = carImageLink;
-    }
-
-    public String getPatrulPassportSeries() {
-        return this.patrulPassportSeries;
-    }
-
-    public void setPatrulPassportSeries ( final String patrulPassportSeries ) {
-        this.patrulPassportSeries = patrulPassportSeries;
     }
 
     public int getSideNumber() {
         return this.sideNumber;
     }
 
-    public void setSideNumber ( final int sideNumber ) {
-        this.sideNumber = sideNumber;
-    }
-
-    public int getSimCardNumber() {
-        return this.simCardNumber;
-    }
-
-    public void setSimCardNumber ( final int simCardNumber ) {
-        this.simCardNumber = simCardNumber;
-    }
-
     public double getLatitude() {
         return this.latitude;
     }
 
-    public void setLatitude ( final double latitude ) {
-        this.latitude = latitude;
+    @lombok.NonNull
+    public String getGosNumber() {
+        return this.gosNumber;
+    }
+
+    @lombok.NonNull
+    public String getTrackerId() {
+        return this.trackerId;
     }
 
     public double getLongitude() {
         return this.longitude;
     }
 
-    public void setLongitude ( final double longitude ) {
-        this.longitude = longitude;
+    public int getSimCardNumber() {
+        return this.simCardNumber;
+    }
+
+    public String getVehicleType() {
+        return this.vehicleType;
+    }
+
+    public String getCarImageLink() {
+        return this.carImageLink;
     }
 
     public double getAverageFuelSize() {
         return this.averageFuelSize;
     }
 
-    public void setAverageFuelSize ( final double averageFuelSize ) {
-        this.averageFuelSize = averageFuelSize;
+    public String getPatrulPassportSeries() {
+        return this.patrulPassportSeries;
     }
 
     public double getAverageFuelConsumption() {
         return this.averageFuelConsumption;
     }
 
+    @MethodsAnnotations(
+            name = "uuid",
+            withoutParams = false,
+            isReturnEntity = false,
+            acceptEntityType = CassandraDataTypes.UUID
+    )
+    public void setUuid ( @lombok.NonNull final UUID uuid ) {
+        this.uuid = uuid;
+    }
+
+    @MethodsAnnotations(
+            name = "patrulId",
+            withoutParams = false,
+            isReturnEntity = false,
+            acceptEntityType = CassandraDataTypes.UUID
+    )
+    public void setPatrulId( @lombok.NonNull final UUID uuid ) {
+        this.patrulId = uuid;
+    }
+
+    @MethodsAnnotations(
+            name = "lustraId",
+            withoutParams = false,
+            isReturnEntity = false,
+            acceptEntityType = CassandraDataTypes.UUID
+    )
+    public void setLustraId ( final UUID lustraId ) {
+        this.lustraId = lustraId;
+    }
+
+    @MethodsAnnotations(
+            name = "latitude",
+            withoutParams = false,
+            isReturnEntity = false,
+            acceptEntityType = CassandraDataTypes.DOUBLE
+    )
+    public void setLatitude ( final double latitude ) {
+        this.latitude = latitude;
+    }
+
+    @MethodsAnnotations(
+            name = "longitude",
+            withoutParams = false,
+            isReturnEntity = false,
+            acceptEntityType = CassandraDataTypes.DOUBLE
+    )
+    public void setLongitude ( final double longitude ) {
+        this.longitude = longitude;
+    }
+
+    @MethodsAnnotations(
+            name = "sideNumber",
+            withoutParams = false,
+            isReturnEntity = false,
+            acceptEntityType = CassandraDataTypes.INT
+    )
+    public void setSideNumber ( final int sideNumber ) {
+        this.sideNumber = sideNumber;
+    }
+
+    @MethodsAnnotations(
+            name = "simCardNumber",
+            withoutParams = false,
+            isReturnEntity = false,
+            acceptEntityType = CassandraDataTypes.INT
+    )
+    public void setSimCardNumber ( final int simCardNumber ) {
+        this.simCardNumber = simCardNumber;
+    }
+
+    @MethodsAnnotations(
+            name = "gosNumber",
+            withoutParams = false,
+            isReturnEntity = false
+    )
+    public void setGosNumber ( final String gosNumber ) {
+        this.gosNumber = gosNumber;
+    }
+
+    @MethodsAnnotations(
+            name = "trackerId",
+            withoutParams = false,
+            isReturnEntity = false
+    )
+    public void setTrackerId ( final String trackerId ) {
+        this.trackerId = trackerId;
+    }
+
+    @MethodsAnnotations(
+            name = "vehicleType",
+            withoutParams = false,
+            isReturnEntity = false
+    )
+    public void setVehicleType ( final String vehicleType ) {
+        this.vehicleType = vehicleType;
+    }
+
+    @MethodsAnnotations(
+            name = "carImageLink",
+            withoutParams = false,
+            isReturnEntity = false
+    )
+    public void setCarImageLink ( final String carImageLink ) {
+        this.carImageLink = carImageLink;
+    }
+
+    @MethodsAnnotations(
+            name = "patrulPassportSeries",
+            withoutParams = false,
+            isReturnEntity = false
+    )
+    public void setPatrulPassportSeries ( final String patrulPassportSeries ) {
+        this.patrulPassportSeries = patrulPassportSeries;
+    }
+
+    @MethodsAnnotations(
+            name = "averageFuelSize",
+            withoutParams = false,
+            isReturnEntity = false,
+            acceptEntityType = CassandraDataTypes.DOUBLE
+    )
+    public void setAverageFuelSize ( final double averageFuelSize ) {
+        this.averageFuelSize = averageFuelSize;
+    }
+
+    @MethodsAnnotations(
+            name = "averageFuelConsumption",
+            withoutParams = false,
+            isReturnEntity = false,
+            acceptEntityType = CassandraDataTypes.DOUBLE
+    )
     public void setAverageFuelConsumption ( final double averageFuelConsumption ) {
         this.averageFuelConsumption = averageFuelConsumption;
     }
 
-    @Expose
+    @FieldAnnotation( name = "uuid", mightBeNull = false )
     private UUID uuid;
-    @Expose
+    @FieldAnnotation( name = "lustraId", mightBeNull = false )
     private UUID lustraId;
-    @Expose
+    @FieldAnnotation( name = "patrulId", mightBeNull = false )
     private UUID patrulId;
 
-    @Expose
+    @FieldAnnotation( name = "gosNumber", hasToBeJoinedWithAstrix = true, mightBeNull = false )
     private String gosNumber;
-    @Expose
+    @EntityIndex( name = "trackerId" )
+    @FieldAnnotation( name = "trackerId", hasToBeJoinedWithAstrix = true, mightBeNull = false )
     private String trackerId;
-    @Expose
+    @FieldAnnotation( name = "vehicleType", hasToBeJoinedWithAstrix = true, mightBeNull = false )
     private String vehicleType;
-    @Expose
+    @FieldAnnotation( name = "carImageLink", hasToBeJoinedWithAstrix = true )
     private String carImageLink;
-    @Expose
+    @FieldAnnotation( name = "patrulPassportSeries", hasToBeJoinedWithAstrix = true, mightBeNull = false )
+    @ChildEntityAnnotation(
+            joinedTable = Patrul.class,
+            joiningColumns = { "passportNumber" }
+    )
     private String patrulPassportSeries;
 
-    @Expose
-    private int sideNumber; // бортовой номер
-    @Expose
+    @FieldAnnotation( name = "sideNumber", comment = "бортовой номер" )
+    private int sideNumber;
+    @FieldAnnotation( name = "simCardNumber" )
     private int simCardNumber;
 
-    @Expose
+    @FieldAnnotation( name = "latitude" )
     private double latitude;
-    @Expose
+    @FieldAnnotation( name = "longitude" )
     private double longitude;
-    @Expose
-    private double averageFuelSize; // средний расход топлива по документам
-    @Expose
-    private double averageFuelConsumption = 0.0; // средний расход топлива исходя из стиля вождения водителя
+    @FieldAnnotation( name = "averageFuelSize", comment = "средний расход топлива по документам" )
+    private double averageFuelSize;
+    @FieldAnnotation( name = "averageFuelConsumption", comment = "средний расход топлива исходя из стиля вождения водителя" )
+    private double averageFuelConsumption = 0.0;
 
-    public ReqCar () {}
+    private ReqCar () {}
 
-    @Override
-    @lombok.NonNull
-    public ReqCar generate() {
-        return new ReqCar();
-    }
-
-    @Override
-    @lombok.NonNull
-    public ReqCar generate( @lombok.NonNull final GettableData row ) {
-        DataValidateInspector.checkAndSetParams(
-                row,
-                row1 -> {
-                    this.setUuid( row.getUUID( "uuid" ) );
-                    this.setPatrulId( row.getUUID( "patrulId" ) );
-                    this.setLustraId( row.getUUID( "lustraId" ) );
-
-                    this.setGosNumber( row.getString( "gosNumber" ) );
-                    this.setTrackerId( row.getString( "trackerId" ) );
-                    this.setVehicleType( row.getString( "vehicleType" ) );
-                    this.setCarImageLink( row.getString( "carImageLink" ) );
-                    this.setPatrulPassportSeries( row.getString( "patrulPassportSeries" ) );
-
-                    this.setSideNumber( row.getInt( "sideNumber" ) );
-                    this.setSimCardNumber( row.getInt( "simCardNumber" ) );
-
-                    this.setLatitude( row.getDouble( "latitude" ) );
-                    this.setLongitude( row.getDouble( "longitude" ) );
-                    this.setAverageFuelSize( row.getDouble( "averageFuelSize" ) );
-                    this.setAverageFuelConsumption( row.getDouble( "averageFuelConsumption" ) );
-                }
-        );
-
-        return this;
-    }
-
-    @Override
-    @lombok.NonNull
-    public CassandraTables getEntityTableName() {
-        return CassandraTables.CARS;
+    @EntityConstructorAnnotation
+    public <T> ReqCar ( final Class<T> instance ) {
+        checkCallerPermission( instance, ReqCar.class );
     }
 
     @Override
@@ -330,6 +402,14 @@ public final class ReqCar implements ObjectFromRowConvertInterface< ReqCar >, Ka
                 this.getLatitude(),
                 this.getUuid()
         );
+    }
+
+    @Override
+    @lombok.NonNull
+    @lombok.Synchronized
+    @org.jetbrains.annotations.Contract( value = "_ -> fail" )
+    public synchronized ReqCar generate( @lombok.NonNull final com.datastax.driver.core.GettableData gettableData ) {
+        return AnnotationInspector.fillEntityParams( this, gettableData );
     }
 
     @Override

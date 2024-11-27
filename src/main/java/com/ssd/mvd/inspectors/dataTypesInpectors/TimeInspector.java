@@ -1,6 +1,11 @@
-package com.ssd.mvd.inspectors;
+package com.ssd.mvd.inspectors.dataTypesInpectors;
 
-import com.ssd.mvd.annotations.EntityConstructorAnnotation;
+import com.ssd.mvd.annotations.entity.object.EntityConstructorAnnotation;
+
+import com.ssd.mvd.inspectors.DataValidateInspector;
+import com.ssd.mvd.inspectors.CollectionsInspector;
+import com.ssd.mvd.inspectors.AnnotationInspector;
+import com.ssd.mvd.inspectors.EntitiesInstances;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.Calendar;
@@ -9,7 +14,7 @@ import java.util.Date;
 import java.time.Duration;
 import java.time.Instant;
 
-@com.ssd.mvd.annotations.ImmutableEntityAnnotation
+@com.ssd.mvd.annotations.services.ImmutableEntityAnnotation
 public class TimeInspector extends CollectionsInspector {
     protected TimeInspector () {
         super( TimeInspector.class );

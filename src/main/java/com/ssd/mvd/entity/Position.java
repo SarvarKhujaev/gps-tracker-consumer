@@ -5,30 +5,36 @@ import com.datastax.oss.driver.api.querybuilder.insert.Insert;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 
-import com.ssd.mvd.annotations.AvroFieldAnnotation;
-import com.ssd.mvd.annotations.AvroMethodAnnotation;
-import com.ssd.mvd.interfaces.EntityToCassandraConverter;
+import com.ssd.mvd.interfaces.entity.EntityToCassandraConverter;
 import com.ssd.mvd.interfaces.KafkaEntitiesCommonMethods;
 
-import com.ssd.mvd.annotations.EntityAnnotations;
-import com.ssd.mvd.annotations.FieldAnnotation;
+import com.ssd.mvd.annotations.avro.AvroMethodAnnotation;
+import com.ssd.mvd.annotations.avro.AvroFieldAnnotation;
+
+import com.ssd.mvd.annotations.entity.object.EntityAnnotations;
+import com.ssd.mvd.annotations.entity.field.FieldAnnotation;
 
 import com.ssd.mvd.kafka.kafkaConfigs.KafkaTopics;
 import com.ssd.mvd.entity.patrulDataSet.Patrul;
 
-import com.ssd.mvd.inspectors.StringOperations;
+import com.ssd.mvd.inspectors.dataTypesInpectors.StringOperations;
 import com.ssd.mvd.inspectors.Inspector;
 
-import com.ssd.mvd.constants.CassandraCommands;
-import com.ssd.mvd.constants.CassandraTables;
+import com.ssd.mvd.constants.cassandra.CassandraCommands;
+import com.ssd.mvd.constants.cassandra.CassandraTables;
 import com.ssd.mvd.constants.Status;
+
 import org.apache.avro.Schema;
 
 import java.text.MessageFormat;
 import java.util.Date;
 import java.util.UUID;
 
-@EntityAnnotations( name = "Position", comment = "Данные о позиции патрульной машины" )
+@EntityAnnotations(
+        name = "Position",
+        comment = "Данные о позиции патрульной машины",
+        tableName = CassandraTables.TRACKERS_LOCATION_TABLE
+)
 public final class Position implements EntityToCassandraConverter, KafkaEntitiesCommonMethods {
     @AvroMethodAnnotation( name = "speed" )
     public double getSpeed() {

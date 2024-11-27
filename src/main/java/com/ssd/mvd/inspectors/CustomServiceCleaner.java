@@ -1,13 +1,14 @@
 package com.ssd.mvd.inspectors;
 
-import com.ssd.mvd.annotations.EntityConstructorAnnotation;
+import com.ssd.mvd.annotations.entity.object.EntityConstructorAnnotation;
+import com.ssd.mvd.inspectors.dataTypesInpectors.UuidInspector;
 import com.ssd.mvd.interfaces.ServiceCommonMethods;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-@com.ssd.mvd.annotations.ImmutableEntityAnnotation
+@com.ssd.mvd.annotations.services.ImmutableEntityAnnotation
 public class CustomServiceCleaner {
     @EntityConstructorAnnotation( permission = UuidInspector.class )
     protected <T extends UuidInspector> CustomServiceCleaner ( @lombok.NonNull final Class<T> instance ) {

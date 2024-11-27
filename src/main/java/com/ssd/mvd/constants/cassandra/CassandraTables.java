@@ -1,12 +1,19 @@
-package com.ssd.mvd.constants;
+package com.ssd.mvd.constants.cassandra;
 
-import com.ssd.mvd.inspectors.StringOperations;
+import com.ssd.mvd.inspectors.dataTypesInpectors.StringOperations;
 
 public enum CassandraTables {
     TABLETS,
 
     CARS,
     PATRULS,
+    PATRUL_CAR_DATA,
+    PATRUL_FIO_DATA,
+    PATRUL_TASK_DATA,
+    PATRUL_REGION_DATA,
+    PATRUL_UNIQUE_DATA,
+    PATRUL_LOCATION_DATA,
+
     POLICE_TYPE,
 
     ESCORT {

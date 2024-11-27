@@ -1,7 +1,7 @@
-package com.ssd.mvd.annotations;
+package com.ssd.mvd.annotations.entity.field;
 
-import com.ssd.mvd.constants.CassandraDataTypes;
-import com.ssd.mvd.inspectors.StringOperations;
+import com.ssd.mvd.inspectors.dataTypesInpectors.StringOperations;
+import com.ssd.mvd.constants.cassandra.CassandraDataTypes;
 
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.ElementType;

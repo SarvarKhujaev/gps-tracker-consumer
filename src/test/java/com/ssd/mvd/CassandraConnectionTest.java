@@ -1,8 +1,8 @@
 package com.ssd.mvd;
 
+import com.ssd.mvd.constants.cassandra.CassandraTables;
 import com.ssd.mvd.database.CassandraDataControl;
 import com.ssd.mvd.inspectors.EntitiesInstances;
-import com.ssd.mvd.constants.CassandraTables;
 
 import com.datastax.driver.core.GettableData;
 import com.datastax.driver.core.utils.UUIDs;

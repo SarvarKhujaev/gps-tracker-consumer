@@ -7,9 +7,12 @@ import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.driver.core.*;
 
+import com.ssd.mvd.inspectors.dataTypesInpectors.StringOperations;
 import com.ssd.mvd.inspectors.AnnotationInspector;
 import com.ssd.mvd.inspectors.EntitiesInstances;
-import com.ssd.mvd.inspectors.StringOperations;
+
+import com.ssd.mvd.interfaces.entity.ObjectFromRowConvertInterface;
+import com.ssd.mvd.interfaces.entity.EntityToCassandraConverter;
 
 import com.ssd.mvd.database.CassandraDataControl;
 

@@ -1,11 +1,15 @@
-package com.ssd.mvd.constants;
+package com.ssd.mvd.constants.cassandra;
 
-import com.ssd.mvd.annotations.EntityCollectionParam;
-import com.ssd.mvd.annotations.MethodsAnnotations;
+import com.ssd.mvd.annotations.entity.object.EntityCollectionParam;
+import com.ssd.mvd.annotations.entity.method.MethodsAnnotations;
 
-import com.ssd.mvd.inspectors.StringOperations;
-import com.ssd.mvd.inspectors.UuidInspector;
+import com.ssd.mvd.inspectors.dataTypesInpectors.StringOperations;
+import com.ssd.mvd.inspectors.dataTypesInpectors.UuidInspector;
+
 import com.ssd.mvd.functions.CustomFunction;
+
+import com.ssd.mvd.constants.Errors;
+import com.ssd.mvd.constants.Status;
 
 import org.apache.commons.lang3.Validate;
 

@@ -4,20 +4,22 @@ import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.*;
 
+import com.ssd.mvd.annotations.entity.object.EntityConstructorAnnotation;
+import com.ssd.mvd.annotations.services.ImmutableEntityAnnotation;
+import com.ssd.mvd.annotations.services.ServiceParametrAnnotation;
+
+import com.ssd.mvd.inspectors.dataTypesInpectors.UuidInspector;
+import com.ssd.mvd.inspectors.AnnotationInspector;
+import com.ssd.mvd.inspectors.EntitiesInstances;
+
+import com.ssd.mvd.interfaces.ServiceCommonMethods;
 import com.ssd.mvd.inspectors.CassandraConverter;
 import com.ssd.mvd.database.CassandraDataControl;
 
-import com.ssd.mvd.annotations.EntityConstructorAnnotation;
-import com.ssd.mvd.interfaces.ServiceCommonMethods;
-
-import com.ssd.mvd.inspectors.AnnotationInspector;
-import com.ssd.mvd.inspectors.EntitiesInstances;
-import com.ssd.mvd.inspectors.UuidInspector;
-
 import java.lang.ref.WeakReference;
 
-@com.ssd.mvd.annotations.ImmutableEntityAnnotation
-@com.ssd.mvd.annotations.ServiceParametrAnnotation( propertyGroupName = "CASSANDRA_VARIABLES" )
+@ImmutableEntityAnnotation
+@ServiceParametrAnnotation( propertyGroupName = "CASSANDRA_VARIABLES" )
 public class CassandraParamsAndOptionsStore extends CassandraConverter implements ServiceCommonMethods {
     @EntityConstructorAnnotation( permission = CassandraDataControl.class )
     protected <T extends UuidInspector> CassandraParamsAndOptionsStore (@lombok.NonNull final Class<T> instance ) {

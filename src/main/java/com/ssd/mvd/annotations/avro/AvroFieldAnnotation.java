@@ -1,8 +1,7 @@
-package com.ssd.mvd.annotations;
+package com.ssd.mvd.annotations.avro;
 
-import com.ssd.mvd.inspectors.StringOperations;
+import com.ssd.mvd.inspectors.dataTypesInpectors.StringOperations;
 import org.apache.avro.Schema;
-
 import java.lang.annotation.*;
 
 @Target( value = ElementType.FIELD )

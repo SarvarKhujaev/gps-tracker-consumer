@@ -1,4 +1,4 @@
-package com.ssd.mvd.annotations;
+package com.ssd.mvd.annotations.avro;
 
 import java.lang.annotation.*;
 

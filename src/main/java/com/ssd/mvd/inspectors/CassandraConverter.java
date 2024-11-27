@@ -1,11 +1,13 @@
 package com.ssd.mvd.inspectors;
 
-import com.ssd.mvd.database.cassandraConfigs.CassandraParamsAndOptionsStore;
-import com.ssd.mvd.annotations.EntityConstructorAnnotation;
-import com.ssd.mvd.database.cassandraRegistry.CassandraTableRegistration;
 import com.ssd.mvd.database.cassandraRegistry.CassandraTablesAndTypesRegister;
-import com.ssd.mvd.interfaces.EntityToCassandraConverter;
-import com.ssd.mvd.constants.CassandraDataTypes;
+import com.ssd.mvd.database.cassandraConfigs.CassandraParamsAndOptionsStore;
+import com.ssd.mvd.database.cassandraRegistry.CassandraTableRegistration;
+
+import com.ssd.mvd.annotations.entity.object.EntityConstructorAnnotation;
+import com.ssd.mvd.interfaces.entity.EntityToCassandraConverter;
+import com.ssd.mvd.inspectors.dataTypesInpectors.UuidInspector;
+import com.ssd.mvd.constants.cassandra.CassandraDataTypes;
 
 import java.util.Date;
 import java.util.UUID;

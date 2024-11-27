@@ -1,10 +1,13 @@
-package com.ssd.mvd.inspectors;
+package com.ssd.mvd.inspectors.avro;
+
+import com.ssd.mvd.inspectors.dataTypesInpectors.StringOperations;
+import com.ssd.mvd.inspectors.*;
 
 import com.ssd.mvd.interfaces.KafkaEntitiesCommonMethods;
 import com.ssd.mvd.constants.Status;
 
-import com.ssd.mvd.annotations.AvroMethodAnnotation;
-import com.ssd.mvd.annotations.AvroFieldAnnotation;
+import com.ssd.mvd.annotations.avro.AvroMethodAnnotation;
+import com.ssd.mvd.annotations.avro.AvroFieldAnnotation;
 
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.Schema;
@@ -23,11 +26,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 
-@SuppressWarnings(
-        value = """
-                отвечает за работу с интерфейсом Schema библиотеки AVRO
-                """
-)
+@SuppressWarnings( value = "отвечает за работу с интерфейсом Schema библиотеки AVRO" )
 public final class AvroSchemaInspector {
     private static final AtomicReference< CopyOnWriteArrayList< Schema.Field > > schemas = EntitiesInstances.generateAtomicEntity(
             CollectionsInspector.newList()
@@ -81,7 +80,7 @@ public final class AvroSchemaInspector {
 
         return Schema.createRecord(
                 entity.getClass().getCanonicalName(),
-                entity.getTopicName().name(),
+                AnnotationInspector.getKafkaTopicName( entity ).name(),
                 entity.getClass().getPackageName(),
                 false,
                 schemas.get()
@@ -120,7 +119,10 @@ public final class AvroSchemaInspector {
     @lombok.NonNull
     @lombok.Synchronized
     @org.jetbrains.annotations.Contract( value = "_, _ -> fail" )
-    public static synchronized <T extends KafkaEntitiesCommonMethods> T deserialize( final byte[] data, final T instance ) {
+    public static synchronized <T extends KafkaEntitiesCommonMethods> T deserialize(
+            final byte[] data,
+            final T instance
+    ) {
         try ( final ByteArrayInputStream inputStream = new ByteArrayInputStream( data ) ) {
             final DatumReader< GenericRecord > datumReader = new SpecificDatumReader<>( generateGenericRecord( instance ).getSchema() );
 

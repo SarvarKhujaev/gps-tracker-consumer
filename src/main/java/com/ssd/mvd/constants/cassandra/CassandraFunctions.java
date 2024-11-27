@@ -1,4 +1,4 @@
-package com.ssd.mvd.constants;
+package com.ssd.mvd.constants.cassandra;
 
 public class CassandraFunctions {
     public static final String NOW = "now()";

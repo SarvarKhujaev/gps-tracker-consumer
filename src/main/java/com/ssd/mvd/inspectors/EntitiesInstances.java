@@ -4,6 +4,8 @@ import com.ssd.mvd.entity.patrulDataSet.patrulSubClasses.PatrulFuelStatistics;
 import com.ssd.mvd.entity.patrulDataSet.Patrul;
 import com.ssd.mvd.entity.*;
 
+import com.ssd.mvd.inspectors.dataTypesInpectors.StringOperations;
+
 import org.apache.commons.collections4.list.UnmodifiableList;
 import org.apache.commons.lang3.Validate;
 
@@ -15,6 +17,7 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 
 @SuppressWarnings( value = "хранит instance на все объекты" )
+@com.ssd.mvd.annotations.services.ImmutableEntityAnnotation
 public final class EntitiesInstances {
     @lombok.NonNull
     @lombok.Synchronized

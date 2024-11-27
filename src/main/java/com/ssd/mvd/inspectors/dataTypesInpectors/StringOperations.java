@@ -1,14 +1,17 @@
-package com.ssd.mvd.inspectors;
+package com.ssd.mvd.inspectors.dataTypesInpectors;
 
+import com.ssd.mvd.annotations.entity.object.EntityConstructorAnnotation;
 import com.ssd.mvd.entity.patrulDataSet.patrulSubClasses.PatrulFIOData;
-import com.ssd.mvd.annotations.EntityConstructorAnnotation;
 
-import com.ssd.mvd.constants.CassandraDataTypes;
-import com.ssd.mvd.constants.CassandraCommands;
+import com.ssd.mvd.constants.cassandra.CassandraDataTypes;
+import com.ssd.mvd.constants.cassandra.CassandraCommands;
+
+import com.ssd.mvd.inspectors.CollectionsInspector;
+import com.ssd.mvd.inspectors.AnnotationInspector;
 
 import java.util.Date;
 
-@com.ssd.mvd.annotations.ImmutableEntityAnnotation
+@com.ssd.mvd.annotations.services.ImmutableEntityAnnotation
 public class StringOperations extends UuidInspector {
     protected StringOperations () {
         super( StringOperations.class );

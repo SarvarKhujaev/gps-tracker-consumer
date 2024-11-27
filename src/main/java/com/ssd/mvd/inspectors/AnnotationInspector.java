@@ -1,8 +1,25 @@
 package com.ssd.mvd.inspectors;
 
-import com.ssd.mvd.interfaces.EntityToCassandraConverter;
-import com.ssd.mvd.constants.Errors;
+import com.ssd.mvd.annotations.entity.object.EntityConstructorAnnotation;
+import com.ssd.mvd.annotations.entity.object.EntityAnnotations;
+
+import com.ssd.mvd.annotations.entity.method.MethodsAnnotations;
+import com.ssd.mvd.annotations.entity.field.FieldAnnotation;
+
+import com.ssd.mvd.annotations.services.ServiceParametrAnnotation;
+import com.ssd.mvd.annotations.services.ImmutableEntityAnnotation;
+
+import com.ssd.mvd.annotations.kafka.KafkaEntityAnnotation;
 import com.ssd.mvd.annotations.*;
+
+import com.ssd.mvd.interfaces.entity.EntityToCassandraConverter;
+import com.ssd.mvd.interfaces.KafkaEntitiesCommonMethods;
+
+import com.ssd.mvd.inspectors.dataTypesInpectors.StringOperations;
+import com.ssd.mvd.inspectors.avro.AvroSchemaInspector;
+
+import com.ssd.mvd.constants.cassandra.CassandraTables;
+import com.ssd.mvd.constants.Errors;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Constructor;
@@ -10,13 +27,14 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Field;
 
 import com.ssd.mvd.interfaces.ServiceCommonMethods;
+import com.ssd.mvd.kafka.kafkaConfigs.KafkaTopics;
 import org.apache.commons.lang3.Validate;
 
 import java.lang.ref.WeakReference;
 import java.util.stream.Stream;
 import java.util.*;
 
-@com.ssd.mvd.annotations.ImmutableEntityAnnotation
+@ImmutableEntityAnnotation
 public class AnnotationInspector extends LogInspector {
     protected static volatile WeakReferenceAnnotation weakReferenceAnnotation;
     protected static volatile MethodsAnnotations methodsAnnotations;
@@ -32,6 +50,47 @@ public class AnnotationInspector extends LogInspector {
 
         AnnotationInspector.checkCallerPermission( instance, AnnotationInspector.class );
         AnnotationInspector.checkAnnotationIsImmutable( AnnotationInspector.class );
+    }
+
+    @lombok.NonNull
+    @lombok.Synchronized
+    @org.jetbrains.annotations.Contract( value = "_ -> !null" )
+    @SuppressWarnings(
+            value = """
+                    проверяет сущность и возвращет название Кафка топика для него
+                    """
+    )
+    public static synchronized <T extends KafkaEntitiesCommonMethods> KafkaTopics getKafkaTopicName (
+            @lombok.NonNull final T entity
+    ) {
+        Validate.isTrue(
+                entity.getClass().isAnnotationPresent( KafkaEntityAnnotation.class )
+        );
+
+        return entity.getClass().getAnnotation( KafkaEntityAnnotation.class ).topicName();
+    }
+
+    @SuppressWarnings(
+            value = """
+                    принимает экземпляр класса
+                    и возвращает название таблицы или пронстранства сущности
+                    """
+    )
+    @lombok.NonNull
+    @lombok.Synchronized
+    @org.jetbrains.annotations.Contract( value = "_, _ -> fail" )
+    public static synchronized <T extends EntityToCassandraConverter> CassandraTables getEntityKeyspaceOrTableName (
+            @lombok.NonNull final T entity,
+            final boolean isKeyspaceName
+    ) {
+        Validate.isTrue(
+                entity.getClass().isAnnotationPresent( EntityAnnotations.class ),
+                Errors.WRONG_TYPE_IN_ANNOTATION.translate( "ru", entity.getClass().getName() )
+        );
+
+        return isKeyspaceName
+                ? convertEntityToEntityAnnotation( entity ).keysapceName()
+                : convertEntityToEntityAnnotation( entity ).tableName();
     }
 
     @SuppressWarnings(
@@ -211,7 +270,7 @@ public class AnnotationInspector extends LogInspector {
     @lombok.Synchronized
     @com.typesafe.config.Optional
     @org.jetbrains.annotations.Contract( value = "_ -> fail" )
-    protected static synchronized < T > void checkAnnotationIsImmutable (
+    public static synchronized < T > void checkAnnotationIsImmutable (
             @lombok.NonNull final Class<T> object
     ) {
         Validate.isTrue(
@@ -505,7 +564,7 @@ public class AnnotationInspector extends LogInspector {
     @lombok.NonNull
     @lombok.Synchronized
     @org.jetbrains.annotations.Contract( value = "_ -> !null" )
-    protected static synchronized Stream< Field > getFields (
+    public static synchronized Stream< Field > getFields (
             @lombok.NonNull @com.typesafe.config.Optional final Class< ? > object
     ) {
         return convertArrayToStream( object.getDeclaredFields() );
@@ -519,7 +578,7 @@ public class AnnotationInspector extends LogInspector {
     @lombok.NonNull
     @lombok.Synchronized
     @org.jetbrains.annotations.Contract( value = "_ -> !null" )
-    protected static synchronized Stream< Method > getMethods (
+    public static synchronized Stream< Method > getMethods (
             @lombok.NonNull @com.typesafe.config.Optional final Class< ? > object
     ) {
         return convertArrayToStream( object.getDeclaredMethods() );

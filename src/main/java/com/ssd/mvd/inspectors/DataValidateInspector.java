@@ -16,19 +16,22 @@ import com.ssd.mvd.entity.Position;
 import com.ssd.mvd.entity.patrulDataSet.Patrul;
 
 import com.ssd.mvd.GpsTrackerApplication;
-import com.ssd.mvd.annotations.EntityConstructorAnnotation;
+import com.ssd.mvd.annotations.entity.object.EntityConstructorAnnotation;
 
 import com.ssd.mvd.database.CassandraDataControl;
 import com.ssd.mvd.database.CassandraDataControlForEscort;
 
-@com.ssd.mvd.annotations.ImmutableEntityAnnotation
+import com.ssd.mvd.inspectors.dataTypesInpectors.TimeInspector;
+import com.ssd.mvd.inspectors.dataTypesInpectors.UuidInspector;
+
+@com.ssd.mvd.annotations.services.ImmutableEntityAnnotation
 public class DataValidateInspector extends TimeInspector {
     protected DataValidateInspector () {
         super( DataValidateInspector.class );
     }
 
     @EntityConstructorAnnotation( permission = Inspector.class )
-    protected <T extends UuidInspector> DataValidateInspector ( @lombok.NonNull final Class<T> instance ) {
+    protected <T extends UuidInspector> DataValidateInspector (@lombok.NonNull final Class<T> instance ) {
         super( DataValidateInspector.class );
 
         AnnotationInspector.checkCallerPermission( instance, DataValidateInspector.class );

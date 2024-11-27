@@ -2,7 +2,7 @@ package com.ssd.mvd.entity;
 
 import com.datastax.driver.core.GettableData;
 import com.ssd.mvd.inspectors.DataValidateInspector;
-import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
+import com.ssd.mvd.interfaces.entity.ObjectFromRowConvertInterface;
 
 public final class Icons implements ObjectFromRowConvertInterface< Icons > {
     public String getIcon1() {

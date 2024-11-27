@@ -8,14 +8,17 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.driver.core.GettableData;
 import com.datastax.driver.core.Row;
 
-import com.ssd.mvd.interfaces.EntityToCassandraConverter;
+import com.ssd.mvd.inspectors.dataTypesInpectors.StringOperations;
+import com.ssd.mvd.inspectors.dataTypesInpectors.TimeInspector;
+
+import com.ssd.mvd.interfaces.entity.EntityToCassandraConverter;
 import com.ssd.mvd.database.CassandraDataControl;
 import com.ssd.mvd.entity.patrulDataSet.Patrul;
 import com.ssd.mvd.inspectors.*;
 
-import com.ssd.mvd.constants.CassandraFunctions;
-import com.ssd.mvd.constants.CassandraCommands;
-import com.ssd.mvd.constants.CassandraTables;
+import com.ssd.mvd.constants.cassandra.CassandraFunctions;
+import com.ssd.mvd.constants.cassandra.CassandraCommands;
+import com.ssd.mvd.constants.cassandra.CassandraTables;
 
 import java.lang.ref.WeakReference;
 import java.text.MessageFormat;

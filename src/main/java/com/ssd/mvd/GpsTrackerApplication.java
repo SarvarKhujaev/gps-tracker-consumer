@@ -1,11 +1,8 @@
 package com.ssd.mvd;
 
 import com.ssd.mvd.entity.Position;
-import com.ssd.mvd.inspectors.AvroSchemaInspector;
-import com.ssd.mvd.kafka.KafkaDataControl;
-import com.ssd.mvd.database.CassandraDataControl;
+import com.ssd.mvd.inspectors.avro.AvroSchemaInspector;
 
-import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 

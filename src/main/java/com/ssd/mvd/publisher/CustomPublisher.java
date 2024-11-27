@@ -12,12 +12,11 @@ import org.reactivestreams.Publisher;
 @SuppressWarnings(
         value = """
                 кастомный Publisher, который принимает сообщение и название топика для Кафки
-
                 А также отслеживает состояние передачи сообщения и обрабатывает ошибки или сообщение об удаче
                 """
 )
-@com.ssd.mvd.annotations.ImmutableEntityAnnotation
-@com.ssd.mvd.annotations.ServiceParametrAnnotation( propertyGroupName = "KAFKA_VARIABLES.KAFKA_TOPICS" )
+@com.ssd.mvd.annotations.services.ImmutableEntityAnnotation
+@com.ssd.mvd.annotations.services.ServiceParametrAnnotation( propertyGroupName = "KAFKA_VARIABLES.KAFKA_TOPICS" )
 public final class CustomPublisher implements Publisher< ProducerRecord< String, byte[] > > {
     private final ProducerRecord< String, byte[] > producerRecord;
 
@@ -35,7 +34,7 @@ public final class CustomPublisher implements Publisher< ProducerRecord< String,
         this.producerRecord = new ProducerRecord<>(
                 AnnotationInspector.getVariable(
                         CustomPublisher.class,
-                        kafkaEntitiesCommonMethods.getTopicName().name()
+                        AnnotationInspector.getKafkaTopicName( kafkaEntitiesCommonMethods ).name()
                 ),
                 kafkaEntitiesCommonMethods.getEntityRecord().toString().getBytes()
         );

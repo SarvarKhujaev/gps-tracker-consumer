@@ -1,24 +1,40 @@
 package com.ssd.mvd.entity.patrulDataSet;
 
-import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
-import com.ssd.mvd.annotations.*;
+import com.ssd.mvd.annotations.entity.object.EntityAnnotations;
+import com.ssd.mvd.annotations.entity.object.ClusteringOrder;
 
+import com.ssd.mvd.annotations.entity.method.MethodsAnnotations;
+import com.ssd.mvd.annotations.entity.field.FieldAnnotation;
+
+import com.ssd.mvd.interfaces.entity.ObjectFromRowConvertInterface;
+
+import com.ssd.mvd.inspectors.dataTypesInpectors.StringOperations;
 import com.ssd.mvd.inspectors.DataValidateInspector;
-import com.ssd.mvd.inspectors.StringOperations;
 
 import com.ssd.mvd.entity.patrulDataSet.patrulSubClasses.*;
 import com.ssd.mvd.entity.TupleOfCar;
 
-import com.ssd.mvd.constants.CassandraDataTypes;
-import com.ssd.mvd.constants.CassandraCommands;
-import com.ssd.mvd.constants.CassandraTables;
+import com.ssd.mvd.constants.cassandra.CassandraDataTypes;
+import com.ssd.mvd.constants.cassandra.CassandraCommands;
+import com.ssd.mvd.constants.cassandra.CassandraTables;
 
 import com.datastax.driver.core.GettableData;
 
 import java.text.MessageFormat;
 import java.util.UUID;
 
-@EntityAnnotations( name = "Patrul" )
+@EntityAnnotations(
+        name = "Patrul",
+        comment = "хранит данные, обо всех патрульных, является основной таблицей",
+        tableName = CassandraTables.PATRULS,
+        primaryKeys = {
+                "uuid",
+                "passportNumber"
+        },
+        clusteringKeys = {
+                @ClusteringOrder( columnName = "passportNumber" )
+        }
+)
 public final class Patrul implements ObjectFromRowConvertInterface< Patrul > {
     @MethodsAnnotations(
             name = "uuid",

@@ -1,67 +1,119 @@
 package com.ssd.mvd.entity.patrulDataSet.patrulSubClasses;
 
 import java.util.UUID;
-import com.datastax.driver.core.GettableData;
 
-import com.ssd.mvd.inspectors.DataValidateInspector;
-import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
+import com.ssd.mvd.annotations.entity.field.FieldAnnotation;
+import com.ssd.mvd.annotations.entity.method.MethodsAnnotations;
 
+import com.ssd.mvd.annotations.entity.object.EntityAnnotations;
+import com.ssd.mvd.annotations.entity.object.EntityConstructorAnnotation;
+
+import com.ssd.mvd.constants.cassandra.CassandraTables;
+import com.ssd.mvd.constants.cassandra.CassandraDataTypes;
+
+import com.ssd.mvd.inspectors.AnnotationInspector;
+import com.ssd.mvd.interfaces.entity.ObjectFromRowConvertInterface;
+
+@EntityAnnotations( name = "patrulUniqueValues", isSubClass = true, tableName = CassandraTables.PATRUL_UNIQUE_DATA )
 public final class PatrulUniqueValues implements ObjectFromRowConvertInterface< PatrulUniqueValues > {
+    @MethodsAnnotations(
+            name = "organ",
+            withoutParams = false,
+            isReturnEntity = false,
+            acceptEntityType = CassandraDataTypes.UUID
+    )
     public void setOrgan( final UUID organ ) {
         this.organ = organ;
     }
 
+    @MethodsAnnotations(
+            name = "sos_id",
+            withoutParams = false,
+            isReturnEntity = false,
+            acceptEntityType = CassandraDataTypes.UUID
+    )
     public void setSos_id( final UUID sos_id ) {
         this.sos_id = sos_id;
     }
 
+    @MethodsAnnotations(
+            name = "uuidOfEscort",
+            withoutParams = false,
+            isReturnEntity = false,
+            acceptEntityType = CassandraDataTypes.UUID
+    )
     public void setUuidOfEscort( final UUID uuidOfEscort ) {
         this.uuidOfEscort = uuidOfEscort;
+    }
+
+    @MethodsAnnotations(
+            name = "uuidForPatrulCar",
+            withoutParams = false,
+            isReturnEntity = false,
+            acceptEntityType = CassandraDataTypes.UUID
+    )
+    public void setUuidForPatrulCar( final UUID uuidForPatrulCar ) {
+        this.uuidForPatrulCar = uuidForPatrulCar;
+    }
+
+    @MethodsAnnotations(
+            name = "uuidForEscortCar",
+            withoutParams = false,
+            isReturnEntity = false,
+            acceptEntityType = CassandraDataTypes.UUID
+    )
+    public void setUuidForEscortCar( final UUID uuidForEscortCar ) {
+        this.uuidForEscortCar = uuidForEscortCar;
+    }
+
+    public UUID getOrgan() {
+        return this.organ;
+    }
+
+    public UUID getSos_id() {
+        return this.sos_id;
+    }
+
+    public UUID getUuidOfEscort() {
+        return this.uuidOfEscort;
     }
 
     public UUID getUuidForPatrulCar() {
         return this.uuidForPatrulCar;
     }
 
-    public void setUuidForPatrulCar( final UUID uuidForPatrulCar ) {
-        this.uuidForPatrulCar = uuidForPatrulCar;
-    }
-
     public UUID getUuidForEscortCar() {
         return this.uuidForEscortCar;
     }
 
-    public void setUuidForEscortCar( final UUID uuidForEscortCar ) {
-        this.uuidForEscortCar = uuidForEscortCar;
+    @FieldAnnotation( name = "organ", comment = "choosing from dictionary" )
+    private UUID organ;
+    @FieldAnnotation( name = "sos_id", comment = "choosing from dictionary" )
+    private UUID sos_id;
+    @FieldAnnotation( name = "uuidOfEscort", comment = "UUID of the Escort which this car is linked to" )
+    private UUID uuidOfEscort;
+    @FieldAnnotation( name = "uuidForPatrulCar", comment = "choosing from dictionary" )
+    private UUID uuidForPatrulCar;
+    @FieldAnnotation( name = "uuidForEscortCar", comment = "choosing from dictionary" )
+    private UUID uuidForEscortCar;
+
+    private PatrulUniqueValues () {}
+
+    @EntityConstructorAnnotation
+    public <T> PatrulUniqueValues ( @lombok.NonNull final Class<T> instance ) {
+        AnnotationInspector.checkCallerPermission( instance, PatrulUniqueValues.class );
     }
 
-    private UUID organ; // choosing from dictionary
-    private UUID sos_id; // choosing from dictionary
-    private UUID uuidOfEscort; // UUID of the Escort which this car is linked to
-    private UUID uuidForPatrulCar; // choosing from dictionary
-    private UUID uuidForEscortCar; // choosing from dictionary
-
-    public PatrulUniqueValues () {}
-
     @Override
-    public PatrulUniqueValues generate() {
+    @lombok.NonNull
+    public PatrulUniqueValues generate () {
         return new PatrulUniqueValues();
     }
 
     @Override
     @lombok.NonNull
-    public PatrulUniqueValues generate( @lombok.NonNull final GettableData udtValue ) {
-        DataValidateInspector.checkAndSetParams(
-                udtValue,
-                udtValue1 -> {
-                    this.setOrgan( udtValue.getUUID( "organ" ) );
-                    this.setSos_id( udtValue.getUUID( "sos_id" ) );
-                    this.setUuidOfEscort( udtValue.getUUID( "uuidOfEscort" ) );
-                    this.setUuidForPatrulCar( udtValue.getUUID( "uuidForPatrulCar" ) );
-                    this.setUuidForEscortCar( udtValue.getUUID( "uuidForEscortCar" ) );
-                }
-        );
-
-        return this;
+    @org.jetbrains.annotations.Contract( value = "_ -> fail" )
+    public PatrulUniqueValues generate( final com.datastax.driver.core.GettableData gettableData ) {
+        return AnnotationInspector.fillEntityParams( this, gettableData );
     }
 }

@@ -1,13 +1,16 @@
 package com.ssd.mvd.entity.patrulDataSet.patrulSubClasses;
 
-import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
-import com.ssd.mvd.inspectors.DataValidateInspector;
-import com.ssd.mvd.entity.TupleOfCar;
-import com.ssd.mvd.annotations.*;
+import com.ssd.mvd.annotations.entity.object.EntityConstructorAnnotation;
+import com.ssd.mvd.annotations.entity.object.EntityAnnotations;
 
-import com.datastax.driver.core.GettableData;
+import com.ssd.mvd.annotations.entity.method.MethodsAnnotations;
+import com.ssd.mvd.annotations.entity.field.FieldAnnotation;
 
-@EntityAnnotations( name = "PatrulCarInfo", isSubClass = true )
+import com.ssd.mvd.interfaces.entity.ObjectFromRowConvertInterface;
+import com.ssd.mvd.constants.cassandra.CassandraTables;
+import com.ssd.mvd.inspectors.AnnotationInspector;
+
+@EntityAnnotations( name = "PatrulCarInfo", isSubClass = true, tableName = CassandraTables.PATRUL_CAR_DATA )
 public final class PatrulCarInfo implements ObjectFromRowConvertInterface< PatrulCarInfo > {
     public String getCarType() {
         return this.carType;
@@ -35,35 +38,28 @@ public final class PatrulCarInfo implements ObjectFromRowConvertInterface< Patru
         this.carNumber = carNumber;
     }
 
-    public void setCarNumber( final TupleOfCar tupleOfCar ) {
-        this.setCarNumber( tupleOfCar.getGosNumber() );
-        this.setCarType( tupleOfCar.getCarModel() );
-    }
-
-    @FieldAnnotation( name = "carType", hasToBeJoinedWithAstrix = true )
-    private String carType; // модель машины
+    @FieldAnnotation( name = "carType", hasToBeJoinedWithAstrix = true, comment = "модель машины" )
+    private String carType;
     @FieldAnnotation( name = "carNumber", hasToBeJoinedWithAstrix = true )
     private String carNumber;
 
-    public PatrulCarInfo () {}
+    private PatrulCarInfo () {}
 
-    @Override
-    @lombok.NonNull
-    public PatrulCarInfo generate( @lombok.NonNull final GettableData row ) {
-        DataValidateInspector.checkAndSetParams(
-                row,
-                row1 -> {
-                    this.setCarType( row.getString( "carType" ) );
-                    this.setCarNumber( row.getString( "carNumber" ) );
-                }
-        );
-
-        return this;
+    @EntityConstructorAnnotation
+    public <T> PatrulCarInfo ( @lombok.NonNull final Class<T> instance ) {
+        AnnotationInspector.checkCallerPermission( instance, PatrulCarInfo.class );
     }
 
     @Override
     @lombok.NonNull
-    public PatrulCarInfo generate() {
+    public PatrulCarInfo generate () {
         return new PatrulCarInfo();
+    }
+
+    @Override
+    @lombok.NonNull
+    @org.jetbrains.annotations.Contract( value = "_ -> fail" )
+    public PatrulCarInfo generate( final com.datastax.driver.core.GettableData gettableData ) {
+        return AnnotationInspector.fillEntityParams( this, gettableData );
     }
 }

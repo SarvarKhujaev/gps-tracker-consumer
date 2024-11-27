@@ -1,6 +1,8 @@
 package com.ssd.mvd.inspectors;
 
-import com.ssd.mvd.annotations.EntityConstructorAnnotation;
+import com.ssd.mvd.annotations.entity.object.EntityConstructorAnnotation;
+import com.ssd.mvd.inspectors.dataTypesInpectors.UuidInspector;
+
 import com.ssd.mvd.entity.ApiResponseModel;
 import com.ssd.mvd.entity.TrackerInfo;
 import com.ssd.mvd.entity.Status;
@@ -13,7 +15,7 @@ import java.util.WeakHashMap;
 import java.util.Date;
 import java.util.Map;
 
-@com.ssd.mvd.annotations.ImmutableEntityAnnotation
+@com.ssd.mvd.annotations.services.ImmutableEntityAnnotation
 public class Inspector extends DataValidateInspector {
     protected Inspector () {
         icons = super.newMap();
@@ -23,7 +25,7 @@ public class Inspector extends DataValidateInspector {
     }
 
     @EntityConstructorAnnotation( permission = WebFluxInspector.class )
-    protected <T extends UuidInspector> Inspector ( @lombok.NonNull final Class<T> instance ) {
+    protected <T extends UuidInspector> Inspector (@lombok.NonNull final Class<T> instance ) {
         super( Inspector.class );
 
         AnnotationInspector.checkCallerPermission( instance, Inspector.class );

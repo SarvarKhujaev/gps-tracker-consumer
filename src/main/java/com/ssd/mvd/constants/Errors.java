@@ -1,6 +1,7 @@
 package com.ssd.mvd.constants;
 
-import com.ssd.mvd.inspectors.StringOperations;
+import com.ssd.mvd.inspectors.dataTypesInpectors.StringOperations;
+import java.text.MessageFormat;
 
 public enum Errors {
     DATA_NOT_FOUND {
@@ -8,7 +9,7 @@ public enum Errors {
         @lombok.NonNull
         @org.jetbrains.annotations.Contract( value = "_ -> _" )
         public String translate (
-                final String languageType
+                @lombok.NonNull final String languageType
         ) {
             return switch ( languageType ) {
                 case "ru" -> "НЕ НАЙДЕНО";
@@ -22,7 +23,7 @@ public enum Errors {
         @lombok.NonNull
         @org.jetbrains.annotations.Contract( value = "_ -> _" )
         public String translate (
-                final String languageType
+                @lombok.NonNull final String languageType
         ) {
             return switch ( languageType ) {
                 case "ru" -> "СЕРВИС НЕ РАБОТАЕТ";
@@ -31,12 +32,28 @@ public enum Errors {
             };
         }
     },
+    METHOD_NOT_REALIZED {
+        @Override
+        @lombok.NonNull
+        public String translate (
+                @lombok.NonNull final String methodName,
+                @lombok.NonNull final String entityName
+        ) {
+            return MessageFormat.format(
+                    """
+                    Method: {0} has not been realized in {1} entity
+                    """,
+                    methodName,
+                    entityName
+            );
+        }
+    },
     PRIMARY_KEYS_NOT_FOUND {
         @Override
         @lombok.NonNull
         @org.jetbrains.annotations.Contract( value = "_ -> _" )
         public String translate (
-                final String languageType
+                @lombok.NonNull final String languageType
         ) {
             return switch ( languageType ) {
                 case "uz" -> "HATTO";
@@ -51,7 +68,7 @@ public enum Errors {
         @lombok.NonNull
         @org.jetbrains.annotations.Contract( value = "_ -> _" )
         public String translate (
-                final String languageType
+                @lombok.NonNull final String languageType
         ) {
             return switch ( languageType ) {
                 case "uz" -> "Mumkin emas %s".formatted( languageType );
@@ -66,7 +83,7 @@ public enum Errors {
         @lombok.NonNull
         @org.jetbrains.annotations.Contract( value = "_ -> _" )
         public String translate (
-        @lombok.NonNull final String error
+                @lombok.NonNull final String error
         ) {
             return String.join(
                     StringOperations.SPACE,
@@ -81,7 +98,7 @@ public enum Errors {
         @lombok.NonNull
         @org.jetbrains.annotations.Contract( value = "_ -> _" )
         public String translate (
-        @lombok.NonNull final String error
+                @lombok.NonNull final String error
         ) {
             return String.join(
                     StringOperations.SPACE,
@@ -96,8 +113,8 @@ public enum Errors {
         @lombok.NonNull
         @org.jetbrains.annotations.Contract( value = "_, _ -> _" )
         public String translate (
-        @lombok.NonNull final String languageType,
-        @lombok.NonNull final String entityName
+                @lombok.NonNull final String languageType,
+                @lombok.NonNull final String entityName
         ) {
             return String.join(
                     StringOperations.SPACE,
@@ -113,9 +130,9 @@ public enum Errors {
         @lombok.NonNull
         @org.jetbrains.annotations.Contract( value = "_, _, _ -> _" )
         public String translate (
-        @lombok.NonNull final String entityName,
-        @lombok.NonNull final String fieldName,
-        @lombok.NonNull final String annotationName
+                @lombok.NonNull final String entityName,
+                @lombok.NonNull final String fieldName,
+                @lombok.NonNull final String annotationName
         ) {
             return String.join(
                     StringOperations.SPACE,
@@ -136,7 +153,7 @@ public enum Errors {
         @lombok.NonNull
         @org.jetbrains.annotations.Contract( value = "_ -> _" )
         public String translate (
-                final String languageType
+                @lombok.NonNull final String languageType
         ) {
             return switch ( languageType ) {
                 case "uz" -> "Mumkin emas %s".formatted( languageType );

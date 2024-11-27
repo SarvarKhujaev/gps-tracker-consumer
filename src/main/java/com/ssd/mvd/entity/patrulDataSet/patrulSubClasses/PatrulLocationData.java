@@ -1,82 +1,121 @@
 package com.ssd.mvd.entity.patrulDataSet.patrulSubClasses;
 
-import com.datastax.driver.core.GettableData;
-import com.ssd.mvd.inspectors.DataValidateInspector;
-import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
+import com.ssd.mvd.annotations.entity.object.EntityConstructorAnnotation;
+import com.ssd.mvd.annotations.entity.object.EntityAnnotations;
 
+import com.ssd.mvd.annotations.entity.method.MethodsAnnotations;
+import com.ssd.mvd.annotations.entity.field.FieldAnnotation;
+
+import com.ssd.mvd.interfaces.entity.ObjectFromRowConvertInterface;
+import com.ssd.mvd.inspectors.AnnotationInspector;
+
+import com.ssd.mvd.constants.cassandra.CassandraDataTypes;
+import com.ssd.mvd.constants.cassandra.CassandraTables;
+
+@EntityAnnotations(
+        name = "patrulLocationData",
+        isSubClass = true,
+        tableName = CassandraTables.PATRUL_LOCATION_DATA
+)
 public final class PatrulLocationData implements ObjectFromRowConvertInterface< PatrulLocationData > {
     public double getDistance() {
         return this.distance;
-    }
-
-    public void setDistance( final double distance ) {
-        this.distance = distance;
     }
 
     public double getLatitude() {
         return this.latitude;
     }
 
-    public void setLatitude( final double latitude ) {
-        this.latitude = latitude;
-    }
-
     public double getLongitude() {
         return this.longitude;
-    }
-
-    public void setLongitude( final double longitude ) {
-        this.longitude = longitude;
     }
 
     public double getLatitudeOfTask() {
         return this.latitudeOfTask;
     }
 
-    public void setLatitudeOfTask( final double latitudeOfTask ) {
-        this.latitudeOfTask = latitudeOfTask;
-    }
-
     public double getLongitudeOfTask() {
         return this.longitudeOfTask;
     }
 
+    @MethodsAnnotations(
+            name = "distance",
+            withoutParams = false,
+            isReturnEntity = false,
+            acceptEntityType = CassandraDataTypes.DOUBLE
+    )
+    public void setDistance( final double distance ) {
+        this.distance = distance;
+    }
+
+    @MethodsAnnotations(
+            name = "latitude",
+            withoutParams = false,
+            isReturnEntity = false,
+            acceptEntityType = CassandraDataTypes.DOUBLE
+    )
+    public void setLatitude( final double latitude ) {
+        this.latitude = latitude;
+    }
+
+    @MethodsAnnotations(
+            name = "longitude",
+            withoutParams = false,
+            isReturnEntity = false,
+            acceptEntityType = CassandraDataTypes.DOUBLE
+    )
+    public void setLongitude( final double longitude ) {
+        this.longitude = longitude;
+    }
+
+    @MethodsAnnotations(
+            name = "latitudeOfTask",
+            withoutParams = false,
+            isReturnEntity = false,
+            acceptEntityType = CassandraDataTypes.DOUBLE
+    )
+    public void setLatitudeOfTask( final double latitudeOfTask ) {
+        this.latitudeOfTask = latitudeOfTask;
+    }
+
+    @MethodsAnnotations(
+            name = "longitudeOfTask",
+            withoutParams = false,
+            isReturnEntity = false,
+            acceptEntityType = CassandraDataTypes.DOUBLE
+    )
     public void setLongitudeOfTask( final double longitudeOfTask ) {
         this.longitudeOfTask = longitudeOfTask;
     }
 
+    @FieldAnnotation( name = "distance" )
     private double distance;
-    // текущее местоположение патрульного по Х
+    @FieldAnnotation( name = "latitude", comment = "текущее местоположение патрульного по Х" )
     private double latitude;
-    // текущее местоположение патрульного по Y
+    @FieldAnnotation( name = "longitude", comment = "текущее местоположение патрульного по Y" )
     private double longitude;
-    // локация заданной задачи по Х
+    @FieldAnnotation( name = "latitudeOfTask", comment = "локация заданной задачи по Х" )
     private double latitudeOfTask;
-    // локация заданной задачи по Y
+    @FieldAnnotation( name = "longitudeOfTask", comment = "локация заданной задачи по Y" )
     private double longitudeOfTask;
 
-    public PatrulLocationData () {}
+    private PatrulLocationData () {}
 
-    @Override
-    @lombok.NonNull
-    public PatrulLocationData generate( @lombok.NonNull final GettableData row ) {
-        DataValidateInspector.checkAndSetParams(
-                row,
-                row1 -> {
-                    this.setLongitudeOfTask( row.getDouble( "longitudeOfTask" ) );
-                    this.setLatitudeOfTask( row.getDouble( "latitudeOfTask" ) );
-                    this.setLongitude( row.getDouble( "longitude" ) );
-                    this.setLatitude( row.getDouble( "latitude" ) );
-                    this.setDistance( row.getDouble( "distance" ) );
-                }
-        );
-
-        return this;
+    @EntityConstructorAnnotation
+    public <T> PatrulLocationData ( @lombok.NonNull final Class<T> instance ) {
+        AnnotationInspector.checkCallerPermission( instance, PatrulLocationData.class );
     }
 
     @Override
     @lombok.NonNull
-    public PatrulLocationData generate() {
+    public PatrulLocationData generate () {
         return new PatrulLocationData();
+    }
+
+    @Override
+    @lombok.NonNull
+    @org.jetbrains.annotations.Contract( value = "_ -> fail" )
+    public PatrulLocationData generate( @lombok.NonNull final com.datastax.driver.core.GettableData gettableData ) {
+        return AnnotationInspector.fillEntityParams( this, gettableData );
     }
 }

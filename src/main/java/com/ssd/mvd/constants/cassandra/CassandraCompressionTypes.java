@@ -1,4 +1,4 @@
-package com.ssd.mvd.constants;
+package com.ssd.mvd.constants.cassandra;
 
 public final class CassandraCompressionTypes {
     public static final String LZ4 = "LZ4Compressor";

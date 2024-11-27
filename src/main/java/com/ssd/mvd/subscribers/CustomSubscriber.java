@@ -6,7 +6,7 @@ import com.ssd.mvd.inspectors.LogInspector;
 import org.reactivestreams.Subscription;
 import org.reactivestreams.Subscriber;
 
-@com.ssd.mvd.annotations.ImmutableEntityAnnotation
+@com.ssd.mvd.annotations.services.ImmutableEntityAnnotation
 public final class CustomSubscriber<T> extends LogInspector implements Subscriber<T> {
     private final CustomSubscriberFunction< T > customSubscriberFunction;
     private Subscription subscription;

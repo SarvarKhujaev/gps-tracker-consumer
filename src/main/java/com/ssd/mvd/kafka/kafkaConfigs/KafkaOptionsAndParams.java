@@ -1,12 +1,15 @@
 package com.ssd.mvd.kafka.kafkaConfigs;
 
-import com.ssd.mvd.annotations.EntityConstructorAnnotation;
+import com.ssd.mvd.annotations.entity.object.EntityConstructorAnnotation;
+import com.ssd.mvd.annotations.services.ServiceParametrAnnotation;
+
+import com.ssd.mvd.inspectors.dataTypesInpectors.UuidInspector;
 import com.ssd.mvd.inspectors.AnnotationInspector;
-import com.ssd.mvd.inspectors.UuidInspector;
+
 import com.ssd.mvd.kafka.KafkaDataControl;
 
-@com.ssd.mvd.annotations.ImmutableEntityAnnotation
-@com.ssd.mvd.annotations.ServiceParametrAnnotation( propertyGroupName = "KAFKA_VARIABLES" )
+@com.ssd.mvd.annotations.services.ImmutableEntityAnnotation
+@ServiceParametrAnnotation( propertyGroupName = "KAFKA_VARIABLES" )
 public class KafkaOptionsAndParams extends AnnotationInspector {
     @EntityConstructorAnnotation( permission = KafkaDataControl.class )
     protected <T extends UuidInspector> KafkaOptionsAndParams ( @lombok.NonNull final Class<T> instance ) {

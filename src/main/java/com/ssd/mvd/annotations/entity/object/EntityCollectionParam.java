@@ -1,6 +1,6 @@
-package com.ssd.mvd.annotations;
+package com.ssd.mvd.annotations.entity.object;
 
-import com.ssd.mvd.constants.CassandraDataTypes;
+import com.ssd.mvd.constants.cassandra.CassandraDataTypes;
 import java.lang.annotation.*;
 
 @Target( value = ElementType.FIELD )

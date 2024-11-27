@@ -1,6 +1,6 @@
 package com.ssd.mvd.database;
 
-import com.ssd.mvd.interfaces.EntityToCassandraConverter;
+import com.ssd.mvd.interfaces.entity.EntityToCassandraConverter;
 import com.ssd.mvd.interfaces.DatabaseCommonMethods;
 
 import com.ssd.mvd.inspectors.CassandraConverter;
@@ -9,9 +9,9 @@ import com.ssd.mvd.inspectors.EntitiesInstances;
 import com.ssd.mvd.kafka.KafkaDataControl;
 import com.ssd.mvd.entity.*;
 
-import com.ssd.mvd.constants.CassandraFunctions;
-import com.ssd.mvd.constants.CassandraCommands;
-import com.ssd.mvd.constants.CassandraTables;
+import com.ssd.mvd.constants.cassandra.CassandraFunctions;
+import com.ssd.mvd.constants.cassandra.CassandraCommands;
+import com.ssd.mvd.constants.cassandra.CassandraTables;
 
 import reactor.core.scheduler.Schedulers;
 import reactor.core.publisher.Flux;

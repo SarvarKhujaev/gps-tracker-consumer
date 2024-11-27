@@ -1,8 +1,7 @@
 package com.ssd.mvd.interfaces;
 
-import com.ssd.mvd.inspectors.AvroSchemaInspector;
-import com.ssd.mvd.kafka.kafkaConfigs.KafkaTopics;
-
+import com.ssd.mvd.inspectors.avro.AvroSchemaInspector;
+import com.ssd.mvd.inspectors.AnnotationInspector;
 import org.apache.avro.generic.GenericRecord;
 
 @SuppressWarnings(
@@ -10,14 +9,11 @@ import org.apache.avro.generic.GenericRecord;
 )
 public interface KafkaEntitiesCommonMethods {
     @lombok.NonNull
-    KafkaTopics getTopicName();
-
-    @lombok.NonNull
     String getSuccessMessage();
 
     @lombok.NonNull
     default String generateMessage() {
-        return "Kafka got request for topic: " + this.getTopicName();
+        return "Kafka got request for topic: " + AnnotationInspector.getKafkaTopicName( this );
     }
 
     @lombok.NonNull

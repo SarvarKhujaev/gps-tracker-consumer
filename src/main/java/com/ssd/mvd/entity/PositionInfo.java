@@ -1,6 +1,6 @@
 package com.ssd.mvd.entity;
 
-import com.ssd.mvd.interfaces.ObjectFromRowConvertInterface;
+import com.ssd.mvd.interfaces.entity.ObjectFromRowConvertInterface;
 import com.ssd.mvd.inspectors.DataValidateInspector;
 import com.ssd.mvd.controller.UnirestController;
 

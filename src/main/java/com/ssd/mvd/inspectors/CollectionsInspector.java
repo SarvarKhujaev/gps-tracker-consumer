@@ -1,7 +1,12 @@
 package com.ssd.mvd.inspectors;
 
+import com.ssd.mvd.annotations.entity.object.EntityConstructorAnnotation;
+
+import com.ssd.mvd.inspectors.dataTypesInpectors.StringOperations;
+import com.ssd.mvd.inspectors.dataTypesInpectors.TimeInspector;
+import com.ssd.mvd.inspectors.dataTypesInpectors.UuidInspector;
+
 import org.apache.commons.collections4.list.UnmodifiableList;
-import com.ssd.mvd.annotations.EntityConstructorAnnotation;
 
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
@@ -11,14 +16,14 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-@com.ssd.mvd.annotations.ImmutableEntityAnnotation
+@com.ssd.mvd.annotations.services.ImmutableEntityAnnotation
 public class CollectionsInspector extends StringOperations {
     protected CollectionsInspector () {
         super( CollectionsInspector.class );
     }
 
     @EntityConstructorAnnotation( permission = TimeInspector.class )
-    protected <T extends UuidInspector> CollectionsInspector ( @lombok.NonNull final Class<T> instance ) {
+    protected <T extends UuidInspector> CollectionsInspector (@lombok.NonNull final Class<T> instance ) {
         super( CollectionsInspector.class );
 
         AnnotationInspector.checkCallerPermission( instance, CollectionsInspector.class );
@@ -87,7 +92,7 @@ public class CollectionsInspector extends StringOperations {
     }
 
     @lombok.Synchronized
-    protected synchronized static <T> void analyze (
+    public synchronized static <T> void analyze (
             @lombok.NonNull final Stream<T> someList,
             @lombok.NonNull final Consumer<T> someConsumer
     ) {
