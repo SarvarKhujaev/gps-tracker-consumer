@@ -1,23 +1,30 @@
 package com.ssd.mvd.entity;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
+
+import com.datastax.driver.core.querybuilder.Update;
 import com.datastax.oss.driver.api.querybuilder.insert.Insert;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 
-import com.ssd.mvd.interfaces.entity.EntityToCassandraConverter;
-import com.ssd.mvd.interfaces.KafkaEntitiesCommonMethods;
+import com.datastax.oss.driver.api.querybuilder.update.Assignment;
+import com.ssd.mvd.annotations.entity.object.EntityConstructorAnnotation;
+import com.ssd.mvd.annotations.entity.object.EntityAnnotations;
+import com.ssd.mvd.annotations.entity.field.FieldAnnotation;
+
+import com.ssd.mvd.annotations.kafka.KafkaEntityAnnotation;
 
 import com.ssd.mvd.annotations.avro.AvroMethodAnnotation;
 import com.ssd.mvd.annotations.avro.AvroFieldAnnotation;
 
-import com.ssd.mvd.annotations.entity.object.EntityAnnotations;
-import com.ssd.mvd.annotations.entity.field.FieldAnnotation;
+import com.ssd.mvd.interfaces.entity.EntityToCassandraConverter;
+import com.ssd.mvd.interfaces.KafkaEntitiesCommonMethods;
 
 import com.ssd.mvd.kafka.kafkaConfigs.KafkaTopics;
 import com.ssd.mvd.entity.patrulDataSet.Patrul;
 
 import com.ssd.mvd.inspectors.dataTypesInpectors.StringOperations;
+import com.ssd.mvd.inspectors.AnnotationInspector;
 import com.ssd.mvd.inspectors.Inspector;
 
 import com.ssd.mvd.constants.cassandra.CassandraCommands;
@@ -35,6 +42,7 @@ import java.util.UUID;
         comment = "Данные о позиции патрульной машины",
         tableName = CassandraTables.TRACKERS_LOCATION_TABLE
 )
+@KafkaEntityAnnotation( topicName = KafkaTopics.TUPLE_OF_CAR_LOCATION_TOPIC )
 public final class Position implements EntityToCassandraConverter, KafkaEntitiesCommonMethods {
     @AvroMethodAnnotation( name = "speed" )
     public double getSpeed() {
@@ -308,6 +316,11 @@ public final class Position implements EntityToCassandraConverter, KafkaEntities
     @AvroFieldAnnotation( name = "longitudeOfTask", schemaType = Schema.Type.DOUBLE )
     private double longitudeOfTask;
 
+    @EntityConstructorAnnotation
+    public <T> Position ( final Class<T> instance ) {
+        AnnotationInspector.checkCallerPermission( instance, Position.class );
+    }
+
     @Override
     @lombok.NonNull
     public String getEntityUpdateCommand () {
@@ -336,20 +349,12 @@ public final class Position implements EntityToCassandraConverter, KafkaEntities
     @Override
     @lombok.NonNull
     public Insert getEntityInsert() {
-        return QueryBuilder.insertInto(
-                this.getEntityKeyspaceName().name(),
-                this.getEntityTableName().name()
-        ).value( CqlIdentifier.fromCql( "imei" ), literal( this.getDeviceId() ) )
-                .value( CqlIdentifier.fromCql( "date" ), literal( this.getDeviceTime() ) )
-                .value( CqlIdentifier.fromCql( "speed" ), literal( this.getSpeed() ) )
-                .value( CqlIdentifier.fromCql( "latitude" ), literal( this.getLatitude() ) )
-                .value( CqlIdentifier.fromCql( "longitude" ), literal( this.getLongitude() ) );
-    }
-
-    @Override
-    @lombok.NonNull
-    public KafkaTopics getTopicName() {
-        return KafkaTopics.TUPLE_OF_CAR_LOCATION_TOPIC;
+        return this.startInsert()
+                .value( CqlIdentifier.fromCql( "imei" ), QueryBuilder.literal( this.getDeviceId() ) )
+                .value( CqlIdentifier.fromCql( "date" ), QueryBuilder.literal( this.getDeviceTime() ) )
+                .value( CqlIdentifier.fromCql( "speed" ), QueryBuilder.literal( this.getSpeed() ) )
+                .value( CqlIdentifier.fromCql( "latitude" ), QueryBuilder.literal( this.getLatitude() ) )
+                .value( CqlIdentifier.fromCql( "longitude" ), QueryBuilder.literal( this.getLongitude() ) );
     }
 
     @Override

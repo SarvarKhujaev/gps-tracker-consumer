@@ -52,6 +52,41 @@ public class AnnotationInspector extends LogInspector {
         AnnotationInspector.checkAnnotationIsImmutable( AnnotationInspector.class );
     }
 
+    @SuppressWarnings(
+            value = """
+                    Принимает любой Object и проверяет является ли он доп. объектов
+                    """
+    )
+    @lombok.Synchronized
+    @com.typesafe.config.Optional
+    @org.jetbrains.annotations.Contract( value = "_ -> fail" )
+    protected static synchronized < T extends EntityToCassandraConverter > T checkAnnotationIsSubClass (
+            @lombok.NonNull @com.typesafe.config.Optional final T entity
+    ) {
+        checkAnnotationInitialized( entity.getClass() );
+
+        Validate.isTrue(
+                convertEntityToEntityAnnotation( entity ).isSubClass(),
+                Errors.ENTITY_IS_NOT_SUB_CLASS.translate( entity.getClass().getName() )
+        );
+
+        return entity;
+    }
+
+    @lombok.NonNull
+    @lombok.Synchronized
+    @SuppressWarnings(
+            value = """
+                    возвращает название колонки из БД для cуб-объекта
+                    """
+    )
+    @org.jetbrains.annotations.Contract( value = "_ -> fail" )
+    public static synchronized <T extends EntityToCassandraConverter> String getSubClassColumnName (
+            @lombok.NonNull @com.typesafe.config.Optional final T entity
+    ) {
+        return convertEntityToEntityAnnotation( checkAnnotationIsSubClass( entity ) ).name();
+    }
+
     @lombok.NonNull
     @lombok.Synchronized
     @org.jetbrains.annotations.Contract( value = "_ -> !null" )

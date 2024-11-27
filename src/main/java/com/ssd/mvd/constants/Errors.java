@@ -62,6 +62,21 @@ public enum Errors {
             };
         }
     },
+    ENTITY_IS_NOT_SUB_CLASS {
+        @Override
+        @lombok.NonNull
+        @org.jetbrains.annotations.Contract( value = "_ -> _" )
+        public String translate (
+                @lombok.NonNull final String error
+        ) {
+            return String.join(
+                    StringOperations.SPACE,
+                    "Entity:",
+                    error,
+                    "is not subclass"
+            );
+        }
+    },
 
     WRONG_TYPE_IN_ANNOTATION {
         @Override

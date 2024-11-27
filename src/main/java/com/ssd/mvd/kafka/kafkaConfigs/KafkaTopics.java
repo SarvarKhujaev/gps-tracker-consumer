@@ -34,16 +34,6 @@ public enum KafkaTopics {
         }
     },
 
-    WEBSOCKET_SERVICE_TOPIC_FOR_ONLINE {
-        @Override
-        public String getTopicName () {
-            return DataValidateInspector.checkContextOrReturnDefaultValue(
-                    "variables.KAFKA_VARIABLES.KAFKA_TOPICS.WEBSOCKET_SERVICE_TOPIC_FOR_ONLINE",
-                    Errors.DATA_NOT_FOUND.name()
-            );
-        }
-    },
-
     RAW_GPS_LOCATION_TOPIC;
 
     public String getTopicName () {

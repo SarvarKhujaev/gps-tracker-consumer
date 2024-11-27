@@ -6,10 +6,11 @@ import com.ssd.mvd.annotations.entity.object.ClusteringOrder;
 import com.ssd.mvd.annotations.entity.method.MethodsAnnotations;
 import com.ssd.mvd.annotations.entity.field.FieldAnnotation;
 
+import com.ssd.mvd.annotations.entity.object.EntityConstructorAnnotation;
 import com.ssd.mvd.interfaces.entity.ObjectFromRowConvertInterface;
 
 import com.ssd.mvd.inspectors.dataTypesInpectors.StringOperations;
-import com.ssd.mvd.inspectors.DataValidateInspector;
+import com.ssd.mvd.inspectors.AnnotationInspector;
 
 import com.ssd.mvd.entity.patrulDataSet.patrulSubClasses.*;
 import com.ssd.mvd.entity.TupleOfCar;
@@ -17,8 +18,6 @@ import com.ssd.mvd.entity.TupleOfCar;
 import com.ssd.mvd.constants.cassandra.CassandraDataTypes;
 import com.ssd.mvd.constants.cassandra.CassandraCommands;
 import com.ssd.mvd.constants.cassandra.CassandraTables;
-
-import com.datastax.driver.core.GettableData;
 
 import java.text.MessageFormat;
 import java.util.UUID;
@@ -35,7 +34,7 @@ import java.util.UUID;
                 @ClusteringOrder( columnName = "passportNumber" )
         }
 )
-public final class Patrul implements ObjectFromRowConvertInterface< Patrul > {
+public final class Patrul extends AnnotationInspector implements ObjectFromRowConvertInterface< Patrul > {
     @MethodsAnnotations(
             name = "uuid",
             isPrimaryKey = true
@@ -244,15 +243,14 @@ public final class Patrul implements ObjectFromRowConvertInterface< Patrul > {
 
     public void linkWithTupleOfCar ( final TupleOfCar tupleOfCar ) {
         this.getPatrulUniqueValues().setUuidForEscortCar( tupleOfCar.getUuid() );
-        this.getPatrulCarInfo().setCarNumber( tupleOfCar );
+        this.getPatrulCarInfo().setCarNumber( tupleOfCar.getGosNumber() );
     }
 
-    public Patrul () {}
+    private Patrul () {}
 
-    @Override
-    @lombok.NonNull
-    public CassandraTables getEntityTableName () {
-        return CassandraTables.PATRULS;
+    @EntityConstructorAnnotation
+    public <T> Patrul ( final Class<T> instance ) {
+        AnnotationInspector.checkCallerPermission( instance, Patrul.class );
     }
 
     @Override
@@ -263,33 +261,45 @@ public final class Patrul implements ObjectFromRowConvertInterface< Patrul > {
 
     @Override
     @lombok.NonNull
-    public Patrul generate( @lombok.NonNull final GettableData row ) {
-        DataValidateInspector.checkAndSetParams(
-                row,
-                row1 -> {
-                    this.setUuid( row.getUUID( "uuid" ) );
-                    this.setInPolygon( row.getBool( "inPolygon" ) );
-                    this.setTuplePermission( row.getBool( "tuplePermission" ) );
-                    this.setTotalActivityTime( row.getLong( "totalActivityTime" ) );
-
-                    this.setRank( row.getString( "rank" ) );
-                    this.setEmail( row.getString( "email" ) );
-                    this.setOrganName( row.getString( "organName" ) );
-                    this.setPoliceType( row.getString( "policeType" ) );
-                    this.setDateOfBirth( row.getString( "dateOfBirth" ) );
-                    this.setPassportNumber( row.getString( "passportNumber" ) );
-                    this.setPatrulImageLink( row.getString( "patrulImageLink" ) );
-
-                    this.setPatrulCarInfo( new PatrulCarInfo().generate( row.getUDTValue( "patrulCarInfo" ) ) );
-                    this.setPatrulFIOData( new PatrulFIOData().generate( row.getUDTValue( "patrulFIOData" ) ) );
-                    this.setPatrulTaskInfo( new PatrulTaskInfo().generate( row.getUDTValue( "patrulTaskInfo" ) ) );
-                    this.setPatrulRegionData( new PatrulRegionData().generate( row.getUDTValue( "patrulRegionData" ) ) );
-                    this.setPatrulLocationData( new PatrulLocationData().generate( row.getUDTValue( "patrulLocationData" ) ) );
-                    this.setPatrulUniqueValues( new PatrulUniqueValues().generate( row.getUDTValue( "patrulUniqueValues" ) ) );
+    @org.jetbrains.annotations.Contract( value = "_ -> fail" )
+    public synchronized Patrul generate( final com.datastax.driver.core.GettableData gettableData ) {
+        checkAndSetParams(
+                gettableData,
+                udtValue1 -> {
+                    this.setPatrulFIOData(
+                            this.getPatrulFIOData()
+                                    .generate()
+                                    .generate( gettableData.getUDTValue( getSubClassColumnName( this.getPatrulFIOData() ) ) )
+                    );
+                    this.setPatrulCarInfo(
+                            this.getPatrulCarInfo()
+                                    .generate()
+                                    .generate( gettableData.getUDTValue( getSubClassColumnName( this.getPatrulCarInfo() ) ) )
+                    );
+                    this.setPatrulTaskInfo(
+                            this.getPatrulTaskInfo()
+                                    .generate()
+                                    .generate( gettableData.getUDTValue( getSubClassColumnName( this.getPatrulTaskInfo() ) ) )
+                    );
+                    this.setPatrulRegionData(
+                            this.getPatrulRegionData()
+                                    .generate()
+                                    .generate( gettableData.getUDTValue( getSubClassColumnName( this.getPatrulRegionData() ) ) )
+                    );
+                    this.setPatrulLocationData(
+                            this.getPatrulLocationData()
+                                    .generate()
+                                    .generate( gettableData.getUDTValue( getSubClassColumnName( this.getPatrulLocationData() ) ) )
+                    );
+                    this.setPatrulUniqueValues(
+                            this.getPatrulUniqueValues()
+                                    .generate()
+                                    .generate( gettableData.getUDTValue( getSubClassColumnName( this.getPatrulUniqueValues() ) ) )
+                    );
                 }
         );
 
-        return this;
+        return fillEntityParams( this, gettableData );
     }
 
     @Override

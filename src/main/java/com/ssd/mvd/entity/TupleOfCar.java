@@ -329,18 +329,6 @@ public final class TupleOfCar implements ObjectFromRowConvertInterface< TupleOfC
 
     @Override
     @lombok.NonNull
-    public CassandraTables getEntityTableName() {
-        return CassandraTables.TUPLE_OF_CAR;
-    }
-
-    @Override
-    @lombok.NonNull
-    public CassandraTables getEntityKeyspaceName() {
-        return CassandraTables.ESCORT;
-    }
-
-    @Override
-    @lombok.NonNull
     public TupleOfCar generate () {
         return new TupleOfCar();
     }

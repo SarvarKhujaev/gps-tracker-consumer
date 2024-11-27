@@ -1,20 +1,23 @@
 package com.ssd.mvd.entity;
 
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
+import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.api.querybuilder.insert.Insert;
+import com.datastax.oss.driver.api.querybuilder.select.Select;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 
 import com.datastax.driver.core.GettableData;
 import com.datastax.driver.core.Row;
 
+
 import com.ssd.mvd.inspectors.dataTypesInpectors.StringOperations;
 import com.ssd.mvd.inspectors.dataTypesInpectors.TimeInspector;
+import com.ssd.mvd.inspectors.*;
 
 import com.ssd.mvd.interfaces.entity.EntityToCassandraConverter;
+import com.ssd.mvd.annotations.entity.object.EntityAnnotations;
 import com.ssd.mvd.database.CassandraDataControl;
 import com.ssd.mvd.entity.patrulDataSet.Patrul;
-import com.ssd.mvd.inspectors.*;
 
 import com.ssd.mvd.constants.cassandra.CassandraFunctions;
 import com.ssd.mvd.constants.cassandra.CassandraCommands;
@@ -24,6 +27,12 @@ import java.lang.ref.WeakReference;
 import java.text.MessageFormat;
 import java.util.Date;
 
+@EntityAnnotations(
+        name = "TrackerInfo",
+        tableName = CassandraTables.TRACKERSID,
+        keysapceName = CassandraTables.ESCORT,
+        primaryKeys = { "trackersId" }
+)
 public final class TrackerInfo implements EntityToCassandraConverter {
     public ReqCar getReqCar() {
         return this.reqCar;
@@ -231,8 +240,8 @@ public final class TrackerInfo implements EntityToCassandraConverter {
     }
 
     public TrackerInfo (
-            final WeakReference< Patrul > patrul,
-            final TupleOfCar tupleOfCar
+            @lombok.NonNull final WeakReference< Patrul > patrul,
+            @lombok.NonNull final TupleOfCar tupleOfCar
     ) {
         this.setStatus( true );
         this.setReqCar( null );
@@ -252,9 +261,9 @@ public final class TrackerInfo implements EntityToCassandraConverter {
     }
 
     public TrackerInfo (
-            final Patrul patrul,
-            final ReqCar reqCar,
-            final Row row
+            @lombok.NonNull final Patrul patrul,
+            @lombok.NonNull final ReqCar reqCar,
+            @lombok.NonNull final Row row
     ) {
         this.setPatrul( patrul );
         this.setPatrulPassportSeries( patrul.getPassportNumber() );
@@ -297,8 +306,8 @@ public final class TrackerInfo implements EntityToCassandraConverter {
     }
 
     private void save (
-            final Patrul patrul,
-            final Position position
+            @lombok.NonNull final Patrul patrul,
+            @lombok.NonNull final Position position
     ) {
         // обновляем позицию патрульного, и трекера
         position.update( patrul );
@@ -325,8 +334,8 @@ public final class TrackerInfo implements EntityToCassandraConverter {
     }
 
     private Position save (
-            final ReqCar reqCar,
-            final Position position
+            @lombok.NonNull final ReqCar reqCar,
+            @lombok.NonNull final Position position
     ) {
         position.setCarGosNumber( reqCar.getGosNumber() );
         position.setCarType( reqCar.getVehicleType() );
@@ -347,8 +356,8 @@ public final class TrackerInfo implements EntityToCassandraConverter {
     }
 
     private void save (
-            final TupleOfCar tupleOfCar,
-            final Position position
+            @lombok.NonNull final TupleOfCar tupleOfCar,
+            @lombok.NonNull final Position position
     ) {
         // обновляем позицию патрульного, и трекера
         position.setCarGosNumber( tupleOfCar.getGosNumber() );
@@ -367,8 +376,8 @@ public final class TrackerInfo implements EntityToCassandraConverter {
     }
 
     public Position updateTime (
-            final Position position,
-            final TupleOfCar tupleOfCar
+            @lombok.NonNull final Position position,
+            @lombok.NonNull final TupleOfCar tupleOfCar
     ) {
         this.setPatrul( null );
         this.setPatrulPassportSeries( null );
@@ -401,9 +410,9 @@ public final class TrackerInfo implements EntityToCassandraConverter {
     }
 
     public Position updateTime (
-            final Position position,
-            final TupleOfCar tupleOfCar,
-            final Patrul patrul
+            @lombok.NonNull final Position position,
+            @lombok.NonNull final TupleOfCar tupleOfCar,
+            @lombok.NonNull final Patrul patrul
     ) {
         this.setLastActiveDate( TimeInspector.newDate() );
         this.setTotalActivityTime(
@@ -414,12 +423,6 @@ public final class TrackerInfo implements EntityToCassandraConverter {
         this.save( patrul, position );
 
         return position;
-    }
-
-    @Override
-    @lombok.NonNull
-    public CassandraTables getEntityTableName () {
-        return CassandraTables.TRACKERSID;
     }
 
     @Override
@@ -448,20 +451,41 @@ public final class TrackerInfo implements EntityToCassandraConverter {
     @Override
     @lombok.NonNull
     public Insert getEntityInsert() {
-        return QueryBuilder.insertInto(
-                CqlIdentifier.fromCql( this.getEntityKeyspaceName().name() ),
-                CqlIdentifier.fromCql( this.getEntityTableName().name() )
-        ).value( CqlIdentifier.fromCql( "trackersId" ), literal( this.getTrackerId() ) )
-                .value( CqlIdentifier.fromCql( "patrulPassportSeries" ), literal( this.getPatrulPassportSeries() ) )
-                .value( CqlIdentifier.fromCql( "gosnumber" ), literal( this.getGosNumber() ) )
-                .value( CqlIdentifier.fromCql( "policeType" ), literal( this.getIcon() ) )
-                .value( CqlIdentifier.fromCql( "policeType2" ), literal( this.getIcon2() ) )
-                .value( CqlIdentifier.fromCql( "status" ), literal( this.getStatus() ) )
-                .value( CqlIdentifier.fromCql( "latitude" ), literal( this.getLatitude() ) )
-                .value( CqlIdentifier.fromCql( "longitude" ), literal( this.getLongitude() ) )
-                .value( CqlIdentifier.fromCql( "totalActivityTime" ), literal( this.getTotalActivityTime() ) )
-                .value( CqlIdentifier.fromCql( "lastActiveDate" ), QueryBuilder.now() )
-                .value( CqlIdentifier.fromCql( "dateOfRegistration" ), literal( this.getDateOfRegistration() ) );
+        return this.startInsert()
+                .value(
+                        CqlIdentifier.fromCql( "trackersId" ),
+                        QueryBuilder.literal( this.getTrackerId() )
+                ).value(
+                        CqlIdentifier.fromCql( "patrulPassportSeries" ),
+                        QueryBuilder.literal( this.getPatrulPassportSeries() )
+                ).value(
+                        CqlIdentifier.fromCql( "gosnumber" ),
+                        QueryBuilder.literal( this.getGosNumber() )
+                ).value(
+                        CqlIdentifier.fromCql( "policeType" ),
+                        QueryBuilder.literal( this.getIcon() )
+                ).value(
+                        CqlIdentifier.fromCql( "policeType2" ),
+                        QueryBuilder.literal( this.getIcon2() )
+                ).value(
+                        CqlIdentifier.fromCql( "status" ),
+                        QueryBuilder.literal( this.getStatus() )
+                ).value(
+                        CqlIdentifier.fromCql( "latitude" ),
+                        QueryBuilder.literal( this.getLatitude() )
+                ).value(
+                        CqlIdentifier.fromCql( "longitude" ),
+                        QueryBuilder.literal( this.getLongitude() )
+                ).value(
+                        CqlIdentifier.fromCql( "totalActivityTime" ),
+                        QueryBuilder.literal( this.getTotalActivityTime() )
+                ).value(
+                        CqlIdentifier.fromCql( "lastActiveDate" ),
+                        QueryBuilder.now()
+                ).value(
+                        CqlIdentifier.fromCql( "dateOfRegistration" ),
+                        QueryBuilder.literal( this.getDateOfRegistration() )
+                );
     }
 
     @Override
@@ -500,5 +524,19 @@ public final class TrackerInfo implements EntityToCassandraConverter {
                 CassandraFunctions.TO_TIMESTAMP.formatted( CassandraFunctions.NOW ),
                 StringOperations.joinWithAstrix( this.getDateOfRegistration() )
         );
+    }
+
+    @lombok.NonNull
+    @org.jetbrains.annotations.Contract( value = "_ -> !null" )
+    public Select getEntitySelect (
+            final Object ... params
+    ) {
+        return this.startSelect()
+                .column( "lastActiveDate" )
+                .where(
+                        Relation.column(
+                                CqlIdentifier.fromCql( "trackersId" )
+                        ).isEqualTo( QueryBuilder.literal( params[0] ) )
+                );
     }
 }

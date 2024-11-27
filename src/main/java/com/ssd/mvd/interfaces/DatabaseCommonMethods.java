@@ -1,6 +1,5 @@
 package com.ssd.mvd.interfaces;
 
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
@@ -35,6 +34,26 @@ public interface DatabaseCommonMethods extends ServiceCommonMethods {
         );
     }
 
+    @lombok.NonNull
+    default PreparedStatement generatePreparedStatement (
+            @lombok.NonNull final String query
+    ) {
+        final PreparedStatement preparedStatement = this.getSession().prepare( query );
+
+        preparedStatement.setConsistencyLevel( ConsistencyLevel.ONE );
+        preparedStatement.setIdempotent( true );
+        preparedStatement.enableTracing();
+
+        return preparedStatement;
+    }
+
+    @lombok.NonNull
+    default PreparedStatement generatePreparedStatement (
+            @lombok.NonNull final BuildableQuery buildableQuery
+    ) {
+        return this.generatePreparedStatement( buildableQuery.asCql() );
+    }
+
     @SuppressWarnings( value = "возвращает одно конкретное значение из БД" )
     @lombok.NonNull
     @org.jetbrains.annotations.Contract( value = "_, _, _ -> !null" )
@@ -51,10 +70,14 @@ public interface DatabaseCommonMethods extends ServiceCommonMethods {
         return EntitiesInstances.generateWeakEntity(
                 this.completeCommand(
                         QueryBuilder.selectFrom(
-                                        entityToCassandraConverter.getEntityKeyspaceName().name(),
-                                        entityToCassandraConverter.getEntityTableName().name()
-                                ).all()
-                                .where( Relation.column( CqlIdentifier.fromCql( columnName ) ).isEqualTo( literal( paramName ) ) )
+                                entityToCassandraConverter.getEntityKeyspaceName().name(),
+                                entityToCassandraConverter.getEntityTableName().name()
+                        ).all()
+                        .where(
+                                Relation.column(
+                                        CqlIdentifier.fromCql( columnName )
+                                ).isEqualTo( QueryBuilder.literal( paramName ) )
+                        )
                 ).one()
         );
     }
@@ -79,7 +102,7 @@ public interface DatabaseCommonMethods extends ServiceCommonMethods {
                                 .where(
                                         Relation.column(
                                                 CqlIdentifier.fromCql( AnnotationInspector.getEntityPrimaryKey( entityToCassandraConverter )[0] )
-                                        ).isEqualTo( literal( paramName ) )
+                                        ).isEqualTo( QueryBuilder.literal( paramName ) )
                                 )
                 ).one()
         );
@@ -167,7 +190,7 @@ public interface DatabaseCommonMethods extends ServiceCommonMethods {
         this.checkSessionNotClosed();
 
         return this.getSession().execute(
-                this.getSession().prepare( query ).bind()
+                this.generatePreparedStatement( query ).bind()
         );
     }
 
@@ -179,7 +202,7 @@ public interface DatabaseCommonMethods extends ServiceCommonMethods {
         this.checkSessionNotClosed();
 
         return this.getSession().execute(
-                this.getSession().prepare( buildableQuery.asCql() ).bind()
+                this.generatePreparedStatement( buildableQuery ).bind()
         );
     }
 
@@ -190,7 +213,17 @@ public interface DatabaseCommonMethods extends ServiceCommonMethods {
     ) {
         this.checkSessionNotClosed();
 
-        return this.getSession().execute( stringBuilder.toString() );
+        return this.getSession().execute( this.generatePreparedStatement( stringBuilder.toString() ).bind() );
+    }
+
+    @lombok.NonNull
+    @org.jetbrains.annotations.Contract( value = "_ -> !null" )
+    default ResultSet completeCommand (
+            @lombok.NonNull final Statement statement
+    ) {
+        this.checkSessionNotClosed();
+
+        return this.getSession().execute( statement );
     }
 
     @lombok.NonNull

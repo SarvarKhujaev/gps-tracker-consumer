@@ -6,6 +6,7 @@ public enum CassandraTables {
     TABLETS,
 
     CARS,
+    ICONS,
     PATRULS,
     PATRUL_CAR_DATA,
     PATRUL_FIO_DATA,
@@ -15,6 +16,7 @@ public enum CassandraTables {
     PATRUL_LOCATION_DATA,
 
     POLICE_TYPE,
+    POSITION_INFO,
 
     ESCORT {
         @Override

@@ -9,8 +9,8 @@ import com.ssd.mvd.inspectors.dataTypesInpectors.StringOperations;
 import org.apache.commons.collections4.list.UnmodifiableList;
 import org.apache.commons.lang3.Validate;
 
-import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.serialization.Serde;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.lang.ref.WeakReference;
@@ -18,7 +18,7 @@ import java.util.List;
 
 @SuppressWarnings( value = "хранит instance на все объекты" )
 @com.ssd.mvd.annotations.services.ImmutableEntityAnnotation
-public final class EntitiesInstances {
+public final class EntitiesInstances extends AnnotationInspector {
     @lombok.NonNull
     @lombok.Synchronized
     public static synchronized <T> WeakReference<T> generateWeakEntity (final T entity ) {
@@ -40,28 +40,31 @@ public final class EntitiesInstances {
     }
 
     public static final AtomicReference< Icons > ICONS = generateAtomicEntity(
-            new Icons()
+            checkAnnotationIsNotImmutable( new Icons( EntitiesInstances.class ) )
     );
     public static final AtomicReference< Patrul > PATRUL = generateAtomicEntity(
-            new Patrul()
+            checkAnnotationIsNotImmutable( new Patrul( EntitiesInstances.class ) )
+    );
+    public static final AtomicReference< Position > POSITION_ATOMIC_REFERENCE = generateAtomicEntity(
+            checkAnnotationIsNotImmutable( new Position( EntitiesInstances.class ) )
     );
     public static final AtomicReference< ReqCar > REQ_CAR = generateAtomicEntity(
-            new ReqCar()
+            checkAnnotationIsNotImmutable( new ReqCar( EntitiesInstances.class ) )
     );
     public static final AtomicReference< PoliceType > POLICE_TYPE = generateAtomicEntity(
-            new PoliceType()
+            checkAnnotationIsNotImmutable( new PoliceType( EntitiesInstances.class ) )
     );
     public static final AtomicReference< TupleOfCar > TUPLE_OF_CAR = generateAtomicEntity(
-            new TupleOfCar()
+            checkAnnotationIsNotImmutable( new TupleOfCar( EntitiesInstances.class ) )
     );
     public static final AtomicReference< TrackerInfo > TRACKER_INFO = generateAtomicEntity(
-            new TrackerInfo()
+            checkAnnotationIsNotImmutable( new TrackerInfo() )
     );
     public static final AtomicReference< PositionInfo > POSITION_INFO = generateAtomicEntity(
-            new PositionInfo()
+            checkAnnotationIsNotImmutable( new PositionInfo( EntitiesInstances.class ) )
     );
     public static final AtomicReference< PatrulFuelStatistics > PATRUL_FUEL_STATISTICS = generateAtomicEntity(
-            new PatrulFuelStatistics()
+            new PatrulFuelStatistics( EntitiesInstances.class )
     );
 
     public static final WeakReference< org.apache.kafka.common.serialization.StringSerializer > KAFKA_STRING_SERIALIZER = generateWeakEntity(

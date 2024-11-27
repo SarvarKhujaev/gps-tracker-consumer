@@ -273,19 +273,7 @@ public final class CassandraDataControlForEscort extends CassandraConverter impl
     public final Supplier< Flux< TrackerInfo > > getAllTrackers = () -> CassandraDataControl
             .getInstance()
             .getAllEntities
-            .apply( new EntityToCassandraConverter() {
-                @Override
-                @lombok.NonNull
-                public CassandraTables getEntityTableName() {
-                    return CassandraTables.TRACKERSID;
-                }
-
-                @Override
-                @lombok.NonNull
-                public CassandraTables getEntityKeyspaceName() {
-                    return CassandraTables.ESCORT;
-                }
-            } )
+            .apply( EntitiesInstances.TRACKER_INFO.get() )
             .map( row -> {
                 final WeakReference< TupleOfCar > tupleOfCar = this.findRowAndReturnEntity(
                         EntitiesInstances.TUPLE_OF_CAR.get(),

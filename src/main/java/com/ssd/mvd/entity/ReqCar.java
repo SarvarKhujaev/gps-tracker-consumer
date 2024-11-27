@@ -8,6 +8,7 @@ import com.ssd.mvd.annotations.entity.field.FieldAnnotation;
 import com.ssd.mvd.annotations.entity.field.EntityIndex;
 
 import com.ssd.mvd.annotations.entity.method.MethodsAnnotations;
+import com.ssd.mvd.annotations.kafka.KafkaEntityAnnotation;
 
 import com.ssd.mvd.interfaces.entity.ObjectFromRowConvertInterface;
 import com.ssd.mvd.interfaces.KafkaEntitiesCommonMethods;
@@ -32,6 +33,7 @@ import java.util.UUID;
         comment = "Данные о патрульных машинах",
         tableName = CassandraTables.CARS
 )
+@KafkaEntityAnnotation( topicName = KafkaTopics.NEW_CAR_TOPIC )
 public final class ReqCar
         extends CassandraConverter
         implements ObjectFromRowConvertInterface< ReqCar >, KafkaEntitiesCommonMethods {
@@ -410,12 +412,6 @@ public final class ReqCar
     @org.jetbrains.annotations.Contract( value = "_ -> fail" )
     public synchronized ReqCar generate( @lombok.NonNull final com.datastax.driver.core.GettableData gettableData ) {
         return AnnotationInspector.fillEntityParams( this, gettableData );
-    }
-
-    @Override
-    @lombok.NonNull
-    public KafkaTopics getTopicName() {
-        return KafkaTopics.NEW_CAR_TOPIC;
     }
 
     @Override
