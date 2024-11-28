@@ -1,6 +1,6 @@
 package com.ssd.mvd.inspectors;
 
-import com.ssd.mvd.entity.patrulDataSet.patrulSubClasses.PatrulFuelStatistics;
+import com.ssd.mvd.entity.patrulDataSet.patrulSubClasses.*;
 import com.ssd.mvd.entity.patrulDataSet.Patrul;
 import com.ssd.mvd.entity.*;
 
@@ -65,6 +65,38 @@ public final class EntitiesInstances extends AnnotationInspector {
     );
     public static final AtomicReference< PatrulFuelStatistics > PATRUL_FUEL_STATISTICS = generateAtomicEntity(
             new PatrulFuelStatistics( EntitiesInstances.class )
+    );
+
+    @SuppressWarnings( value = "Patrul sub classess" )
+    public static final AtomicReference< PatrulCarInfo > PATRUL_CAR_INFO = generateAtomicEntity(
+            checkAnnotationIsSubClass(
+                    checkAnnotationIsNotImmutable( new PatrulCarInfo( EntitiesInstances.class ) )
+            )
+    );
+    public static final AtomicReference< PatrulFIOData > PATRUL_FIO_INFO = generateAtomicEntity(
+            checkAnnotationIsSubClass(
+                    checkAnnotationIsNotImmutable( new PatrulFIOData( EntitiesInstances.class ) )
+            )
+    );
+    public static final AtomicReference< PatrulTaskInfo > PATRUL_TASK_INFO = generateAtomicEntity(
+            checkAnnotationIsSubClass(
+                    checkAnnotationIsNotImmutable( new PatrulTaskInfo( EntitiesInstances.class ) )
+            )
+    );
+    public static final AtomicReference< PatrulRegionData > PATRUL_REGION_DATA = generateAtomicEntity(
+            checkAnnotationIsSubClass(
+                    checkAnnotationIsNotImmutable( new PatrulRegionData( EntitiesInstances.class ) )
+            )
+    );
+    public static final AtomicReference< PatrulUniqueValues > PATRUL_UNIQUE_VALUES = generateAtomicEntity(
+            checkAnnotationIsSubClass(
+                    checkAnnotationIsNotImmutable( new PatrulUniqueValues( EntitiesInstances.class ) )
+            )
+    );
+    public static final AtomicReference< PatrulLocationData > PATRUL_LOCATION_DATA = generateAtomicEntity(
+            checkAnnotationIsSubClass(
+                    checkAnnotationIsNotImmutable( new PatrulLocationData( EntitiesInstances.class ) )
+            )
     );
 
     public static final WeakReference< org.apache.kafka.common.serialization.StringSerializer > KAFKA_STRING_SERIALIZER = generateWeakEntity(

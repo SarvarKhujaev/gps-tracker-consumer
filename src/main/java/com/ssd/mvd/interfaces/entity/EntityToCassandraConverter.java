@@ -29,11 +29,6 @@ public interface EntityToCassandraConverter extends ServiceCommonMethods {
     }
 
     @lombok.NonNull
-    default String getEntityInsertCommand () {
-        return CassandraCommands.INSERT_INTO;
-    }
-
-    @lombok.NonNull
     default String getEntityDeleteCommand () {
         return CassandraCommands.DELETE;
     }
@@ -121,16 +116,6 @@ public interface EntityToCassandraConverter extends ServiceCommonMethods {
         throw new IllegalArgumentException(
                 Errors.METHOD_NOT_REALIZED.translate(
                         "getEntityInsertBatch",
-                        this.getClass().getName()
-                )
-        );
-    }
-
-    @lombok.NonNull
-    default BatchStatement getEntityDeleteBatch () {
-        throw new IllegalArgumentException(
-                Errors.METHOD_NOT_REALIZED.translate(
-                        "getEntityDeleteBatch",
                         this.getClass().getName()
                 )
         );

@@ -1,6 +1,11 @@
 package com.ssd.mvd.database;
 
-import com.ssd.mvd.interfaces.entity.EntityToCassandraConverter;
+import com.datastax.oss.driver.api.querybuilder.relation.Relation;
+import com.datastax.oss.driver.api.querybuilder.update.Assignment;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.driver.core.BatchStatement;
+
 import com.ssd.mvd.interfaces.DatabaseCommonMethods;
 
 import com.ssd.mvd.inspectors.CassandraConverter;
@@ -9,16 +14,11 @@ import com.ssd.mvd.inspectors.EntitiesInstances;
 import com.ssd.mvd.kafka.KafkaDataControl;
 import com.ssd.mvd.entity.*;
 
-import com.ssd.mvd.constants.cassandra.CassandraFunctions;
-import com.ssd.mvd.constants.cassandra.CassandraCommands;
-import com.ssd.mvd.constants.cassandra.CassandraTables;
-
 import reactor.core.scheduler.Schedulers;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.lang.ref.WeakReference;
-import java.text.MessageFormat;
 
 import java.util.function.*;
 import java.util.Optional;
@@ -45,40 +45,35 @@ public final class CassandraDataControlForEscort extends CassandraConverter impl
     )
     private final Function< TrackerInfo, TrackerInfo > saveTackerInfo = trackerInfo -> {
         this.completeCommand(
-                MessageFormat.format(
-                        """
-                        {0} {1}.{2}
-                        (
-                            trackersId,
-                            patrulPassportSeries,
-                            gosnumber,
-                            status
-                            latitude,
-                            longitude,
-                            totalActivityTime,
-                            lastActiveDate,
-                            dateOfRegistration
+                trackerInfo.startInsert()
+                        .value(
+                                CqlIdentifier.fromCql( "trackersId" ),
+                                QueryBuilder.literal( trackerInfo.getTrackerId() )
+                        ).value(
+                                CqlIdentifier.fromCql( "patrulPassportSeries" ),
+                                QueryBuilder.literal( trackerInfo.getPatrulPassportSeries() )
+                        ).value(
+                                CqlIdentifier.fromCql( "gosnumber" ),
+                                QueryBuilder.literal( trackerInfo.getGosNumber() )
+                        ).value(
+                                CqlIdentifier.fromCql( "status" ),
+                                QueryBuilder.literal( trackerInfo.getStatus() )
+                        ).value(
+                                CqlIdentifier.fromCql( "latitude" ),
+                                QueryBuilder.literal( trackerInfo.getLatitude() )
+                        ).value(
+                                CqlIdentifier.fromCql( "longitude" ),
+                                QueryBuilder.literal( trackerInfo.getLongitude() )
+                        ).value(
+                                CqlIdentifier.fromCql( "totalActivityTime" ),
+                                QueryBuilder.literal( trackerInfo.getTotalActivityTime() )
+                        ).value(
+                                CqlIdentifier.fromCql( "lastActiveDate" ),
+                                QueryBuilder.now()
+                        ).value(
+                                CqlIdentifier.fromCql( "dateOfRegistration" ),
+                                QueryBuilder.literal( trackerInfo.getDateOfRegistration() )
                         )
-                        VALUES( {3}, {4}, {5}, {6}, {7}, {8}, {9,number,#}, {10}, {11} );
-                        """,
-
-                        CassandraCommands.INSERT_INTO,
-
-                        CassandraTables.ESCORT,
-                        CassandraTables.TRACKERSID,
-
-                        joinWithAstrix( trackerInfo.getTrackerId() ),
-                        joinWithAstrix( trackerInfo.getPatrulPassportSeries() ),
-                        joinWithAstrix( trackerInfo.getGosNumber() ),
-                        joinWithAstrix( trackerInfo.getStatus() ),
-
-                        trackerInfo.getLatitude(),
-                        trackerInfo.getLongitude(),
-
-                        trackerInfo.getTotalActivityTime(),
-                        CassandraFunctions.TO_TIMESTAMP.formatted( CassandraFunctions.NOW ),
-                        joinWithAstrix( trackerInfo.getDateOfRegistration() )
-                )
         );
 
         return trackerInfo;
@@ -102,53 +97,61 @@ public final class CassandraDataControlForEscort extends CassandraConverter impl
                         return super.getResponse( super.getMap( "Wrong TrackerId" ) );
                     }
 
-                    final StringBuilder stringBuilder = super.newStringBuilder();
+                    final BatchStatement batchStatement = new BatchStatement();
 
                     optional.filter(
                             tupleOfCar2 -> super.objectIsNotNull( tupleOfCar1.get().getUuidOfPatrul() )
                                     && super.objectIsNotNull( tupleOfCar.getUuidOfPatrul() )
                                     && tupleOfCar1.get().getUuidOfPatrul().compareTo( tupleOfCar.getUuidOfPatrul() ) != 0
-                    ).map( tupleOfCar2 -> {
-                        stringBuilder.append(
-                                MessageFormat.format(
-                                        """
-                                        {0} {1}.{2}
-                                        SET uuidforescortcar = {3}
-                                        WHERE uuid = {4};
-                                        """,
-                                        CassandraCommands.UPDATE,
+                    ).ifPresent( tupleOfCar2 -> batchStatement.add(
+                            this.generatePreparedStatement(
+                                    EntitiesInstances.PATRUL.get()
+                                            .startUpdate()
+                                            .set(
+                                                    Assignment.setField(
+                                                            CqlIdentifier.fromCql(
+                                                                    getSubClassColumnName( EntitiesInstances.PATRUL_UNIQUE_VALUES.get() )
+                                                            ),
+                                                            CqlIdentifier.fromCql( "uuidForEscortCar" ),
+                                                            QueryBuilder.bindMarker()
+                                                    )
+                                            ).where(
+                                                    Relation.column(
+                                                            getEntityPrimaryKey( EntitiesInstances.PATRUL.get() )[0]
+                                                    ).isEqualTo( QueryBuilder.bindMarker() )
+                                            )
+                            ).bind(
+                                    tupleOfCar.getUuid(),
+                                    tupleOfCar.getUuidOfPatrul()
+                            )
+                    ).add(
+                            this.generatePreparedStatement(
+                                    EntitiesInstances.PATRUL.get()
+                                            .startUpdate()
+                                            .set(
+                                                    Assignment.setField(
+                                                            CqlIdentifier.fromCql(
+                                                                    getSubClassColumnName( EntitiesInstances.PATRUL_UNIQUE_VALUES.get() )
+                                                            ),
+                                                            CqlIdentifier.fromCql( "uuidForEscortCar" ),
+                                                            QueryBuilder.bindMarker()
+                                                    )
+                                            ).where(
+                                                    Relation.column(
+                                                            getEntityPrimaryKey( EntitiesInstances.PATRUL.get() )[0]
+                                                    ).isEqualTo( QueryBuilder.bindMarker() )
+                                            )
+                            ).bind(
+                                    null,
+                                    tupleOfCar1.get().getUuidOfPatrul()
+                            )
+                    ) );
 
-                                        EntitiesInstances.PATRUL.get().getEntityKeyspaceName(),
-                                        EntitiesInstances.PATRUL.get().getEntityTableName(),
+                    batchStatement.add(
+                            this.generatePreparedStatement( tupleOfCar.getEntityInsert() ).bind()
+                    );
 
-                                        tupleOfCar.getUuid(),
-                                        tupleOfCar.getUuidOfPatrul()
-                                )
-                        ).append(
-                                MessageFormat.format(
-                                        """
-                                        {0} {1}.{2}
-                                        SET uuidforescortcar = {3}
-                                        WHERE uuid = {4};
-                                        """,
-                                        CassandraCommands.UPDATE,
-
-                                        EntitiesInstances.PATRUL.get().getEntityKeyspaceName(),
-                                        EntitiesInstances.PATRUL.get().getEntityTableName(),
-
-                                        null,
-                                        tupleOfCar1.get().getUuidOfPatrul()
-                                )
-                        );
-
-                        return tupleOfCar;
-                    } );
-
-                    stringBuilder.append(
-                            tupleOfCar.getEntityInsertCommand()
-                    ).append( CassandraCommands.APPLY_BATCH );
-
-                    return this.completeCommand( stringBuilder.toString() ).wasApplied()
+                    return this.completeCommand( batchStatement ).wasApplied()
                             ? super.getResponse(
                                     super.getMap( "Car" + tupleOfCar.getGosNumber() + " was updated successfully" )
                             )
@@ -249,7 +252,7 @@ public final class CassandraDataControlForEscort extends CassandraConverter impl
             this.getRowFromTabletsKeyspace(
                     EntitiesInstances.TRACKER_INFO.get(),
                     "trackersId",
-                    joinWithAstrix( trackerId )
+                    trackerId
             )
     ).map( row -> {
             final WeakReference< TupleOfCar > tupleOfCar = this.findRowAndReturnEntity(
@@ -278,7 +281,7 @@ public final class CassandraDataControlForEscort extends CassandraConverter impl
                 final WeakReference< TupleOfCar > tupleOfCar = this.findRowAndReturnEntity(
                         EntitiesInstances.TUPLE_OF_CAR.get(),
                         "gosNumber",
-                        joinWithAstrix( row.getString( "gosnumber" ) )
+                        row.getString( "gosnumber" )
                 );
 
                 return super.objectIsNotNull( tupleOfCar.get().getUuidOfPatrul() )
@@ -297,11 +300,11 @@ public final class CassandraDataControlForEscort extends CassandraConverter impl
 
     public final Function< Point, Flux< TupleOfCar > > findTheClosestCarsInRadius = point ->
             CassandraDataControl
-                .getInstance()
-                .getConvertedEntities(
-                        EntitiesInstances.TUPLE_OF_CAR.get(),
-                        row -> super.calculate( point, row ) <= point.getRadius()
-                );
+                    .getInstance()
+                    .getConvertedEntities(
+                            EntitiesInstances.TUPLE_OF_CAR.get(),
+                            row -> super.calculate( point, row ) <= point.getRadius()
+                    );
 
     public final Function< List< Point >, Flux< TupleOfCar > > findTheClosestCarsInPolygon = point ->
             CassandraDataControl

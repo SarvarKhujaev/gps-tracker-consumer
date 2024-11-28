@@ -1,5 +1,9 @@
 package com.ssd.mvd.entity;
 
+import com.datastax.oss.driver.api.querybuilder.insert.Insert;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
+
 import com.ssd.mvd.annotations.entity.object.EntityConstructorAnnotation;
 import com.ssd.mvd.annotations.entity.object.EntityAnnotations;
 
@@ -15,14 +19,12 @@ import com.ssd.mvd.interfaces.KafkaEntitiesCommonMethods;
 
 import com.ssd.mvd.inspectors.dataTypesInpectors.StringOperations;
 import com.ssd.mvd.inspectors.AnnotationInspector;
-import com.ssd.mvd.inspectors.CassandraConverter;
-
-import com.ssd.mvd.kafka.kafkaConfigs.KafkaTopics;
 
 import com.ssd.mvd.constants.cassandra.CassandraDataTypes;
-import com.ssd.mvd.constants.cassandra.CassandraFunctions;
 import com.ssd.mvd.constants.cassandra.CassandraCommands;
 import com.ssd.mvd.constants.cassandra.CassandraTables;
+
+import com.ssd.mvd.kafka.kafkaConfigs.KafkaTopics;
 
 import java.text.MessageFormat;
 import java.util.UUID;
@@ -189,6 +191,7 @@ public final class TupleOfCar implements ObjectFromRowConvertInterface< TupleOfC
 
     @FieldAnnotation( name = "uuid", mightBeNull = false, cassandraType = CassandraDataTypes.UUID )
     private UUID uuid;
+
     @FieldAnnotation(
             name = "uuidOfEscort",
             comment = "UUID of the Escort which this car is linked to",
@@ -237,6 +240,49 @@ public final class TupleOfCar implements ObjectFromRowConvertInterface< TupleOfC
 
     @Override
     @lombok.NonNull
+    @lombok.Synchronized
+    public synchronized Insert getEntityInsert () {
+        AnnotationInspector.checkEntityFieldsNotEmpty( this );
+
+        return this.startInsert()
+                .value(
+                        CqlIdentifier.fromCql( "uuid" ),
+                        QueryBuilder.now()
+                ).value(
+                        CqlIdentifier.fromCql( "uuidOfEscort" ),
+                        QueryBuilder.literal( this.getUuidOfEscort() )
+                ).value(
+                        CqlIdentifier.fromCql( "uuidOfPatrul" ),
+                        QueryBuilder.literal( this.getUuidOfPatrul() )
+                ).value(
+                        CqlIdentifier.fromCql( "carModel" ),
+                        QueryBuilder.literal( this.getCarModel() )
+                ).value(
+                        CqlIdentifier.fromCql( "gosNumber" ),
+                        QueryBuilder.literal( this.getGosNumber() )
+                ).value(
+                        CqlIdentifier.fromCql( "trackerId" ),
+                        QueryBuilder.literal( this.getTrackerId() )
+                ).value(
+                        CqlIdentifier.fromCql( "nsfOfPatrul" ),
+                        QueryBuilder.literal( this.getNsfOfPatrul() )
+                ).value(
+                        CqlIdentifier.fromCql( "simCardNumber" ),
+                        QueryBuilder.literal( this.getSimCardNumber() )
+                ).value(
+                        CqlIdentifier.fromCql( "latitude" ),
+                        QueryBuilder.literal( this.getLatitude() )
+                ).value(
+                        CqlIdentifier.fromCql( "longitude" ),
+                        QueryBuilder.literal( this.getLongitude() )
+                ).value(
+                        CqlIdentifier.fromCql( "averageFuelConsumption" ),
+                        QueryBuilder.literal( this.getAverageFuelConsumption() )
+                ).ifNotExists();
+    }
+
+    @Override
+    @lombok.NonNull
     public String getEntityUpdateCommand () {
         return MessageFormat.format(
                 """
@@ -253,38 +299,6 @@ public final class TupleOfCar implements ObjectFromRowConvertInterface< TupleOfC
                 this.getLatitude(),
                 this.getUuid(),
                 StringOperations.joinWithAstrix( this.getTrackerId() )
-        );
-    }
-
-    @Override
-    @lombok.NonNull
-    public String getEntityInsertCommand () {
-        return MessageFormat.format(
-                """
-                {0} {1}.{2} {3}
-                VALUES ( {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}, {14} );
-                """,
-                CassandraCommands.INSERT_INTO,
-
-                this.getEntityKeyspaceName(),
-                this.getEntityTableName(),
-
-                CassandraConverter.getALlParamsNamesForClass( this.getClass() ),
-
-                CassandraFunctions.UUID,
-
-                this.getUuidOfEscort(),
-                this.getUuidOfPatrul(),
-
-                StringOperations.joinWithAstrix( this.getCarModel() ),
-                StringOperations.joinWithAstrix( this.getGosNumber() ),
-                StringOperations.joinWithAstrix( this.getTrackerId() ),
-                StringOperations.joinWithAstrix( this.getNsfOfPatrul() ),
-                StringOperations.joinWithAstrix( this.getSimCardNumber() ),
-
-                this.getLatitude(),
-                this.getLongitude(),
-                this.getAverageFuelConsumption()
         );
     }
 

@@ -1,5 +1,10 @@
 package com.ssd.mvd.entity;
 
+import com.datastax.driver.core.BatchStatement;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
+import com.datastax.oss.driver.api.querybuilder.relation.Relation;
+import com.datastax.oss.driver.api.querybuilder.update.Assignment;
 import com.ssd.mvd.annotations.entity.object.EntityConstructorAnnotation;
 import com.ssd.mvd.annotations.entity.object.EntityAnnotations;
 
@@ -10,6 +15,8 @@ import com.ssd.mvd.annotations.entity.field.EntityIndex;
 import com.ssd.mvd.annotations.entity.method.MethodsAnnotations;
 import com.ssd.mvd.annotations.kafka.KafkaEntityAnnotation;
 
+import com.ssd.mvd.database.CassandraDataControl;
+import com.ssd.mvd.inspectors.EntitiesInstances;
 import com.ssd.mvd.interfaces.entity.ObjectFromRowConvertInterface;
 import com.ssd.mvd.interfaces.KafkaEntitiesCommonMethods;
 
@@ -281,71 +288,121 @@ public final class ReqCar
         checkCallerPermission( instance, ReqCar.class );
     }
 
-    @Override
     @lombok.NonNull
-    public String getEntityInsertCommand() {
-        return MessageFormat.format(
-                """
-                {0} {1} {2} {3}
-                """,
-                CassandraCommands.BEGIN_BATCH,
-
-                /*
-                обновляем данные патрульного чтобы связать его с машиной
-                */
-                MessageFormat.format(
-                        """
-                        {0} {1}.{2}
-                        SET carNumber = {3}, carType = {4}, uuidForPatrulCar = {5}
-                        WHERE uuid = {6};
-                        """,
-                        CassandraCommands.UPDATE,
-
-                        this.getEntityKeyspaceName(),
-                        CassandraTables.PATRULS,
-
-                        StringOperations.joinWithAstrix( this.getGosNumber() ),
-                        StringOperations.joinWithAstrix( this.getVehicleType() ),
-
-                        this.getUuid(),
-                        this.getPatrulId()
-                ),
-
-                /*
-                сохраняем данные самой машины
-                */
-                MessageFormat.format(
-                        """
-                        {0} {1}.{2} {3}
-                        VALUES ( {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}, {14}, {15}, {16} {17} );
-                        """,
-                        CassandraCommands.INSERT_INTO,
-
-                        this.getEntityKeyspaceName(),
-                        this.getEntityTableName(),
-
-                        CassandraConverter.getAllParamsNamesForClass( ReqCar.class ),
-
-                        CassandraFunctions.UUID,
-
-                        this.getLustraId(),
-                        this.getPatrulId(),
-
-                        StringOperations.joinWithAstrix( this.getGosNumber() ),
-                        StringOperations.joinWithAstrix( this.getTrackerId() ),
-                        StringOperations.joinWithAstrix( this.getVehicleType() ),
-                        StringOperations.joinWithAstrix( this.getCarImageLink() ),
-                        StringOperations.joinWithAstrix( this.getPatrulPassportSeries() ),
-
-                        this.getSideNumber(),
-                        this.getSimCardNumber(),
-
-                        this.getLatitude(),
-                        this.getLongitude(),
-                        this.getAverageFuelSize(),
-                        this.getAverageFuelConsumption()
-                ),
-                CassandraCommands.APPLY_BATCH
+    @lombok.Synchronized
+    public synchronized BatchStatement getEntityInsertBatch () {
+        return new BatchStatement().add(
+                CassandraDataControl
+                        .getInstance()
+                        .generatePreparedStatement(
+                                QueryBuilder.update(
+                                        this.getEntityKeyspaceName().name(),
+                                        EntitiesInstances.PATRUL.get().getEntityTableName().name()
+                                ).set(
+                                        Assignment.setField(
+                                                CqlIdentifier.fromCql(
+                                                        AnnotationInspector.getSubClassColumnName(
+                                                                EntitiesInstances.PATRUL_CAR_INFO.get()
+                                                        )
+                                                ),
+                                                CqlIdentifier.fromCql( "carNumber" ),
+                                                QueryBuilder.bindMarker()
+                                        ),
+                                        Assignment.setField(
+                                                CqlIdentifier.fromCql(
+                                                        AnnotationInspector.getSubClassColumnName(
+                                                                EntitiesInstances.PATRUL_CAR_INFO.get()
+                                                        )
+                                                ),
+                                                CqlIdentifier.fromCql( "carType" ),
+                                                QueryBuilder.bindMarker()
+                                        ),
+                                        Assignment.setField(
+                                                CqlIdentifier.fromCql(
+                                                        AnnotationInspector.getSubClassColumnName(
+                                                                EntitiesInstances.PATRUL_UNIQUE_VALUES.get()
+                                                        )
+                                                ),
+                                                CqlIdentifier.fromCql( "uuidForPatrulCar" ),
+                                                QueryBuilder.bindMarker()
+                                        )
+                                ).where(
+                                        Relation.column(
+                                                CqlIdentifier.fromCql( "uuid" )
+                                        ).isEqualTo( QueryBuilder.bindMarker() )
+                                )
+                        ).bind(
+                                QueryBuilder.literal( this.getGosNumber() ),
+                                QueryBuilder.literal( this.getVehicleType() ),
+                                QueryBuilder.literal( this.getUuid() ),
+                                QueryBuilder.literal( this.getPatrulId() )
+                        )
+        ).add(
+                CassandraDataControl
+                        .getInstance()
+                        .generatePreparedStatement(
+                                this.startInsert()
+                                        .value(
+                                                CqlIdentifier.fromCql( "uuid" ),
+                                                QueryBuilder.now()
+                                        )
+                                        .value(
+                                                CqlIdentifier.fromCql( "lustraId" ),
+                                                QueryBuilder.bindMarker()
+                                        )
+                                        .value(
+                                                CqlIdentifier.fromCql( "patrulId" ),
+                                                QueryBuilder.bindMarker()
+                                        )
+                                        .value(
+                                                CqlIdentifier.fromCql( "gosNumber" ),
+                                                QueryBuilder.bindMarker()
+                                        )
+                                        .value(
+                                                CqlIdentifier.fromCql( "trackerId" ),
+                                                QueryBuilder.bindMarker()
+                                        )
+                                        .value(
+                                                CqlIdentifier.fromCql( "vehicleType" ),
+                                                QueryBuilder.bindMarker()
+                                        )
+                                        .value(
+                                                CqlIdentifier.fromCql( "carImageLink" ),
+                                                QueryBuilder.bindMarker()
+                                        )
+                                        .value(
+                                                CqlIdentifier.fromCql( "patrulPassportSeries" ),
+                                                QueryBuilder.bindMarker()
+                                        )
+                                        .value(
+                                                CqlIdentifier.fromCql( "sideNumber" ),
+                                                QueryBuilder.bindMarker()
+                                        )
+                                        .value(
+                                                CqlIdentifier.fromCql( "simCardNumber" ),
+                                                QueryBuilder.bindMarker()
+                                        )
+                                        .value(
+                                                CqlIdentifier.fromCql( "latitude" ),
+                                                QueryBuilder.bindMarker()
+                                        )
+                                        .value(
+                                                CqlIdentifier.fromCql( "longitude" ),
+                                                QueryBuilder.bindMarker()
+                                        )
+                        ).bind(
+                                QueryBuilder.literal( this.getLatitude() ),
+                                QueryBuilder.literal( this.getPatrulId() ),
+                                QueryBuilder.literal( this.getGosNumber() ),
+                                QueryBuilder.literal( this.getTrackerId() ),
+                                QueryBuilder.literal( this.getVehicleType() ),
+                                QueryBuilder.literal( this.getCarImageLink() ),
+                                QueryBuilder.literal( this.getPatrulPassportSeries() ),
+                                QueryBuilder.literal( this.getSideNumber() ),
+                                QueryBuilder.literal( this.getSimCardNumber() ),
+                                QueryBuilder.literal( this.getLatitude() ),
+                                QueryBuilder.literal( this.getLongitude() )
+                        )
         );
     }
 
