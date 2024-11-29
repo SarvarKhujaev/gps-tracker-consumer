@@ -1,13 +1,9 @@
 package com.ssd.mvd.entity;
 
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
-
-import com.datastax.driver.core.querybuilder.Update;
 import com.datastax.oss.driver.api.querybuilder.insert.Insert;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 
-import com.datastax.oss.driver.api.querybuilder.update.Assignment;
 import com.ssd.mvd.annotations.entity.object.EntityConstructorAnnotation;
 import com.ssd.mvd.annotations.entity.object.EntityAnnotations;
 import com.ssd.mvd.annotations.entity.field.FieldAnnotation;
@@ -27,13 +23,11 @@ import com.ssd.mvd.inspectors.dataTypesInpectors.StringOperations;
 import com.ssd.mvd.inspectors.AnnotationInspector;
 import com.ssd.mvd.inspectors.Inspector;
 
-import com.ssd.mvd.constants.cassandra.CassandraCommands;
 import com.ssd.mvd.constants.cassandra.CassandraTables;
 import com.ssd.mvd.constants.Status;
 
 import org.apache.avro.Schema;
 
-import java.text.MessageFormat;
 import java.util.Date;
 import java.util.UUID;
 
@@ -319,31 +313,6 @@ public final class Position implements EntityToCassandraConverter, KafkaEntities
     @EntityConstructorAnnotation
     public <T> Position ( final Class<T> instance ) {
         AnnotationInspector.checkCallerPermission( instance, Position.class );
-    }
-
-    @Override
-    @lombok.NonNull
-    public String getEntityUpdateCommand () {
-        return MessageFormat.format(
-                """
-                {0} {1}.{2}
-                ( imei, date, speed, altitude, longitude, address )
-                VALUES ( {3}, {4}, {5}, {6}, {7}, {8} );
-                """,
-                CassandraCommands.INSERT_INTO,
-
-                CassandraTables.ESCORT,
-                CassandraTables.ESCORT_LOCATION,
-
-                StringOperations.joinWithAstrix( this.getDeviceId() ),
-                StringOperations.joinWithAstrix( this.getDeviceTime() ),
-
-                this.getSpeed(),
-                this.getLongitude(),
-                this.getLatitude(),
-
-                StringOperations.EMPTY
-        );
     }
 
     @Override

@@ -1,8 +1,13 @@
 package com.ssd.mvd.entity;
 
+import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.api.querybuilder.insert.Insert;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.driver.core.BatchStatement;
+
+import com.datastax.oss.driver.api.querybuilder.update.Assignment;
+import com.datastax.oss.driver.api.querybuilder.update.Update;
 
 import com.ssd.mvd.annotations.entity.object.EntityConstructorAnnotation;
 import com.ssd.mvd.annotations.entity.object.EntityAnnotations;
@@ -21,12 +26,12 @@ import com.ssd.mvd.inspectors.dataTypesInpectors.StringOperations;
 import com.ssd.mvd.inspectors.AnnotationInspector;
 
 import com.ssd.mvd.constants.cassandra.CassandraDataTypes;
-import com.ssd.mvd.constants.cassandra.CassandraCommands;
 import com.ssd.mvd.constants.cassandra.CassandraTables;
 
 import com.ssd.mvd.kafka.kafkaConfigs.KafkaTopics;
+import com.ssd.mvd.database.CassandraDataControl;
+import com.ssd.mvd.inspectors.EntitiesInstances;
 
-import java.text.MessageFormat;
 import java.util.UUID;
 
 @EntityAnnotations(
@@ -283,61 +288,51 @@ public final class TupleOfCar implements ObjectFromRowConvertInterface< TupleOfC
 
     @Override
     @lombok.NonNull
-    public String getEntityUpdateCommand () {
-        return MessageFormat.format(
-                """
-                {0} {1}.{2}
-                SET longitude = {3}, latitude = {4}
-                WHERE uuid = {5} AND trackerid = {6};
-                """,
-                CassandraCommands.UPDATE,
-
-                this.getEntityKeyspaceName(),
-                this.getEntityTableName(),
-
-                this.getLongitude(),
-                this.getLatitude(),
-                this.getUuid(),
-                StringOperations.joinWithAstrix( this.getTrackerId() )
+    public Update getEntityUpdate () {
+        return this.startUpdate().set(
+                Assignment.setColumn(
+                        CqlIdentifier.fromCql( "longitude" ),
+                        QueryBuilder.literal( this.getLongitude() )
+                ),
+                Assignment.setColumn(
+                        CqlIdentifier.fromCql( "latitude" ),
+                        QueryBuilder.literal( this.getLatitude() )
+                )
+        ).where(
+                Relation.column(
+                        AnnotationInspector.getEntityPrimaryKey( this )[0]
+                ).isEqualTo( QueryBuilder.literal( this.getUuid() ) ),
+                Relation.column(
+                        CqlIdentifier.fromCql( "trackerid" )
+                ).isEqualTo( QueryBuilder.literal( this.getTrackerId() ) )
         );
     }
 
     @Override
     @lombok.NonNull
-    public String getEntityDeleteCommand () {
-        return MessageFormat.format(
-                """
-                {0} {1} {2} {3}
-                """,
-                CassandraCommands.BEGIN_BATCH,
-
-                MessageFormat.format(
-                        """
-                        {0} {1}.{2} WHERE uuid = {3};
-                        """,
-                        CassandraCommands.DELETE,
-
-                        this.getEntityKeyspaceName(),
-                        this.getEntityTableName(),
-
-                        this.getUuid()
-                ),
-
-                MessageFormat.format(
-                        """
-                        {0} {1}.{2} WHERE trackersId = {3} {4};
-                        """,
-                        CassandraCommands.DELETE,
-
-                        this.getEntityKeyspaceName(),
-                        CassandraTables.TRACKERSID,
-
-                        this.getTrackerId(),
-
-                        CassandraCommands.IF_EXISTS
-                ),
-
-                CassandraCommands.APPLY_BATCH
+    public BatchStatement getEntityDeleteBatch () {
+        return new BatchStatement().add(
+                CassandraDataControl
+                        .getInstance()
+                        .generatePreparedStatement(
+                                this.startDelete().where(
+                                        Relation.column(
+                                                CqlIdentifier.fromCql(
+                                                        AnnotationInspector.getEntityPrimaryKey( this )[0]
+                                                )
+                                        ).isEqualTo( QueryBuilder.bindMarker() )
+                                )
+                        ).bind( QueryBuilder.literal( this.getUuid() ) )
+        ).add(
+                CassandraDataControl
+                        .getInstance()
+                        .generatePreparedStatement(
+                                EntitiesInstances.TRACKER_INFO.get().startDelete().where(
+                                        Relation.column(
+                                                AnnotationInspector.getEntityPrimaryKey( EntitiesInstances.TRACKER_INFO.get() )[0]
+                                        ).isEqualTo( QueryBuilder.bindMarker() )
+                                )
+                        ).bind( CqlIdentifier.fromCql( this.getTrackerId() ) )
         );
     }
 

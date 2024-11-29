@@ -1,10 +1,13 @@
 package com.ssd.mvd.entity;
 
-import com.datastax.driver.core.BatchStatement;
-import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.driver.core.BatchStatement;
+
 import com.datastax.oss.driver.api.querybuilder.update.Assignment;
+import com.datastax.oss.driver.api.querybuilder.update.Update;
+
 import com.ssd.mvd.annotations.entity.object.EntityConstructorAnnotation;
 import com.ssd.mvd.annotations.entity.object.EntityAnnotations;
 
@@ -15,24 +18,21 @@ import com.ssd.mvd.annotations.entity.field.EntityIndex;
 import com.ssd.mvd.annotations.entity.method.MethodsAnnotations;
 import com.ssd.mvd.annotations.kafka.KafkaEntityAnnotation;
 
-import com.ssd.mvd.database.CassandraDataControl;
-import com.ssd.mvd.inspectors.EntitiesInstances;
 import com.ssd.mvd.interfaces.entity.ObjectFromRowConvertInterface;
 import com.ssd.mvd.interfaces.KafkaEntitiesCommonMethods;
 
-import com.ssd.mvd.inspectors.dataTypesInpectors.StringOperations;
+import com.ssd.mvd.constants.cassandra.CassandraDataTypes;
+import com.ssd.mvd.constants.cassandra.CassandraTables;
+
+import com.ssd.mvd.database.CassandraDataControl;
+import com.ssd.mvd.inspectors.EntitiesInstances;
+
 import com.ssd.mvd.inspectors.AnnotationInspector;
 import com.ssd.mvd.inspectors.CassandraConverter;
 
 import com.ssd.mvd.kafka.kafkaConfigs.KafkaTopics;
 import com.ssd.mvd.entity.patrulDataSet.Patrul;
 
-import com.ssd.mvd.constants.cassandra.CassandraDataTypes;
-import com.ssd.mvd.constants.cassandra.CassandraFunctions;
-import com.ssd.mvd.constants.cassandra.CassandraCommands;
-import com.ssd.mvd.constants.cassandra.CassandraTables;
-
-import java.text.MessageFormat;
 import java.util.UUID;
 
 @EntityAnnotations(
@@ -408,58 +408,22 @@ public final class ReqCar
 
     @Override
     @lombok.NonNull
-    public String getEntityDeleteCommand() {
-        return MessageFormat.format(
-                """
-                {0} {1} {2} {3};
-                """,
-                CassandraCommands.BEGIN_BATCH,
-
-                MessageFormat.format(
-                        """
-                        {0} {1}.{2} WHERE uuid = {3};
-                        """,
-                        CassandraCommands.DELETE,
-
-                        this.getEntityKeyspaceName(),
-                        this.getEntityTableName(),
-
-                        this.getGosNumber()
+    public Update getEntityUpdate() {
+        return this.startUpdate().set(
+                Assignment.setColumn(
+                        CqlIdentifier.fromCql( "longitude" ),
+                        QueryBuilder.literal( this.getLongitude() )
                 ),
-
-                MessageFormat.format(
-                        """
-                        {0} {1}.{2} WHERE trackersId = {3};
-                        """,
-                        CassandraCommands.DELETE,
-
-                        CassandraTables.TRACKERS,
-                        CassandraTables.TRACKERSID,
-
-                        StringOperations.joinWithAstrix( this.getTrackerId() )
-                ),
-
-                CassandraCommands.APPLY_BATCH
-        );
-    }
-
-    @Override
-    @lombok.NonNull
-    public String getEntityUpdateCommand() {
-        return MessageFormat.format(
-                """
-                {0} {1}.{2}
-                SET longitude = {3}, latitude = {4}
-                WHERE uuid = {5};
-                """,
-                CassandraCommands.UPDATE,
-
-                this.getEntityKeyspaceName(),
-                this.getEntityTableName(),
-
-                this.getLongitude(),
-                this.getLatitude(),
-                this.getUuid()
+                Assignment.setColumn(
+                        CqlIdentifier.fromCql( "latitude" ),
+                        QueryBuilder.literal( this.getLatitude() )
+                )
+        ).where(
+                Relation.column(
+                        CqlIdentifier.fromCql(
+                                AnnotationInspector.getEntityPrimaryKey( this )[0]
+                        )
+                ).isEqualTo( QueryBuilder.literal( this.getUuid() ) )
         );
     }
 

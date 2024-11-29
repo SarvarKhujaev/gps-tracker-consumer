@@ -32,7 +32,6 @@ import com.ssd.mvd.inspectors.CustomServiceCleaner;
 import com.ssd.mvd.inspectors.dataTypesInpectors.TimeInspector;
 
 import com.ssd.mvd.constants.cassandra.CassandraTables;
-import com.ssd.mvd.constants.cassandra.CassandraCommands;
 
 import com.ssd.mvd.interfaces.DatabaseCommonMethods;
 import com.ssd.mvd.interfaces.entity.EntityToCassandraConverter;
@@ -124,44 +123,22 @@ public final class CassandraDataControl extends CassandraParamsAndOptionsStore i
                 /*
                 запускаем BATCH
                 */
-                super.newStringBuilder()
+                new BatchStatement().add(
                         /*
                         сохраняем локацию машин эскорта
                         сохраняются данные всех трекеров
                         */
-                        .append(
-                                QueryBuilder.insertInto(
-                                        CassandraTables.ESCORT.name(),
-                                        CassandraTables.ESCORT_LOCATION.name()
-                                ).value(
-                                        CqlIdentifier.fromCql( "imei" ),
-                                        QueryBuilder.literal( updatedPosition.getDeviceId() )
-                                ).value(
-                                        CqlIdentifier.fromCql( "date" ),
-                                        QueryBuilder.literal( updatedPosition.getDeviceTime() )
-                                ).value(
-                                        CqlIdentifier.fromCql( "speed" ),
-                                        QueryBuilder.literal( updatedPosition.getSpeed() )
-                                ).value(
-                                        CqlIdentifier.fromCql( "altitude" ),
-                                        QueryBuilder.literal( updatedPosition.getLatitude() )
-                                ).value(
-                                        CqlIdentifier.fromCql( "longitude" ),
-                                        QueryBuilder.literal( updatedPosition.getLongitude() )
-                                ).value(
-                                        CqlIdentifier.fromCql( "address" ),
-                                        QueryBuilder.literal( EMPTY )
-                                )
-                        )
+                        this.generatePreparedStatement(
+                                updatedPosition.getEntityInsert()
+                        ).bind()
+                ).add(
                         /*
                             после получения сигнала от трекера обновляем его значения в БД
                         */
-                        .append( trackerInfo.getEntityDeleteCommand() )
-                        /*
-                        завершаем BATCH
-                        */
-                        .append( CassandraCommands.APPLY_BATCH )
-                        .toString()
+                        this.generatePreparedStatement(
+                                trackerInfo.getEntityInsert()
+                        ).bind()
+                )
         );
 
     public final Function< Position, String > saveCarLocation = position -> {

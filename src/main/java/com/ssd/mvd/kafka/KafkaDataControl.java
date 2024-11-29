@@ -8,6 +8,16 @@ import reactor.core.scheduler.Schedulers;
 import reactor.kafka.sender.KafkaSender;
 import reactor.kafka.sender.SenderOptions;
 
+import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.Consumed;
+
+import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.record.CompressionType;
+import org.apache.kafka.clients.producer.ProducerConfig;
+
 import com.ssd.mvd.entity.Position;
 import com.ssd.mvd.publisher.CustomPublisher;
 import com.ssd.mvd.inspectors.EntitiesInstances;
@@ -20,16 +30,6 @@ import com.ssd.mvd.interfaces.KafkaEntitiesCommonMethods;
 import com.ssd.mvd.kafka.kafkaConfigs.KafkaTopics;
 import com.ssd.mvd.kafka.kafkaConfigs.KafkaOptionsAndParams;
 import com.ssd.mvd.kafka.kafkaConfigs.KafkaProducerInterceptor;
-
-import org.apache.kafka.streams.KafkaStreams;
-import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.Consumed;
-
-import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.common.record.CompressionType;
-import org.apache.kafka.clients.producer.ProducerConfig;
 
 public final class KafkaDataControl extends KafkaOptionsAndParams implements ServiceCommonMethods {
     private KafkaStreams kafkaStreams;
@@ -131,7 +131,7 @@ public final class KafkaDataControl extends KafkaOptionsAndParams implements Ser
                 values -> CassandraDataControl
                         .getInstance()
                         .saveCarLocation
-                        .apply( new Position() )
+                        .apply( new Position( EntitiesInstances.class ) )
         );
 
         this.kafkaStreams = new KafkaStreams( this.builder.build(), this.setStreamProperties.get() );

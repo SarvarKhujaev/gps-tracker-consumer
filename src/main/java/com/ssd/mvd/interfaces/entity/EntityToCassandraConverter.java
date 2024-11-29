@@ -1,41 +1,35 @@
 package com.ssd.mvd.interfaces.entity;
 
-import com.datastax.driver.core.BatchStatement;
-import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.querybuilder.delete.Delete;
 import com.datastax.oss.driver.api.querybuilder.delete.DeleteSelection;
-import com.datastax.oss.driver.api.querybuilder.insert.Insert;
+import com.datastax.oss.driver.api.querybuilder.delete.Delete;
+
 import com.datastax.oss.driver.api.querybuilder.insert.InsertInto;
-import com.datastax.oss.driver.api.querybuilder.select.Select;
+import com.datastax.oss.driver.api.querybuilder.insert.Insert;
+
 import com.datastax.oss.driver.api.querybuilder.select.SelectFrom;
-import com.datastax.oss.driver.api.querybuilder.update.Update;
-import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
+import com.datastax.oss.driver.api.querybuilder.select.Select;
 
 import com.datastax.oss.driver.api.querybuilder.update.UpdateStart;
-import com.ssd.mvd.constants.Errors;
-import com.ssd.mvd.inspectors.AnnotationInspector;
+import com.datastax.oss.driver.api.querybuilder.update.Update;
+
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.driver.core.BatchStatement;
+
 import com.ssd.mvd.inspectors.dataTypesInpectors.StringOperations;
+import com.ssd.mvd.inspectors.AnnotationInspector;
+
 import com.ssd.mvd.interfaces.ServiceCommonMethods;
 import com.ssd.mvd.database.CassandraDataControl;
 
-import com.ssd.mvd.constants.cassandra.CassandraCommands;
 import com.ssd.mvd.constants.cassandra.CassandraTables;
+import com.ssd.mvd.constants.Errors;
 
 public interface EntityToCassandraConverter extends ServiceCommonMethods {
     default int getParallelNumber () {
         return Math.abs(
                 this.getEntityKeyspaceName().name().length() + this.getEntityTableName().name().length()
         );
-    }
-
-    @lombok.NonNull
-    default String getEntityDeleteCommand () {
-        return CassandraCommands.DELETE;
-    }
-
-    @lombok.NonNull
-    default String getEntityUpdateCommand () {
-        return CassandraCommands.UPDATE;
     }
 
     @lombok.NonNull
@@ -113,6 +107,16 @@ public interface EntityToCassandraConverter extends ServiceCommonMethods {
     )
     @lombok.NonNull
     default BatchStatement getEntityInsertBatch () {
+        throw new IllegalArgumentException(
+                Errors.METHOD_NOT_REALIZED.translate(
+                        "getEntityInsertBatch",
+                        this.getClass().getName()
+                )
+        );
+    }
+
+    @lombok.NonNull
+    default BatchStatement getEntityDeleteBatch () {
         throw new IllegalArgumentException(
                 Errors.METHOD_NOT_REALIZED.translate(
                         "getEntityInsertBatch",

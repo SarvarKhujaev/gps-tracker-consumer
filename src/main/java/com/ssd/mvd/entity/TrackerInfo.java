@@ -9,8 +9,6 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.driver.core.GettableData;
 import com.datastax.driver.core.Row;
 
-
-import com.ssd.mvd.inspectors.dataTypesInpectors.StringOperations;
 import com.ssd.mvd.inspectors.dataTypesInpectors.TimeInspector;
 import com.ssd.mvd.inspectors.*;
 
@@ -19,12 +17,9 @@ import com.ssd.mvd.annotations.entity.object.EntityAnnotations;
 import com.ssd.mvd.database.CassandraDataControl;
 import com.ssd.mvd.entity.patrulDataSet.Patrul;
 
-import com.ssd.mvd.constants.cassandra.CassandraFunctions;
-import com.ssd.mvd.constants.cassandra.CassandraCommands;
 import com.ssd.mvd.constants.cassandra.CassandraTables;
 
 import java.lang.ref.WeakReference;
-import java.text.MessageFormat;
 import java.util.Date;
 
 @EntityAnnotations(
@@ -427,29 +422,6 @@ public final class TrackerInfo implements EntityToCassandraConverter {
 
     @Override
     @lombok.NonNull
-    public String getEntityUpdateCommand() {
-        return MessageFormat.format(
-                """
-                {0} {1}.{2}
-                ( imei, date, speed, distance )
-                VALUES( {3}, {4}, {5}, {6} );
-                """,
-                CassandraCommands.INSERT_INTO,
-
-                this.getEntityKeyspaceName(),
-                CassandraTables.TRACKER_FUEL_CONSUMPTION,
-
-                StringOperations.joinWithAstrix( this.getTrackerId() ),
-
-                CassandraFunctions.TO_TIMESTAMP.formatted( CassandraFunctions.NOW ),
-
-                this.getSpeed(),
-                ( ( this.getSpeed() * 10 / 36 ) * 15 )
-        );
-    }
-
-    @Override
-    @lombok.NonNull
     public Insert getEntityInsert() {
         return this.startInsert()
                 .value(
@@ -486,44 +458,6 @@ public final class TrackerInfo implements EntityToCassandraConverter {
                         CqlIdentifier.fromCql( "dateOfRegistration" ),
                         QueryBuilder.literal( this.getDateOfRegistration() )
                 );
-    }
-
-    @Override
-    @lombok.NonNull
-    public String getEntityDeleteCommand() {
-        return MessageFormat.format(
-                """
-                {0} {1}.{2}
-                (
-                    trackersId,
-                    patrulPassportSeries,
-                    gosnumber,
-                    status,
-                    latitude,
-                    longitude,
-                    totalActivityTime,
-                    lastActiveDate,
-                    dateOfRegistration
-                )
-                VALUES( {3}, {4}, {5}, {6}, {7}, {8}, {9,number,#}, {10}, {11} );
-                """,
-                CassandraCommands.INSERT_INTO,
-
-                CassandraTables.ESCORT,
-                CassandraTables.TRACKERSID,
-
-                StringOperations.joinWithAstrix( this.getTrackerId() ),
-                StringOperations.joinWithAstrix( this.getPatrulPassportSeries() ),
-                StringOperations.joinWithAstrix( this.getGosNumber() ),
-                StringOperations.joinWithAstrix( this.getStatus() ),
-
-                this.getLatitude(),
-                this.getLongitude(),
-                this.getTotalActivityTime(),
-
-                CassandraFunctions.TO_TIMESTAMP.formatted( CassandraFunctions.NOW ),
-                StringOperations.joinWithAstrix( this.getDateOfRegistration() )
-        );
     }
 
     @lombok.NonNull
